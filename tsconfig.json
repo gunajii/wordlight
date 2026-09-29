@@ -1,0 +1,21 @@
+{
+  // Type-check only. Node runs the .ts files directly (type stripping, Node >= 22.18),
+  // so source must use erasable syntax only: no enums, namespaces or parameter properties.
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "strict": true,
+    "noEmit": true,
+    "allowImportingTsExtensions": true,
+    "erasableSyntaxOnly": true,
+    "verbatimModuleSyntax": true,
+    "allowJs": true,
+    "checkJs": false,
+    "skipLibCheck": true,
+    "types": ["node"],
+    "lib": ["ES2022", "DOM"]
+  },
+  "include": ["packages/*/src/**/*", "packages/*/test/**/*", "server/src/**/*", "server/test/**/*", "tools/content-pipeline/**/*.ts"],
+  "exclude": ["**/node_modules/**", "apps/**", "packages/session-client/**"]
+}
