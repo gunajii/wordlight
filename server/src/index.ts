@@ -1,0 +1,174 @@
+// WordLight session server — one Node process (run with Node >= 22.18: `npm start`).
+//   • WebSocket (/ws): TV + phones, JSON events and binary audio frames, 5 s heartbeat
+//   • REST: create/list sessions, QR codes as PNG, telemetry
+//   • static: phone page, story packages (Range support for the TV's audio player),
+//     and /pkg/* — our TypeScript packages served to the browser as JavaScript
+//
+// HTTP/WebSocket plumbing, QR, heartbeat and Range serving adapted from Earshot's server
+// (same author, commit fe64ce9, server/index.js). See docs/REUSED.md.
+import http from 'node:http';
+import { readFile, stat } from 'node:fs/promises';
+import { createReadStream } from 'node:fs';
+import { networkInterfaces } from 'node:os';
+import * as nodeModule from 'node:module';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { WebSocketServer } from 'ws';
+import QRCode from 'qrcode';
+import { decodeAudioFrame } from '@wordlight/shared-protocol';
+import { SessionHub, type Conn } from './hub.ts';
+
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
+const PORT = Number(process.env.PORT || 8787);
+const HOST = process.env.HOST || '0.0.0.0';
+
+export function lanAddress(): string {
+  for (const list of Object.values(networkInterfaces())) for (const a of list ?? []) if (a.family === 'IPv4' && !a.internal) return a.address;
+  return '127.0.0.1';
+}
+const PUBLIC_URL = (process.env.PUBLIC_URL || `http://${lanAddress()}:${PORT}`).replace(/\/$/, '');
+
+// Monotonic server clock on a wall-clock scale.
+const t0 = performance.timeOrigin;
+export const serverNow = () => t0 + performance.now();
+
+// Phones send ≥ 1 message/s and browsers answer WebSocket pings natively: 5 s of silence means gone.
+export const HEARTBEAT = { pingMs: Number(process.env.HEARTBEAT_PING_MS || 2000), deadMs: Number(process.env.HEARTBEAT_DEAD_MS || 5000) };
+
+const MIME: Record<string, string> = {
+  '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.ts': 'text/javascript; charset=utf-8',
+  '.css': 'text/css', '.json': 'application/json; charset=utf-8', '.png': 'image/png', '.webp': 'image/webp', '.jpg': 'image/jpeg',
+  '.svg': 'image/svg+xml', '.mp3': 'audio/mpeg', '.m4a': 'audio/mp4', '.wav': 'audio/wav', '.vtt': 'text/vtt; charset=utf-8',
+  '.ttf': 'font/ttf', '.ico': 'image/x-icon',
+};
+const STATIC: [string, string][] = [
+  ['/content/', path.join(ROOT, 'content')],
+  ['/phone/', path.join(ROOT, 'web/phone')],
+  ['/pkg/session-client/', path.join(ROOT, 'packages/session-client/src')],
+  ['/pkg/shared-protocol/', path.join(ROOT, 'packages/shared-protocol/src')],
+  ['/pkg/reading-engine/', path.join(ROOT, 'packages/reading-engine/src')],
+  ['/pkg/karaoke-core/', path.join(ROOT, 'packages/karaoke-core/src')],
+];
+
+export function createServer({ hub = new SessionHub({ now: serverNow }), publicUrl = PUBLIC_URL, log = console.log, heartbeat = HEARTBEAT } = {}) {
+  const joinUrl = (id: string) => `${publicUrl}/j/${id}`;
+  const server = http.createServer(async (req, res) => {
+    const url = new URL(req.url ?? '/', 'http://x');
+    const p = url.pathname;
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Headers', 'content-type');
+    if (req.method === 'OPTIONS') return void res.writeHead(204).end();
+    try {
+      if (p === '/healthz') return json(res, 200, { ok: true, sessions: hub.sessions.size, publicUrl });
+      if (p === '/api/time') return json(res, 200, { c0: Number(url.searchParams.get('c0')), s: serverNow() });
+      if (p === '/api/sessions' && req.method === 'POST') {
+        const id = hub.createSession();
+        log(`[session] created ${id}`);
+        return json(res, 201, { sessionId: id, joinUrl: joinUrl(id), qrUrl: `${publicUrl}/api/sessions/${id}/qr.png`, wsUrl: publicUrl.replace(/^http/, 'ws') + '/ws' });
+      }
+      if (p === '/api/sessions' && req.method === 'GET') {
+        const list = [...hub.sessions.values()].sort((a, b) => b.createdAt - a.createdAt)
+          .map((s) => ({ sessionId: s.id, createdAt: s.createdAt, tvConnected: !!s.tv, phones: s.phones.size, readers: s.readers.size }));
+        return json(res, 200, list);
+      }
+      let m = p.match(/^\/api\/sessions\/([A-Za-z0-9]+)(\/.*)?$/);
+      if (m) {
+        const s = hub.get(m[1]);
+        if (!s) return json(res, 404, { error: 'no-session' });
+        const sub = m[2] || '';
+        if (sub === '' && req.method === 'GET') return json(res, 200, { sessionId: s.id, tvConnected: !!s.tv, phones: [...s.phones.keys()], readers: s.readers.size, turn: s.turn?.turn.turnId ?? null, joinUrl: joinUrl(s.id) });
+        if (sub === '/qr.png') {
+          const png = await QRCode.toBuffer(joinUrl(s.id), { width: Number(url.searchParams.get('size') || 480), margin: 2, errorCorrectionLevel: 'M' });
+          res.writeHead(200, { 'Content-Type': 'image/png', 'Cache-Control': 'no-store' });
+          return void res.end(png);
+        }
+        if (sub === '/telemetry.json') return json(res, 200, s.telemetry);
+      }
+      if (p === '/' || p === '/j' || (m = p.match(/^\/j\/([A-Za-z0-9]+)$/))) return sendFile(res, path.join(ROOT, 'web/phone/index.html'), req);
+      for (const [prefix, dir] of STATIC) {
+        if (!p.startsWith(prefix)) continue;
+        const f = path.normalize(path.join(dir, decodeURIComponent(p.slice(prefix.length))));
+        if (!f.startsWith(dir)) return json(res, 403, { error: 'forbidden' });
+        if (f.endsWith('.ts')) return sendTypeScript(res, f);
+        return sendFile(res, f, req);
+      }
+      json(res, 404, { error: 'not-found' });
+    } catch (err) {
+      log('[http] error', err);
+      if (!res.headersSent) json(res, 500, { error: 'internal' });
+    }
+  });
+
+  const wss = new WebSocketServer({ server, path: '/ws' });
+  wss.on('connection', (ws, req) => {
+    const conn: Conn = { send: (msg) => { if (ws.readyState === 1) ws.send(JSON.stringify(msg)); } };
+    let lastRx = Date.now(), lastPing = 0, closeReason: 'closed' | 'timeout' = 'closed';
+    ws.on('pong', () => (lastRx = Date.now()));
+    const hb = setInterval(() => {
+      const now = Date.now();
+      if (now - lastRx > heartbeat.deadMs) { closeReason = 'timeout'; return ws.terminate(); }
+      if (now - lastPing >= heartbeat.pingMs) { lastPing = now; try { ws.ping(); } catch {} }
+    }, Math.min(1000, heartbeat.pingMs));
+    ws.on('message', (data, isBinary) => {
+      lastRx = Date.now();
+      if (isBinary) {
+        const buf = Array.isArray(data) ? Buffer.concat(data) : Buffer.from(data as ArrayBuffer);
+        const frame = decodeAudioFrame(new Uint8Array(buf.buffer, buf.byteOffset, buf.byteLength));
+        if (frame) hub.audio(conn, frame);
+        return;
+      }
+      let msg: any;
+      try { msg = JSON.parse(data.toString()); } catch { return; }
+      if (msg?.t === 'hello') log(`[ws] hello ${msg.role} ${msg.clientId} → ${msg.sessionId} (${req.socket.remoteAddress})`);
+      hub.handle(conn, msg);
+    });
+    ws.on('close', () => { clearInterval(hb); hub.disconnect(conn, closeReason); });
+  });
+  return { server, hub, wss, publicUrl };
+}
+
+function json(res: http.ServerResponse, code: number, body: unknown) {
+  res.writeHead(code, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' });
+  res.end(JSON.stringify(body));
+}
+
+// Our packages are TypeScript with erasable syntax only; browsers get them with types stripped
+// by Node itself (node:module stripTypeScriptTypes, Node >= 22.13). Import specifiers keep their
+// .ts extension, which is fine: the browser just requests the next file from this route.
+async function sendTypeScript(res: http.ServerResponse, file: string) {
+  const strip = (nodeModule as any).stripTypeScriptTypes as undefined | ((src: string, o?: object) => string);
+  if (!strip) return json(res, 501, { error: 'this Node version cannot strip TypeScript; use Node >= 22.13' });
+  let src: string;
+  try { src = await readFile(file, 'utf8'); } catch { return json(res, 404, { error: 'not-found' }); }
+  res.writeHead(200, { 'Content-Type': MIME['.ts'], 'Cache-Control': 'no-cache' });
+  res.end(strip(src, { mode: 'strip' }));
+}
+
+// Static files with Range support (media players need it to seek).
+async function sendFile(res: http.ServerResponse, file: string, req?: http.IncomingMessage) {
+  let st;
+  try { st = await stat(file); } catch { return json(res, 404, { error: 'not-found' }); }
+  if (st.isDirectory()) return json(res, 404, { error: 'not-found' });
+  const type = MIME[path.extname(file)] || 'application/octet-stream';
+  const range = req?.headers.range?.match(/bytes=(\d*)-(\d*)/);
+  if (range) {
+    const start = range[1] ? Number(range[1]) : st.size - Number(range[2]);
+    const end = range[1] && range[2] ? Math.min(Number(range[2]), st.size - 1) : st.size - 1;
+    if (start >= st.size || start > end) { res.writeHead(416, { 'Content-Range': `bytes */${st.size}` }); return void res.end(); }
+    res.writeHead(206, { 'Content-Type': type, 'Content-Length': end - start + 1, 'Content-Range': `bytes ${start}-${end}/${st.size}`, 'Accept-Ranges': 'bytes', 'Cache-Control': 'no-cache' });
+    return void createReadStream(file, { start, end }).pipe(res);
+  }
+  res.writeHead(200, { 'Content-Type': type, 'Content-Length': st.size, 'Accept-Ranges': 'bytes', 'Cache-Control': 'no-cache' });
+  if (st.size < 256 * 1024) return void res.end(await readFile(file));
+  createReadStream(file).pipe(res);
+}
+
+if (process.argv[1] && fileURLToPath(import.meta.url) === path.resolve(process.argv[1])) {
+  const { server, publicUrl } = createServer();
+  server.listen(PORT, HOST, () => {
+    console.log(`WordLight server on ${HOST}:${PORT}`);
+    console.log(`  public URL (TV + phones use this): ${publicUrl}`);
+    console.log(`  phone page:                        ${publicUrl}/j/<CODE>   (open the QR on the TV)`);
+    console.log(`  stories:                           ${publicUrl}/content/stories/`);
+  });
+}

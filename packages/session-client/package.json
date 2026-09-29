@@ -1,0 +1,9 @@
+{
+  "name": "@wordlight/session-client",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "WebSocket session client (hello, clock sync, reconnect with timeouts and backoff) — reused from Earshot.",
+  "exports": { ".": "./src/index.js" },
+  "license": "MIT"
+}

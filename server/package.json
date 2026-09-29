@@ -1,0 +1,17 @@
+{
+  "name": "@wordlight/server",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "WordLight session server: pairing, live events, content, and (later) the reading pipeline.",
+  "dependencies": {
+    "@wordlight/shared-protocol": "*",
+    "@wordlight/reading-engine": "*",
+    "qrcode": "^1.5.4",
+    "ws": "^8.21.0"
+  },
+  "devDependencies": {
+    "@types/qrcode": "^1.5.5",
+    "@types/ws": "^8.5.12"
+  }
+}
