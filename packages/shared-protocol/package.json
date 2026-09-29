@@ -1,0 +1,9 @@
+{
+  "name": "@wordlight/shared-protocol",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Live event types and validators shared by the WordLight TV app, phone page and server.",
+  "exports": { ".": "./src/index.ts" },
+  "license": "MIT"
+}
