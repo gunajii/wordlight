@@ -1,0 +1,9 @@
+{
+  "name": "@wordlight/karaoke-core",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Platform-free core of word-timed (karaoke) subtitles: an accurate playhead from a coarse currentTime, word lookup, and WebVTT word-timestamp parsing. Future open-source package.",
+  "exports": { ".": "./src/index.ts" },
+  "license": "MIT"
+}

@@ -1,0 +1,9 @@
+{
+  "name": "@wordlight/story-package",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "WordLight story package format: types, validator, Polly speech-mark mapping (UTF-8 byte offsets) and deterministic turn-line selection.",
+  "exports": { ".": "./src/index.ts" },
+  "license": "MIT"
+}
