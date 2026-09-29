@@ -1,0 +1,9 @@
+{
+  "name": "@wordlight/reading-engine",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Pure, deterministic matcher that follows a child reading an expected line from a stream of partial transcripts.",
+  "exports": { ".": "./src/index.ts" },
+  "license": "MIT"
+}
