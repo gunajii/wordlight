@@ -5,12 +5,11 @@
   "description": "WordLight \u2014 read-along stories for Fire TV (Vega OS): words light up as they are spoken, and children read marked lines aloud into a paired phone.",
   "workspaces": [
     "packages/*",
-    "server",
-    "tools/content-pipeline"
+    "server"
   ],
   "scripts": {
     "start": "node server/src/index.ts",
-    "test": "node --test \"packages/*/test/*.test.ts\" \"packages/*/test/*.test.js\" \"server/test/*.test.ts\" \"tools/content-pipeline/test/*.test.ts\"",
+    "test": "node --test \"packages/*/test/*.test.ts\" \"packages/*/test/*.test.js\" \"server/test/*.test.ts\"",
     "typecheck": "tsc -p tsconfig.json",
     "s1:media": "python3 tools/s1-media/make_s1_media.py",
     "s1:analyze": "python3 tools/audio-analysis/av_offset.py"

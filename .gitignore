@@ -13,3 +13,4 @@ recordings/
 bench/runs/
 .env
 .env.*
+content/stories/s1-timing/
