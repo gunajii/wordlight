@@ -15,3 +15,5 @@ bench/runs/
 .env.*
 content/stories/s1-timing/
 .dev/
+__pycache__/
+*.pyc
