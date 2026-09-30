@@ -18,15 +18,22 @@ import { SERVER_URL, MEDIA_URL, STORY_ID, AUDIO_FILE, LEAD_MS } from './wordligh
 // audio and images come from an https base resolved at RUNTIME from the dev server (/api/config, kept current by
 // tools/dev-tunnel/dev-tunnel.sh), so a new tunnel URL needs no rebuild. The baked MEDIA_URL is the fallback
 // (for a fixed https host such as CloudFront).
-async function resolveMediaBase(): Promise<string | null> {
+type Run = { runId?: string; audioFile: string; leadMs: number; autorun?: boolean };
+type DevConfig = { mediaBase: string | null; run: Partial<Run> };
+async function fetchConfig(): Promise<DevConfig> {
+  let mediaBase: string | null = MEDIA_URL.startsWith('https://') && !MEDIA_URL.includes('SET-ME') ? MEDIA_URL : null;
+  let run: Partial<Run> = {};
   try {
     const cfg = await (await fetch(`${SERVER_URL}/api/config`)).json();
-    if (typeof cfg?.mediaUrl === 'string' && cfg.mediaUrl.startsWith('https://')) return cfg.mediaUrl;
+    if (typeof cfg?.mediaUrl === 'string' && cfg.mediaUrl.startsWith('https://')) mediaBase = cfg.mediaUrl;
+    if (cfg?.run && typeof cfg.run === 'object') run = cfg.run;
   } catch (e: any) { log(`config fetch failed: ${e?.message ?? e}`); }
-  return MEDIA_URL.startsWith('https://') && !MEDIA_URL.includes('SET-ME') ? MEDIA_URL : null;
+  return { mediaBase, run };
 }
+async function resolveMediaBase(): Promise<string | null> { return (await fetchConfig()).mediaBase; }
 import { useDevanagariFont } from './fonts';
 
+declare const performance: { now(): number }; // provided by the Vega JS runtime (used by the S1 build); not in the RN type libs
 type Word = { w: string; t0: number; t1: number };
 type Line = { text: string; words: Word[]; turn: boolean };
 type Story = { id: string; title: string; credits: { attribution: string }; pages: { image: string; audio: string; durationMs: number; lines: Line[] }[] };
@@ -46,12 +53,37 @@ export const App = () => {
   const [mediaBase, setMediaBase] = useState<string | null>(null);
   const [screen, setScreen] = useState<'shelf' | 'player' | 'fonts'>('shelf');
   const fontReady = useDevanagariFont();
+  // Dev run control (tools/s1-run/s1-run.sh via /api/config): baked values are defaults; a NEW runId with
+  // autorun starts the player from 0 with that run's audio file and lead — no rebuild, relaunch or key press.
+  const [run, setRun] = useState<Run>({ audioFile: AUDIO_FILE, leadMs: LEAD_MS });
+  const [playerKey, setPlayerKey] = useState('manual');
+  const [autoplay, setAutoplay] = useState(false);
+  const baselineRunId = useRef<string | undefined | null>(null); // null = not polled yet
+  useEffect(() => {
+    let alive = true;
+    const poll = async () => {
+      const cfg = await fetchConfig();
+      if (!alive) return;
+      setMediaBase((m) => (m === cfg.mediaBase ? m : cfg.mediaBase));
+      const id = cfg.run.runId;
+      if (baselineRunId.current === null) { baselineRunId.current = id; return; } // ignore a run that predates this launch
+      if (id && id !== baselineRunId.current && cfg.run.autorun) {
+        baselineRunId.current = id;
+        const next: Run = { runId: id, audioFile: cfg.run.audioFile ?? AUDIO_FILE, leadMs: cfg.run.leadMs ?? LEAD_MS };
+        log(`autorun ${JSON.stringify(next)}`);
+        setRun(next); setAutoplay(true); setPlayerKey(id); setScreen('player');
+      }
+    };
+    poll();
+    const t = setInterval(poll, 2000);
+    return () => { alive = false; clearInterval(t); };
+  }, []);
 
   useEffect(() => {
     const url = `${SERVER_URL}/content/stories/${STORY_ID}/story.json`;
     fetch(url).then((r) => r.json()).then((st) => { setStory(st); log(`story ${st.id} loaded`); })
       .catch((e) => setError(`Cannot load ${url}: ${e?.message ?? e}`));
-    resolveMediaBase().then((m) => { setMediaBase(m); log(`media base ${m ?? 'NONE (run tools/dev-tunnel/dev-tunnel.sh)'}`); });
+    resolveMediaBase().then((m) => log(`media base ${m ?? 'NONE (run tools/dev-tunnel/dev-tunnel.sh)'}`));
   }, []);
 
   useTVEventHandler((evt: any) => {
@@ -65,22 +97,26 @@ export const App = () => {
   if (error) return <View style={s.root}><Text style={s.err}>{error}</Text><Text style={s.hint}>Is `npm start` running on the Mac? Server: {SERVER_URL}</Text></View>;
   if (!story) return <View style={s.root}><Text style={s.hint}>Loading {STORY_ID}…</Text></View>;
   if (screen === 'fonts') return <FontCheck fontReady={fontReady} />;
-  if (screen === 'player') return <Player story={story} fontReady={fontReady} mediaBase={mediaBase} onExit={() => setScreen('shelf')} />;
+  if (screen === 'player') return <Player key={playerKey} story={story} fontReady={fontReady} mediaBase={mediaBase} audioFile={run.audioFile} leadMs={run.leadMs} autoplay={autoplay} onExit={() => { setAutoplay(false); setScreen('shelf'); }} />;
   return (
     <View style={s.root}>
       <Text style={s.brand}>WordLight</Text>
       {/* Focusable so OK reaches onPress through Vega's focus system even if the HW listener does not see 'select'. */}
-      <TouchableOpacity hasTVPreferredFocus style={[s.card, s.cardFocused]} onPress={() => { log('card onPress'); setScreen('player'); }}>
+      <TouchableOpacity hasTVPreferredFocus style={[s.card, s.cardFocused]} onPress={() => { log('card onPress'); setAutoplay(false); setPlayerKey(`manual-${Date.now()}`); setScreen('player'); }}>
         {mediaBase ? <Image source={{ uri: `${mediaBase}/content/stories/${story.id}/${story.pages[0].image}` }} style={s.cardImg} /> : <View style={s.cardImg} />}
         <Text style={s.cardTitle}>{story.title}</Text>
       </TouchableOpacity>
-      <Text style={s.hint}>Select: open · Down: Devanagari check · audio: {AUDIO_FILE} · lead {LEAD_MS} ms</Text>
+      <Text style={s.hint}>Select: open · Down: Devanagari check · audio: {run.audioFile} · lead {run.leadMs} ms</Text>
       <Text style={s.hint}>media: {mediaBase ?? 'no https media URL — run tools/dev-tunnel/dev-tunnel.sh on the Mac'}</Text>
     </View>
   );
 };
 
-function Player({ story, fontReady, mediaBase, onExit }: { story: Story; fontReady: boolean; mediaBase: string | null; onExit: () => void }) {
+function Player({ story, fontReady, mediaBase, audioFile, leadMs, autoplay, onExit }: {
+  story: Story; fontReady: boolean; mediaBase: string | null; audioFile: string; leadMs: number; autoplay: boolean; onExit: () => void;
+}) {
+  const LEAD = leadMs; // per-run lead (see Run); the timing loop reads it through leadRef
+  const leadRef = useRef(leadMs); leadRef.current = leadMs;
   const page = story.pages[0];
   const lines = page.lines;
   const player = useRef<AudioPlayer | null>(null);
@@ -102,7 +138,7 @@ function Player({ story, fontReady, mediaBase, onExit }: { story: Story; fontRea
     on('pause', () => { playing.current = false; sampler.current.reset(); log('pause'); });
     on('seeking', () => { sampler.current.reset(); });
     on('ended', () => { playing.current = false; log('ended'); });
-    const srcFor = (base: string | null) => `${base ?? '(no-https-media-url)'}/content/stories/${story.id}/${AUDIO_FILE}`;
+    const srcFor = (base: string | null) => `${base ?? '(no-https-media-url)'}/content/stories/${story.id}/${audioFile}`;
     let src = srcFor(mediaBase);
     let retries = 0;
     on('error', () => {
@@ -116,7 +152,12 @@ function Player({ story, fontReady, mediaBase, onExit }: { story: Story; fontRea
         setTimeout(async () => { src = srcFor(await resolveMediaBase()); log(`retry ${retries} after ${ms} ms: ${src}`); p.src = src; }, ms);
       }
     });
-    on('canplay', () => setMediaError(null));
+    let autoStarted = false;
+    on('canplay', () => {
+      setMediaError(null);
+      // autorun: start 3 s after the media is ready, so a screen recording started just before has a clean lead-in
+      if (autoplay && !autoStarted) { autoStarted = true; log('autorun: playing in 3 s'); setTimeout(() => { const r: any = p.play(); r?.catch?.((e: any) => log(`autorun play rejected: ${e?.message ?? e}`)); }, 3000); }
+    });
     for (const ev of ['loadstart', 'loadedmetadata', 'canplay', 'waiting', 'stalled']) on(ev, () => log(`media ${ev} t=${p.currentTime}`));
     p.initialize().then(() => {
       p.autoplay = false;
@@ -137,8 +178,8 @@ function Player({ story, fontReady, mediaBase, onExit }: { story: Story; fontRea
       last = now;
       sampler.current.sample((p.currentTime ?? 0) * 1000, now, playing.current);
       const pos = sampler.current.positionAt(now, playing.current) ?? 0;
-      const li = lineIndexAt(lines, pos + LEAD_MS);
-      const wi = wordIndexAt(lines[li].words, pos + LEAD_MS);
+      const li = lineIndexAt(lines, pos + leadRef.current);
+      const wi = wordIndexAt(lines[li].words, pos + leadRef.current);
       const key = `${li}:${wi}`;
       if (key !== lastWord.current) {
         lastWord.current = key;
@@ -193,7 +234,7 @@ function Player({ story, fontReady, mediaBase, onExit }: { story: Story; fontRea
   });
 
   const line = lines[view.line];
-  const phases = phasesAt(line.words, view.pos, LEAD_MS);
+  const phases = phasesAt(line.words, view.pos, LEAD);
   return (
     <View style={s.root}>
       {mediaBase ? <Image source={{ uri: `${mediaBase}/content/stories/${story.id}/${page.image}` }} style={s.pageImg} /> : null}
@@ -208,7 +249,7 @@ function Player({ story, fontReady, mediaBase, onExit }: { story: Story; fontRea
       <View style={[s.marker, marker ? s.markerOn : null]} />
       <View style={s.diag}>
         {Object.entries(diag).map(([k, v]) => <Text key={k} style={s.diagText}>{k}: {v}</Text>)}
-        <Text style={s.diagText}>line {view.line + 1}/{lines.length} · word {view.word + 1} · audio {AUDIO_FILE} · lead {LEAD_MS} ms</Text>
+        <Text style={s.diagText}>line {view.line + 1}/{lines.length} · word {view.word + 1} · audio {audioFile} · lead {LEAD} ms</Text>
         {mediaError ? <Text style={[s.diagText, { color: '#ff9f80' }]}>{mediaError}</Text> : null}
         <Text style={s.diagText}>OK or ▶: play/pause · ←/→ line · ↑ again · Back: shelf</Text>
       </View>

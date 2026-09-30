@@ -38,6 +38,22 @@ export async function currentMediaUrl(): Promise<string | null> {
   catch { return null; }
 }
 
+// Dev-only run control for the TV (written by tools/s1-run/s1-run.sh): lets a script change the audio file and
+// lead and start a timing run on the already-running TV app, with no rebuild, relaunch or remote press.
+const TV_RUN_FILE = path.join(ROOT, '.dev', 'tv.json');
+export type TvRun = { runId?: string; audioFile?: string; leadMs?: number; autorun?: boolean };
+export function sanitizeTvRun(v: any): TvRun {
+  const out: TvRun = {};
+  if (typeof v?.runId === 'string' && /^[\w.:-]{1,64}$/.test(v.runId)) out.runId = v.runId;
+  if (typeof v?.audioFile === 'string' && /^[\w-]{1,40}\.(mp3|m4a)$/.test(v.audioFile)) out.audioFile = v.audioFile;
+  if (typeof v?.leadMs === 'number' && Number.isFinite(v.leadMs) && Math.abs(v.leadMs) <= 2000) out.leadMs = v.leadMs;
+  if (typeof v?.autorun === 'boolean') out.autorun = v.autorun;
+  return out;
+}
+export async function currentTvRun(): Promise<TvRun> {
+  try { return sanitizeTvRun(JSON.parse(await readFile(TV_RUN_FILE, 'utf8'))); } catch { return {}; }
+}
+
 // Monotonic server clock on a wall-clock scale.
 const t0 = performance.timeOrigin;
 export const serverNow = () => t0 + performance.now();
@@ -60,7 +76,7 @@ const STATIC: [string, string][] = [
   ['/pkg/karaoke-core/', path.join(ROOT, 'packages/karaoke-core/src')],
 ];
 
-export function createServer({ hub = new SessionHub({ now: serverNow }), publicUrl = PUBLIC_URL, log = console.log, heartbeat = HEARTBEAT, mediaUrl = currentMediaUrl } = {}) {
+export function createServer({ hub = new SessionHub({ now: serverNow }), publicUrl = PUBLIC_URL, log = console.log, heartbeat = HEARTBEAT, mediaUrl = currentMediaUrl, tvRun = currentTvRun } = {}) {
   const joinUrl = (id: string) => `${publicUrl}/j/${id}`;
   const server = http.createServer(async (req, res) => {
     const url = new URL(req.url ?? '/', 'http://x');
@@ -70,7 +86,7 @@ export function createServer({ hub = new SessionHub({ now: serverNow }), publicU
     if (req.method === 'OPTIONS') return void res.writeHead(204).end();
     try {
       if (p === '/healthz') return json(res, 200, { ok: true, sessions: hub.sessions.size, publicUrl });
-      if (p === '/api/config') return json(res, 200, { mediaUrl: await mediaUrl() });
+      if (p === '/api/config') return json(res, 200, { mediaUrl: await mediaUrl(), run: await tvRun() });
       if (p === '/api/time') return json(res, 200, { c0: Number(url.searchParams.get('c0')), s: serverNow() });
       if (p === '/api/sessions' && req.method === 'POST') {
         const id = hub.createSession();

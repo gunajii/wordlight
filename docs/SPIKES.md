@@ -56,6 +56,11 @@ Interpretation:
 - MP3 is 53 ms further ahead than M4A. INFERRED cause: encoder-delay/priming handling differs by codec in the Vega pipeline; the offline decode check shows ffmpeg trims both to < 0.3 ms, so the difference comes from the device side. Consequence: calibrate **per audio format**; ship one format.
 - Product consequence: a fixed per-platform lead is needed and must be measured on each target (VVD, each Fire TV model); consider a one-time "sync check" if hardware varies. Not built.
 
+## S1 — one-command runs (added 2026-09-30)
+
+After run 1, each further S1 measurement is one command on the Mac, with no rebuild and no remote presses:
+`bash tools/s1-run/s1-run.sh <label> --audio p1.m4a --lead -339` records the screen and microphone with `screencapture -v -g`, captures the TV log, and starts the run. The run is started through `.dev/tv.json` → `/api/config`: the open TV app polls it every 2 s and plays from 0 with the given audio file and lead. `--chain` records `recordings/chain-check.mp4` (flash and click in sync by construction) played in QuickTime, to measure the Mac's own recording chain.
+
 ## S1 — runbook (Mac)
 
 See the "Next" section of the latest report, or `apps/vega-tv/setup.sh` output.

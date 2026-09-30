@@ -1,10 +1,10 @@
 import { test, after } from 'node:test';
 import assert from 'node:assert/strict';
 import WebSocket from 'ws';
-import { createServer } from '../src/index.ts';
+import { createServer, sanitizeTvRun } from '../src/index.ts';
 import { encodeAudioFrame } from '@wordlight/shared-protocol';
 
-const { server, hub } = createServer({ publicUrl: 'http://test.local:1', log: () => {}, heartbeat: { pingMs: 100, deadMs: 600 }, mediaUrl: async () => 'https://media.example' });
+const { server, hub } = createServer({ publicUrl: 'http://test.local:1', log: () => {}, heartbeat: { pingMs: 100, deadMs: 600 }, mediaUrl: async () => 'https://media.example', tvRun: async () => ({ runId: 'r1', leadMs: -339 }) });
 await new Promise<void>((r) => server.listen(0, '127.0.0.1', r));
 const base = `http://127.0.0.1:${(server.address() as any).port}`;
 after(() => new Promise<void>((r) => { server.closeAllConnections?.(); server.close(() => r()); }));
@@ -22,7 +22,7 @@ test('http: session create, QR png, content with Range, TypeScript packages serv
   assert.ok(!/: Lang\)/.test(js), 'type annotations stripped');
   assert.equal((await fetch(`${base}/content/../package.json`)).status, 404);
   assert.equal((await fetch(`${base}/api/sessions/ZZZZ`)).status, 404);
-  assert.deepEqual(await (await fetch(`${base}/api/config`)).json(), { mediaUrl: 'https://media.example' });
+  assert.deepEqual(await (await fetch(`${base}/api/config`)).json(), { mediaUrl: 'https://media.example', run: { runId: 'r1', leadMs: -339 } });
 });
 
 test('ws: phone joins, saves a reader; binary audio reaches the driver only during a turn', async () => {
@@ -53,4 +53,9 @@ test('heartbeat: a silent connection that answers no pings is dropped as timeout
   w.send(JSON.stringify({ t: 'hello', role: 'phone', sessionId, clientId: 'mute' }));
   await waitFor(() => hub.get(sessionId)!.telemetry.some((r) => r.kind === 'leave' && r.reason === 'timeout'), 3000);
   w.terminate();
+});
+
+test('dev run control: only well-formed fields pass', () => {
+  assert.deepEqual(sanitizeTvRun({ runId: 'cal-m4a:1', audioFile: 'p1.m4a', leadMs: -339, autorun: true }), { runId: 'cal-m4a:1', audioFile: 'p1.m4a', leadMs: -339, autorun: true });
+  assert.deepEqual(sanitizeTvRun({ runId: 'x y', audioFile: '../../etc/passwd', leadMs: 1e9, autorun: 'yes' }), {});
 });
