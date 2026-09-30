@@ -15,7 +15,7 @@
 
 ## Automated tests
 
-`npm test` — 70 tests pass (2026-09-30): protocol 4, reading engine 19, karaoke core 7, story package 5, session client 7 (reused), server 24 (incl. S3 stats/sink/hub 13), phone audio worklet 4. `npm run typecheck` clean.
+`npm test` — 72 tests pass (2026-09-30): protocol 4, reading engine 19, karaoke core 7, story package 5, session client 7 (reused), server 26 (incl. S3 stats/sink/hub 15), phone audio worklet 4. `npm run typecheck` clean.
 
 | Area | Covered |
 |---|---|
@@ -33,16 +33,16 @@ Real speech (S2), Polly (S4), AWS, end-to-end latency, physical Fire TV.
 
 | # | Test | iPhone Safari | Android Chrome |
 |---|---|---|---|
-| 1 | page load over HTTPS (tunnel), pairing via QR | UNKNOWN | UNKNOWN |
-| 2 | consent screen shown before any mic request; no `getUserMedia` before a turn | UNKNOWN | UNKNOWN |
-| 3 | mic permission prompt on the first turn; mic opens without a tap once "Get ready" was tapped | UNKNOWN | UNKNOWN |
-| 4 | chunks arrive; level meter moves | UNKNOWN | UNKNOWN |
-| 5 | chunk sweep 20/40/60/100 ms × 60 s: latency, loss, capture gaps | UNKNOWN | UNKNOWN |
-| 6 | acoustic upper bound (afplay tone → server) | UNKNOWN | UNKNOWN |
-| 7 | mic OFF after turn end / skip (browser API), time to off | UNKNOWN | UNKNOWN |
-| 8 | 10-minute turn: loss, duplicates, reordering, reconnects | UNKNOWN | UNKNOWN |
+| 1 | page load over HTTPS (tunnel), pairing via QR | PASS (run 1) | PASS (run 1) |
+| 2 | consent screen shown before any mic request; no `getUserMedia` before a turn | PASS: 0 live tracks while idle (browser API) | PASS: same |
+| 3 | mic permission prompt on the first turn; mic opens without a tap once "Get ready" was tapped | PASS: prompt on turn 1 (first chunk 2.8 s); later turns 0.4–0.7 s, no tap | PASS: 0.3–0.8 s, no tap |
+| 4 | chunks arrive; level meter moves | PASS (chunks); meter not reported | PASS (chunks); meter not reported |
+| 5 | chunk sweep 20/40/60/100 ms × 60 s: latency, loss, capture gaps | PASS: 0 loss; 40 ms median 49.5 ms | PASS: 0 loss; 40 ms median 52.1 ms |
+| 6 | acoustic upper bound (afplay tone → server) | 306 ms median (includes afplay/Mac output: Mac part not yet measured) | 340 ms (same caveat) |
+| 7 | mic OFF after turn end / skip (browser API), time to off | PASS ≤ 1 s (1-s resolution) | PASS ≤ 1 s |
+| 8 | 10-minute turn: loss, duplicates, reordering, reconnects | PASS: 600 s, 14 990 chunks, 0 loss, 0 reconnects | 0 loss in 598 s, but **1 reconnect at 244 s, cause UNKNOWN** |
 | 9 | Wi-Fi off ~10 s mid-turn (`--plan network`): mic stops, turn ends, reconnect time | UNKNOWN | UNKNOWN |
 | 10 | background / lock screen mid-turn: mic stops; return: no restart without a new turn | UNKNOWN | UNKNOWN |
 | 11 | reload mid-turn: turn ends; mic stays off until a new turn + tap | UNKNOWN | UNKNOWN |
-| 12 | privacy audit: 0 violations over the whole run | UNKNOWN | UNKNOWN |
+| 12 | privacy audit: 0 violations over the whole run | PASS (897 reports) | PASS (880 reports) |
 

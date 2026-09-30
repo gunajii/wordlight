@@ -6,7 +6,7 @@ Labels: **MEASURED** (read from instrumentation) · **INFERRED** · **HYPOTHESIZ
 |---|---|---|---|---|
 | S1 Vega basics | Can a Vega app play narration, report time, render Devanagari, handle the D-pad? | median offset ≤ 100 ms; stable over 3 min; conjuncts/matras correct | **PASS on the Virtual Device (2026-09-30)** with a per-platform lead: calibrated M4A median **−1.0 ms** (stdev 11.2) · stable **PASS** · Devanagari **PASS** (system font) · D-pad **PASS**. Uncalibrated: −392 ms (MP3), −339 ms (M4A). **Fire TV hardware UNKNOWN.** | Fire OS (React Native TV) build |
 | S2 Child speech | Can Transcribe + matcher follow a child reading hi/en? | ≥ 90 % correct words lit within 1.0 s; ≤ 10 % misreads accepted | **UNKNOWN** — matcher built; no speech tested | Echo mode; browser speech recognition |
-| S3 Phone mic | Do iOS Safari and Android Chrome stream mic audio reliably over HTTPS? | both work; mic → server ≤ 300 ms; no drops in 10 min | **UNKNOWN on real phones** — pipeline built and validated in headless Chromium with a fake microphone (see S3 below); iPhone/Android runs pending | demo on the browser that passes; document the gap |
+| S3 Phone mic | Do iOS Safari and Android Chrome stream mic audio reliably over HTTPS? | both work; mic → server ≤ 300 ms; no drops in 10 min | **Run 1: streaming PASS on iPhone Safari and Android Chrome** (0 loss in ≈ 42 000 chunks; 40 ms chunks: median ≈ 50 ms, p95 70–91 ms first-sample→server; 0 privacy violations). **Open:** interruption/background tests, acoustic bound's Mac part, one unexplained Android reconnect → overall S3 verdict pending | demo on the browser that passes; document the gap |
 | S4 Polly timings | Do Kajal speech marks match the audio? | ≥ 95 % of words within 50 ms of onset | **UNKNOWN** — mapping built; no AWS access yet | Transcribe word timestamps |
 
 ## S1 — method
@@ -155,4 +155,33 @@ Plan `full` (default, ≈ 17 min): 8 s idle privacy check → 4 × 60 s turns at
 | privacy audit over the run | 56 status reports, 0 violations |
 | synthetic phone (`tools/s3/fake-phone.ts`, Node) | click detector found each 1 kHz tone; sequence and latency accounting match the injected jitter |
 
-**Real phones:** iPhone Safari UNKNOWN · Android Chrome UNKNOWN · 10-minute run UNKNOWN · Wi-Fi interruption UNKNOWN · background/foreground on iOS UNKNOWN · acoustic upper bound UNKNOWN.
+### Real-phone run 1 (2026-09-30, `npm run s3`, plan `full`) — MEASURED unless marked
+
+Environment: phones on the home Wi-Fi, server on the MacBook Pro, **phone → Cloudflare quick tunnel → Mac** (HTTPS/WSS). Test tones from the Mac speakers (`afplay`); no voice. Sessions: iPhone `7PGN`, Android `P33V`. An earlier Android run (`PHC3`) was aborted by the tester and is excluded from the verdict (its facts are listed below).
+
+**Sequence integrity — both phones:** iPhone 20 990 chunks, Android 20 969 chunks: **0 missing, 0 duplicate, 0 out-of-order, 0 stale-tag**.
+
+| | iPhone Safari | Android Chrome |
+|---|---|---|
+| chunk-size sweep, first-sample → server, **median / p95 / max** (ms) | 20 ms: 29.8 / 50.5 / 141.5 · **40 ms: 49.5 / 70.3 / 212.7** · 60 ms: 71.6 / 165.8 / 412 · 100 ms: 127.5 / 218.2 / 726.9 | 20 ms: 31.4 / 55.1 / 444.3 · **40 ms: 52.1 / 90.8 / 438.2** · 60 ms: 84.6 / 163.1 / 384.5 · 100 ms: 130.8 / 231 / 449.3 |
+| transport only (first-sample − chunk), median / p95 (ms) | 20: 9.8 / 30.5 · 40: 9.5 / 30.3 · 60: 11.6 / 105.8 · 100: 27.5 / 118.2 | 20: 11.4 / 35.1 · 40: 12.1 / 50.8 · 60: 24.6 / 103.1 · 100: 30.8 / 131 |
+| **10-min endurance, 40 ms** | one 600 s turn: 14 990 chunks, 0 loss; median **49.8**, p95 74.5, max 1257.6 ms | 244 s + 354 s (the first turn ended `phone-lost` at 244 s; cause UNKNOWN, see below): 14 876 chunks, 0 loss; median **51.7 / 51.9**, p95 74.2 / 84.1, max 700.9 / 819.5 ms |
+| clock sync (phone ↔ server via tunnel) | min RTT 12–15 ms → offset uncertainty ≈ ±7 ms | min RTT 15–17 ms → ≈ ±8 ms |
+| audio coverage (audio received ÷ time since first chunk) | 0.998–1.002 | 0.992–0.998 (effective rate ≈ 15 950 Hz) |
+| first chunk after turn start | 2755 ms on the first turn (permission prompt), then 404–658 ms | 289–770 ms (permission already granted in the aborted run) |
+| acoustic: afplay start → server, **median** (40 ms chunks) | 306 ms (sweep), 306 ms (endurance) | 340 ms (sweep), 334–337 ms (endurance) |
+| acoustic: afplay start → captured (phone clock → server clock), median | 266–268 ms, very stable | 287–292 ms, very stable |
+| privacy audit (live mic tracks, browser API, 1/s) | 897 reports, **0 violations**; idle 8 s: mic live 0 | 880 reports, **0 violations**; idle 8 s: mic live 0 |
+| mic off after turn end / skip | ≤ 1 s everywhere (the measurement had 1-s resolution; fixed for the next run) | ≤ 1 s everywhere |
+
+Interpretation:
+- **Latency bar (≤ 300 ms, first sample → server): PASS on both phones at every chunk size by median**, and by p95 at 20/40 ms. What is not covered by this number is the phone's microphone hardware/OS input delay (not observable from JavaScript).
+- **Acoustic upper bound does not yet close the question.** afplay start → server is 306 ms (iPhone) / 340 ms (Android), but ≈ 260–290 ms of that is afplay start-up + Mac audio output + the phone's input delay, which are not separated. The spawn → capture part is nearly constant (spread of a few ms), so it is a fixed pipeline delay, not network. The Android − iPhone difference (≈ 23 ms) is INFERRED to be the difference in phone input delay (same Mac, same tones). **Next: measure the Mac-side part** by running the same test with the page open on the Mac itself (its mic hears afplay directly).
+- **Chunk size:** transport p95 jumps at 60/100 ms on both phones (≈ 30–50 → 103–131 ms). INFERRED cause: with fewer packets the Wi-Fi radio enters power save between sends. **Choice: 40 ms** — median ≈ 50 ms, p95 70–91 ms, 25 messages/s; 20 ms saves ≈ 20 ms of buffering for twice the messages. The server can re-chunk for Transcribe (S2).
+- **Android delivers ≈ 0.3 % less audio than wall-clock time** (coverage 0.997, effective rate ≈ 15 950 Hz) with **no sequence gaps**. INFERRED: a clock-rate difference (Android audio clock vs system clock), not dropouts. Harmless for recognition. The next run records timeline drift to distinguish a steady clock difference from steps (loss).
+- **Outliers:** single-chunk maxima of 0.4–1.3 s on both phones (Wi-Fi). They are rare (p95 ≤ 91 ms at 40 ms chunks) and caused no loss.
+- **Android endurance `phone-lost` at 244 s:** the socket was replaced mid-turn, the server ended the turn as designed, the runner started a new turn, and the remaining 354 s ran clean. Cause (screen timeout, app switch, network) UNKNOWN — the tester is asked; the next run saves the session timeline.
+- Aborted Android run `PHC3` (tester interrupted): turn 1 delivered 68 % of its audio; turns 2–3 delivered no audio (the second ended `phone-lost`). Not used for the verdict; no timeline was saved to explain it.
+- **Metric fix:** the first version's "capture gaps" counted chunks reaching the page in bursts (Android: 293 per minute) even when no audio was lost (coverage 0.997, no sequence gaps). It is now documented as delivery irregularity. Coverage and timeline drift are the loss metrics.
+
+Still UNKNOWN: Wi-Fi interruption, lock screen/background, reload on real phones · Mac-side part of the acoustic bound · phone input delay · audio device sample rates (in the saved timeline from the next run).
