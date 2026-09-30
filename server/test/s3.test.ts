@@ -157,3 +157,31 @@ test('reconnect during a turn: the turn ends (phone-lost) and is never resumed b
   assert.equal(again.out.at(-1).type, 'turn.cancel');
   assert.equal(again.out.at(-1).reason, 'phone-lost');
 });
+
+test('stats: coverage and timeline drift expose lost audio; delivery bursts alone do not', () => {
+  const bursty = new TurnStats({ turnId: 'a', chunkMs: 20, startedAtServerMs: 0 });
+  const lossy = new TurnStats({ turnId: 'b', chunkMs: 20, startedAtServerMs: 0 });
+  for (let i = 0; i < 300; i++) {
+    const cap = i * 20 + (i % 5 === 0 ? 15 : 0); // chunks reach the page in bursts; no audio lost
+    bursty.frame({ seq: i, capturedAtMs: cap, pcm: pcm(320) }, 100 + i * 20);
+    lossy.frame({ seq: i, capturedAtMs: i * 20 + (i >= 150 ? 500 : 0), pcm: pcm(320) }, 100 + i * 20 + (i >= 150 ? 500 : 0)); // 500 ms never produced
+  }
+  const b = bursty.summary(6100, 'exit'), l = lossy.summary(6600, 'exit');
+  assert.ok(b.captureGaps.count > 0, 'bursts show as delivery irregularity');
+  assert.ok(Math.abs(b.timelineDriftMs!) <= 15, `no drift without loss: ${b.timelineDriftMs}`);
+  assert.ok(b.audioCoverage! > 0.97);
+  assert.equal(l.timelineDriftMs, 500);
+  assert.ok(l.audioCoverage! < 0.93);
+});
+
+test('privacy audit: time from turn end to the phone reporting 0 live tracks is recorded', () => {
+  const { hub, phone, s, tick } = testSession();
+  hub.handle(phone, { type: 'reader.save', reader: { readerId: 'r', firstName: 'Test', age: 8, lang: 'en-IN' }, consent: { microphone: true, atMs: 1 } });
+  hub.startTestTurn(s, 'p1');
+  hub.endActiveTurn(s, 'exit');
+  tick(120);
+  hub.handle(phone, { t: 'phone.status', micLive: 0, turnId: null });
+  tick(1000);
+  hub.handle(phone, { t: 'phone.status', micLive: 0, turnId: null });
+  assert.deepEqual(s.micAudit.offAfterEndMs, [120]);
+});

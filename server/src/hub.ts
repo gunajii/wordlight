@@ -50,8 +50,10 @@ export interface Session {
   /** latest clock estimate each phone reported (server ≈ phone + offsetMs) */
   clocks: Map<string, { offsetMs: number; minRttMs: number; atServerMs: number }>;
   phoneStatus: Map<string, PhoneStatus>;
-  lastTurnEnd: { clientId: string; atServerMs: number } | null;
-  micAudit: { statusReports: number; violations: MicViolation[]; liveDuringTurnReports: number; offDuringTurnReports: number };
+  lastTurnEnd: { clientId: string; atServerMs: number; offSeen?: boolean } | null;
+  micAudit: { statusReports: number; violations: MicViolation[]; liveDuringTurnReports: number; offDuringTurnReports: number;
+    /** per ended turn: ms from the server ending it to the phone's first report of 0 live mic tracks */
+    offAfterEndMs: number[] };
 }
 
 const CODE_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
@@ -74,7 +76,7 @@ export class SessionHub {
     this.sessions.set(id, {
       id, createdAt: this.o.now(), tv: null, phones: new Map(), readers: new Map(), turn: null, seen: new Set(), telemetry: [],
       testMode: !!o.testMode, nextAudioTag: 1, clocks: new Map(), phoneStatus: new Map(), lastTurnEnd: null,
-      micAudit: { statusReports: 0, violations: [], liveDuringTurnReports: 0, offDuringTurnReports: 0 },
+      micAudit: { statusReports: 0, violations: [], liveDuringTurnReports: 0, offDuringTurnReports: 0, offAfterEndMs: [] },
     });
     return id;
   }
@@ -240,6 +242,10 @@ export class SessionHub {
     s.micAudit.statusReports++;
     const inTurn = s.turn?.phoneClientId === clientId;
     if (inTurn) { if (micLive > 0) s.micAudit.liveDuringTurnReports++; else s.micAudit.offDuringTurnReports++; return; }
+    if (micLive === 0 && s.lastTurnEnd?.clientId === clientId && !s.lastTurnEnd.offSeen) {
+      s.lastTurnEnd.offSeen = true;
+      if (s.micAudit.offAfterEndMs.length < 1000) s.micAudit.offAfterEndMs.push(Math.round(now - s.lastTurnEnd.atServerMs));
+    }
     if (micLive > 0) {
       const since = s.lastTurnEnd?.clientId === clientId ? now - s.lastTurnEnd.atServerMs : null;
       if (since === null || since > MIC_GRACE_MS) {

@@ -11,11 +11,18 @@
 //     Not included: microphone hardware + OS input buffering before the AudioWorklet sees the samples
 //     (not observable from JavaScript). The opt-in acoustic click test bounds the total from above.
 //   • transport latency = first-sample latency − chunk duration (page → server only)
-//   • capture continuity: gaps in the phone-clock timeline between consecutive chunks (audio lost on the phone)
+//   • audio coverage: audio received (samples/16 ms) ÷ time from the first frame to the turn end — below ~1 means
+//     audio was never produced or never arrived
+//   • timeline drift: (capturedAtMs − expected from the sample count) at the end minus at the start, medians of
+//     50 chunks: grows by the length of any audio the phone lost, or by clock-rate mismatch (audio vs page clock)
+//   • captureGaps: page-side DELIVERY irregularity (a chunk reached the page later than the previous one ended).
+//     Chunks that arrive in bursts show up here even when no audio is lost — use coverage/drift for loss.
 //   • effective sample rate: samples received vs server-clock duration
 export interface ClockReport { offsetMs: number; minRttMs: number; atServerMs: number }
 export interface Dist { n: number; median: number; p95: number; max: number; min: number; mean: number; sd: number }
 export interface ClickEvent { phoneCapturedMs: number; captureServerMs: number | null; recvServerMs: number; level: number }
+
+const med = (xs: number[]) => { const a = [...xs].sort((x, y) => x - y); return a[a.length >> 1]; };
 
 export function dist(xs: number[]): Dist | null {
   if (!xs.length) return null;
@@ -67,6 +74,7 @@ export interface TurnSummary {
   latencyFirstSampleMs: Dist | null; latencyTransportMs: Dist | null;
   clock: { reports: number; minRttMs: Dist | null; offsetDriftMs: number | null } ;
   captureGaps: { count: number; maxMs: number; totalMs: number };
+  audioCoverage: number | null; timelineDriftMs: number | null;
   effectiveSampleRate: number | null;
   clicks: ClickEvent[];
 }
@@ -80,7 +88,8 @@ export class TurnStats {
   private latFirst: number[] = []; private latTransport: number[] = [];
   private rtts: number[] = []; private offsets: number[] = [];
   private prevCapEnd: number | null = null; private capGaps: number[] = [];
-  private detector: ClickDetector | null; private streamIdx = 0; private clicks: ClickEvent[] = [];
+  private detector: ClickDetector | null;
+  private cap0: number | null = null; private samplesInOrder = 0; private lags: number[] = []; private streamIdx = 0; private clicks: ClickEvent[] = [];
   private lastClock: ClockReport | undefined;
 
   constructor(o: { turnId: string; chunkMs: number; startedAtServerMs: number; detectClicks?: boolean }) {
@@ -111,6 +120,9 @@ export class TurnStats {
       this.latFirst.push(lat); this.latTransport.push(lat - durMs);
     }
     if (inOrder) {
+      this.cap0 ??= f.capturedAtMs;
+      if (this.lags.length < 100000) this.lags.push(f.capturedAtMs - (this.cap0 + this.samplesInOrder / 16));
+      this.samplesInOrder += f.pcm.length;
       if (this.prevCapEnd !== null) { const g = f.capturedAtMs - this.prevCapEnd; if (g > durMs / 2) this.capGaps.push(g); }
       this.prevCapEnd = f.capturedAtMs + durMs;
       if (this.detector) {
@@ -147,6 +159,8 @@ export class TurnStats {
       latencyFirstSampleMs: dist(this.latFirst), latencyTransportMs: dist(this.latTransport),
       clock: { reports: this.offsets.length, minRttMs: dist(this.rtts), offsetDriftMs: drift },
       captureGaps: { count: this.capGaps.length, maxMs: Math.round(Math.max(0, ...this.capGaps)), totalMs: Math.round(this.capGaps.reduce((s, x) => s + x, 0)) },
+      audioCoverage: this.firstRecv === null ? null : Math.round((this.samples / 16 / Math.max(1, endedAtServerMs - this.firstRecv)) * 1000) / 1000,
+      timelineDriftMs: this.lags.length >= 100 ? Math.round((med(this.lags.slice(-50)) - med(this.lags.slice(0, 50))) * 10) / 10 : null,
       effectiveSampleRate: span > 5000 ? Math.round(((this.samples - this.samples / Math.max(1, this.frames)) / span) * 1000) : null,
       clicks: this.clicks,
     };

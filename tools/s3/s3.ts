@@ -119,6 +119,8 @@ async function runTurn(sid: string, o: { chunkMs: number; durationMs: number; cl
 }
 
 function acoustic(t: TurnOut) {
+  // Robust: the detector can fire on other sounds and a missed tone makes a click pair with an older spawn, so
+  // pairs whose spawn→capture is > 150 ms from the median are reported as outliers, not averaged in.
   // pair each detected click with the latest afplay spawn before it (within 1.5 s)
   const pairs: { spawnToCapture: number; spawnToServer: number }[] = [];
   for (const c of t.summary?.clicks ?? []) {
@@ -126,8 +128,11 @@ function acoustic(t: TurnOut) {
     const sp = t.spawns.filter((s) => s <= ref + 50 && ref - s < 1500).pop();
     if (sp !== undefined) pairs.push({ spawnToCapture: c.captureServerMs == null ? NaN : c.captureServerMs - sp, spawnToServer: c.recvServerMs - sp });
   }
+  const m0 = pairs.map((p) => p.spawnToCapture).filter(Number.isFinite).sort((x, y) => x - y);
+  const mid = m0.length ? m0[m0.length >> 1] : NaN;
+  const good = pairs.filter((p) => Math.abs(p.spawnToCapture - mid) <= 150);
   const d = (xs: number[]) => { const a = xs.filter(Number.isFinite).sort((x, y) => x - y); if (!a.length) return null; const q = (p: number) => a[Math.min(a.length - 1, Math.ceil(p * a.length) - 1)]; return { n: a.length, median: Math.round(q(0.5)), p95: Math.round(q(0.95)), max: Math.round(a[a.length - 1]) }; };
-  return { played: t.spawns.length, detected: t.summary?.clicks?.length ?? 0, matched: pairs.length, spawnToCaptureMs: d(pairs.map((p) => p.spawnToCapture)), spawnToServerMs: d(pairs.map((p) => p.spawnToServer)) };
+  return { played: t.spawns.length, detected: t.summary?.clicks?.length ?? 0, matched: good.length, outliers: pairs.length - good.length, spawnToCaptureMs: d(good.map((p) => p.spawnToCapture)), spawnToServerMs: d(good.map((p) => p.spawnToServer)), spawns: t.spawns.map((x) => Math.round(x)) };
 }
 
 function row(name: string, t: TurnOut) {
@@ -137,7 +142,7 @@ function row(name: string, t: TurnOut) {
     name, turnId: s.turnId, reason: t.endReason, chunkMs: s.chunkMs, seconds: Math.round((s.durationMs ?? 0) / 1000), frames: s.frames,
     missing: s.missing, duplicates: s.duplicates, outOfOrder: s.outOfOrder, staleTag: s.staleTag,
     firstSample: l && { median: l.median, p95: l.p95, max: l.max, sd: l.sd }, transport: tr && { median: tr.median, p95: tr.p95, max: tr.max },
-    clockMinRttMs: s.clock?.minRttMs?.min ?? null, captureGaps: s.captureGaps, effectiveSampleRate: s.effectiveSampleRate,
+    clockMinRttMs: s.clock?.minRttMs?.min ?? null, captureGaps: s.captureGaps, audioCoverage: s.audioCoverage, timelineDriftMs: s.timelineDriftMs, effectiveSampleRate: s.effectiveSampleRate,
     firstFrameAfterStartMs: s.firstFrameAfterStartMs, micOffAfterEndMs: t.micOffAfterEndMs, acoustic: a,
   };
 }
@@ -147,7 +152,7 @@ function printRow(r: any) {
   say(`  ${r.name}: ${r.reason} · ${r.seconds}s · chunk ${r.chunkMs} · frames ${r.frames} · missing ${r.missing} dup ${r.duplicates} ooo ${r.outOfOrder} stale ${r.staleTag}`);
   say(`     first-sample→server: median ${f?.median ?? '—'} p95 ${f?.p95 ?? '—'} max ${f?.max ?? '—'} sd ${f?.sd ?? '—'} ms · clock ±${r.clockMinRttMs == null ? '?' : Math.round(r.clockMinRttMs / 2)} ms · first frame ${r.firstFrameAfterStartMs ?? '—'} ms after start · mic off ${r.micOffAfterEndMs ?? '—'} ms after end`);
   if (a.played) say(`     acoustic (afplay→server, upper bound): median ${a.spawnToServerMs?.median ?? '—'} p95 ${a.spawnToServerMs?.p95 ?? '—'} max ${a.spawnToServerMs?.max ?? '—'} ms · clicks ${a.matched}/${a.played} matched`);
-  if (r.captureGaps?.count) say(`     capture gaps on the phone: ${r.captureGaps.count} (max ${r.captureGaps.maxMs} ms, total ${r.captureGaps.totalMs} ms)`);
+  say(`     audio coverage ${r.audioCoverage ?? '—'} · timeline drift ${r.timelineDriftMs ?? '—'} ms · effective rate ${r.effectiveSampleRate ?? '—'} Hz`);
 }
 
 async function main() {
@@ -205,9 +210,11 @@ async function main() {
     }
   }
   if (PLAN === 'network') {
-    say('network test: one 3-minute turn. At ~60 s turn the phone\'s Wi-Fi OFF for ~10 s, then ON again.');
-    say('Expected: the page stops the microphone when the socket drops; the server ends the turn (phone-lost); this runner starts a new turn once the phone is back.');
-    let left = 180_000, part = 0;
+    const mins = args.includes('--minutes') ? MINUTES : 4;
+    say(`interruption test: ${mins} min of turns. Do each of these once, about a minute apart, ~10 s each:`);
+    say('  (1) Wi-Fi OFF then ON   (2) lock the screen, then unlock   (3) switch to another app, then come back   (4) reload the page (tap "Get ready" again)');
+    say('Expected each time: mic stops at once; the turn ends; nothing restarts until this runner starts a NEW turn once the phone is back.');
+    let left = mins * 60_000, part = 0;
     while (left > 5000) {
       const t0 = Date.now();
       const t = await runTurn(sid, { chunkMs: CHUNK, durationMs: left, clicksEveryMs: 5000 });
@@ -222,10 +229,15 @@ async function main() {
   }
   const fin = await api(`/api/s3/sessions/${sid}/status`);
   report.privacy.audit = fin.micAudit;
+  // session timeline (joins, leaves, turn start/end, mic.state incl. device audio settings) — events only, no audio
+  const tel = await api(`/api/sessions/${sid}/telemetry.json`).catch(() => []);
   report.finishedAt = new Date().toISOString();
   const dir = path.join(ROOT, 'bench/runs/s3', sid);
   mkdirSync(dir, { recursive: true });
   writeFileSync(path.join(dir, `report-${LABEL}-${PLAN}.json`), JSON.stringify(report, null, 1));
+  writeFileSync(path.join(dir, `telemetry-${LABEL}-${PLAN}.json`), JSON.stringify(tel, null, 1));
+  const offs = [...fin.micAudit.offAfterEndMs].sort((x: number, y: number) => x - y);
+  if (offs.length) say(`mic off after turn end (server end → phone reports 0 live tracks): median ${offs[offs.length >> 1]} ms, max ${offs[offs.length - 1]} ms over ${offs.length} turns`);
   say(`privacy audit: ${fin.micAudit.statusReports} status reports · mic live during turns ${fin.micAudit.liveDuringTurnReports} · violations (live outside a turn) ${fin.micAudit.violations.length}`);
   say(`report: bench/runs/s3/${sid}/report-${LABEL}-${PLAN}.json`);
   if (existsSync(CLICK)) say('done.');
