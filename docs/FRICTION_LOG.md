@@ -39,3 +39,11 @@ Only problems actually encountered. Format: Date / Environment / Component / Exp
 - **Cost:** one failed build.
 - **Suggestion:** declare `expo-asset`/`expo-constants` as dependencies (or peers) of `@amazon-devices/expo-font` so npm reports them.
 - **Fix in repo:** `apps/vega-tv/setup.sh` installs the documented set.
+
+## W5 — Media player silently refuses `http://` sources (MEASURED, 2026-09-30, VVD, SDK 0.24.12112, w3cmedia 2.3.2)
+- **What happened:** `AudioPlayer.src = 'http://192.168.1.33:8787/…/p1.mp3'` → no audio. `play()` resolved, the state stayed paused. The JS side only ever gets MediaError code 4 (`MEDIA_ERR_SRC_NOT_SUPPORTED`), which reads like a codec problem.
+- **Real cause, native log only:** `MEDIA_PLAYER: isUriSchemeSecure Got an insecure protocol/scheme http, return error` → `set_src_uri: MPB Call failed with code: 50004`. `fetch()` of `story.json` over the same http URL works, so the restriction is specific to the media pipeline.
+- **Docs:** the URL-mode playback page shows only https examples; I found no statement that http is refused.
+- **Cost:** ~40 min and three rebuilds (key handling was suspected first).
+- **Suggestion:** document the https requirement on the URL-mode page, and put the scheme reason in `MediaError.message`.
+- **Fix in repo:** audio/images come from `MEDIA_URL` (https); for local runs, an HTTPS tunnel to the dev server.

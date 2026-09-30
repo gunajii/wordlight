@@ -12,7 +12,10 @@ import { View, Text, Image, StyleSheet, TouchableOpacity } from 'react-native';
 import { AudioPlayer } from '@amazon-devices/react-native-w3cmedia';
 import { useTVEventHandler } from '@amazon-devices/react-native-kepler';
 import { PlayheadSampler, lineIndexAt, phasesAt, wordIndexAt } from './vendor/karaoke-core/index';
-import { SERVER_URL, STORY_ID, AUDIO_FILE, LEAD_MS } from './wordlight.config';
+import { SERVER_URL, MEDIA_URL, STORY_ID, AUDIO_FILE, LEAD_MS } from './wordlight.config';
+// Vega's media player refuses http:// sources (VVD log: "isUriSchemeSecure Got an insecure protocol/scheme
+// http, return error", MPB code 50004 → MediaError 4). story.json comes from SERVER_URL (fetch allows http);
+// audio and images come from MEDIA_URL, which must be https.
 import { useDevanagariFont } from './fonts';
 
 type Word = { w: string; t0: number; t1: number };
@@ -23,7 +26,10 @@ const POLL_MS = 20;
 const log = (m: string) => console.log(`[wordlight] ${m}`); // vega device start-log-stream
 // Every remote event is logged so key handling can be checked from the log stream.
 const logKey = (where: string, evt: any) => log(`key ${where} type=${evt?.eventType} action=${evt?.eventKeyAction}`);
-const PLAY_KEYS = ['select', 'playpause', 'play', 'pause'];
+const PLAY_KEYS = ['select', 'kpenter', 'enter', 'playpause', 'play', 'pause'];
+// In the player, OK arrives as 'select' on a remote and 'kpenter' from the VVD/keyboard. The media keys
+// (play/pause/playpause) are NOT handled here: Vega's Player Session already acts on them, and handling them
+// too made play→pause within 100 ms (VVD log, build 4).
 
 export const App = () => {
   const [story, setStory] = useState<Story | null>(null);
@@ -54,7 +60,7 @@ export const App = () => {
       <Text style={s.brand}>WordLight</Text>
       {/* Focusable so OK reaches onPress through Vega's focus system even if the HW listener does not see 'select'. */}
       <TouchableOpacity hasTVPreferredFocus style={[s.card, s.cardFocused]} onPress={() => { log('card onPress'); setScreen('player'); }}>
-        <Image source={{ uri: `${SERVER_URL}/content/stories/${story.id}/${story.pages[0].image}` }} style={s.cardImg} />
+        <Image source={{ uri: `${MEDIA_URL}/content/stories/${story.id}/${story.pages[0].image}` }} style={s.cardImg} />
         <Text style={s.cardTitle}>{story.title}</Text>
       </TouchableOpacity>
       <Text style={s.hint}>Select: open · Down: Devanagari check · audio: {AUDIO_FILE} · lead {LEAD_MS} ms</Text>
@@ -71,6 +77,7 @@ function Player({ story, fontReady, onExit }: { story: Story; fontReady: boolean
   const [view, setView] = useState({ line: 0, word: -1, pos: 0 });
   const [marker, setMarker] = useState(false);
   const [diag, setDiag] = useState<Record<string, string>>({});
+  const [mediaError, setMediaError] = useState<string | null>(null);
   const lastWord = useRef<string>('');
   const pollGaps = useRef<number[]>([]);
 
@@ -83,12 +90,21 @@ function Player({ story, fontReady, onExit }: { story: Story; fontReady: boolean
     on('pause', () => { playing.current = false; sampler.current.reset(); log('pause'); });
     on('seeking', () => { sampler.current.reset(); });
     on('ended', () => { playing.current = false; log('ended'); });
-    on('error', () => log(`player error ${JSON.stringify({ code: (p as any).error?.code, message: (p as any).error?.message })}`));
+    const src = `${MEDIA_URL}/content/stories/${story.id}/${AUDIO_FILE}`;
+    let retries = 0;
+    on('error', () => {
+      const err = { code: (p as any).error?.code, message: (p as any).error?.message };
+      log(`player error ${JSON.stringify(err)} src=${src}`);
+      setMediaError(`media error ${err.code ?? '?'}${src.startsWith('https:') ? '' : ' (http source: Vega needs https)'}`);
+      // Known VVD cold-start case: the guest network is not ready yet and this surfaces as error 4; retry with backoff.
+      if (retries < 3) { const ms = 500 * 2 ** retries++; setTimeout(() => { log(`retry ${retries} after ${ms} ms`); p.src = src; }, ms); }
+    });
+    on('canplay', () => setMediaError(null));
     for (const ev of ['loadstart', 'loadedmetadata', 'canplay', 'waiting', 'stalled']) on(ev, () => log(`media ${ev} t=${p.currentTime}`));
     p.initialize().then(() => {
       p.autoplay = false;
-      p.src = `${SERVER_URL}/content/stories/${story.id}/${AUDIO_FILE}`;
-      log(`player initialised, src ${AUDIO_FILE}`);
+      p.src = src;
+      log(`player initialised, src ${src}`);
     }).catch((e: any) => log(`initialize failed: ${e?.message ?? e}`));
     return () => { try { p.pause(); } catch {} p.deinitialize().catch(() => {}); };
   }, [story.id]);
@@ -142,9 +158,8 @@ function Player({ story, fontReady, onExit }: { story: Story; fontReady: boolean
     const p = player.current;
     if (!p) return;
     switch (evt.eventType) {
-      case 'select': case 'playpause': case 'play': case 'pause': {
-        // Toggle on OUR state (set by the 'playing'/'pause' events), not p.paused: in build 3
-        // play/OK did nothing while seeking worked, so p.paused is not trusted until verified.
+      case 'select': case 'kpenter': case 'enter': {
+        // Toggle on our event-driven state. (Build 4 log: p.paused was correct; audio failed because the source was http.)
         const wantPlay = !playing.current;
         log(`toggle -> ${wantPlay ? 'play' : 'pause'} (p.paused=${String((p as any).paused)})`);
         try {
@@ -164,7 +179,7 @@ function Player({ story, fontReady, onExit }: { story: Story; fontReady: boolean
   const phases = phasesAt(line.words, view.pos, LEAD_MS);
   return (
     <View style={s.root}>
-      <Image source={{ uri: `${SERVER_URL}/content/stories/${story.id}/${page.image}` }} style={s.pageImg} />
+      <Image source={{ uri: `${MEDIA_URL}/content/stories/${story.id}/${page.image}` }} style={s.pageImg} />
       <View style={s.subtitle}>
         <Text style={[s.line, fontReady && s.deva]}>
           {line.words.map((w, i) => (
@@ -177,7 +192,8 @@ function Player({ story, fontReady, onExit }: { story: Story; fontReady: boolean
       <View style={s.diag}>
         {Object.entries(diag).map(([k, v]) => <Text key={k} style={s.diagText}>{k}: {v}</Text>)}
         <Text style={s.diagText}>line {view.line + 1}/{lines.length} · word {view.word + 1} · audio {AUDIO_FILE} · lead {LEAD_MS} ms</Text>
-        <Text style={s.diagText}>Select/Play: pause · ←/→ line · ↑ again · Back: shelf</Text>
+        {mediaError ? <Text style={[s.diagText, { color: '#ff9f80' }]}>{mediaError}</Text> : null}
+        <Text style={s.diagText}>OK or ▶: play/pause · ←/→ line · ↑ again · Back: shelf</Text>
       </View>
       <Text style={s.credit}>{story.credits.attribution}</Text>
     </View>
