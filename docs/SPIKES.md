@@ -4,7 +4,7 @@ Labels: **MEASURED** (read from instrumentation) · **INFERRED** · **HYPOTHESIZ
 
 | Spike | Question | Pass bar | Result | Fallback |
 |---|---|---|---|---|
-| S1 Vega basics | Can a Vega app play narration, report time, render Devanagari, handle the D-pad? | median offset ≤ 100 ms; stable over 3 min; conjuncts/matras correct | **UNKNOWN** — ready to run | Fire OS (React Native TV) build |
+| S1 Vega basics | Can a Vega app play narration, report time, render Devanagari, handle the D-pad? | median offset ≤ 100 ms; stable over 3 min; conjuncts/matras correct | **VVD run 1 (2026-09-30):** uncalibrated offset **FAIL** (−392 ms MP3, −339 ms M4A: words light up *before* they are heard) · stable **PASS** · Devanagari **PASS** (system font) · D-pad **PASS**. Constant offset → calibration run pending. Real hardware UNKNOWN. | Fire OS (React Native TV) build |
 | S2 Child speech | Can Transcribe + matcher follow a child reading hi/en? | ≥ 90 % correct words lit within 1.0 s; ≤ 10 % misreads accepted | **UNKNOWN** — matcher built; no speech tested | Echo mode; browser speech recognition |
 | S3 Phone mic | Do iOS Safari and Android Chrome stream mic audio reliably over HTTPS? | both work; mic → server ≤ 300 ms; no drops in 10 min | **UNKNOWN** — not started | demo on the browser that passes; document the gap |
 | S4 Polly timings | Do Kajal speech marks match the audio? | ≥ 95 % of words within 50 ms of onset | **UNKNOWN** — mapping built; no AWS access yet | Transcribe word timestamps |
@@ -33,6 +33,28 @@ Stdev is dominated by the synthetic 10 ms jitter and frame quantisation. Median 
 **Screen recording vs filming.** A macOS screen recording timestamps the frame when the Mac composites it; filming the panel adds the display's own latency. On the VVD the app under test is the same either way, so the screen recording isolates the app's timing; filming answers "what a viewer sees". Results are labelled with the method used.
 
 **What S1 on the Virtual Device does NOT tell us:** physical Fire TV output latency, HDMI/TV audio path, or real speech. Those are Test 10 / S4.
+
+## S1 — results, Vega Virtual Device run 1 (2026-09-30)
+
+Setup: VVD (SDK 0.24.12112, w3cmedia 2.3.2) on MacBook Pro (arm64, macOS 26.3.1); sound through the Mac speakers; **macOS screen recording** (full screen, 3024×1446, variable frame rate ≈ 10 fps) with the MacBook microphone picking up the clicks; `LEAD_MS = 0`; media over HTTPS (dev tunnel). Analyzer: `av_offset.py` with marker auto-crop and global-offset pairing (both added after nearest-click pairing gave garbage at this offset; validated on synthetic +60 ms → 58.5 ms and −390 ms → −391.4 ms).
+
+| | MP3 (`p1.mp3`) | M4A (`p1.m4a`) |
+|---|---|---|
+| pairs | 253 / 253 words | 253 / 253 words |
+| **median offset (flash − click)** | **−392.0 ms** | **−339.2 ms** |
+| stdev · range | 11.1 ms · −423.9 … −358.7 | 13.3 ms · −380.1 … −306.0 |
+| first-minute vs last-minute median | −390.6 vs −394.4 ms | −339.5 vs −337.4 ms |
+| drift | −1.85 ms/min | −1.12 ms/min |
+| S1 bar: median ≤ 100 ms | **FAIL** | **FAIL** |
+| S1 bar: stable over 3 min | **PASS** | **PASS** |
+
+All MEASURED. Other measurements from the M4A run log: `currentTime` changed on **every** 20 ms poll (update period ≤ 20 ms, limited by our poll rate) · poll-loop gap median 20.0 ms, max 22.7–24.6 ms per 1-s window · no stalls or media errors during playback.
+
+Interpretation:
+- Negative = the highlight is **ahead** of the sound. The offset is large but constant (stdev 11–13 ms, drift < 2 ms/min), which is the correctable case: `LEAD_MS` shifts the highlight; with LEAD_MS ≈ −390 (MP3) / −340 (M4A) the residual should be ≈ 0 ± 13 ms. **HYPOTHESIZED until the calibration run confirms it.**
+- The offset is the sum of (a) VVD emulator audio buffering, (b) macOS audio output, (c) the screen recording's own mic-vs-video alignment, (d) any decoder priming the player does not trim. We have **not** separated these. (a)–(c) are specific to this Mac/emulator setup, so **these numbers do not transfer to Fire TV hardware** — real-device offset is UNKNOWN.
+- MP3 is 53 ms further ahead than M4A. INFERRED cause: encoder-delay/priming handling differs by codec in the Vega pipeline; the offline decode check shows ffmpeg trims both to < 0.3 ms, so the difference comes from the device side. Consequence: calibrate **per audio format**; ship one format.
+- Product consequence: a fixed per-platform lead is needed and must be measured on each target (VVD, each Fire TV model); consider a one-time "sync check" if hardware varies. Not built.
 
 ## S1 — runbook (Mac)
 
