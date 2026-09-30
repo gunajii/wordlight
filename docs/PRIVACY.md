@@ -27,3 +27,8 @@ Children use WordLight. Privacy is a product requirement, not a feature.
 - The optional test-tone detector reads the stream only to find onsets of a synthetic 1 kHz tone; it keeps timestamps, not audio.
 - Microphone lifecycle and its browser-API audit: see docs/SPIKES.md, "S3 — privacy mechanisms".
 - S3 runs use test tones and adult speech only, through the dev tunnel (Cloudflare). No child's voice.
+
+## AWS processing (added 2026-09-30, before any AWS use)
+- Transcribe and Polly may retain content for service improvement unless the account opts out; WordLight requires the AI services opt-out policy (docs/AWS.md) before any child audio is sent. Verify the effective policy; do not assume.
+- Speech is streamed to Transcribe during a turn and not stored by WordLight. What Transcribe itself retains after opt-out is governed by AWS's terms; WordLight makes no stronger claim.
+- Child audio never goes through the Cloudflare dev tunnel; only through the AWS-hosted HTTPS endpoint (not built yet).
