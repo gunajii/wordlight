@@ -68,6 +68,7 @@
     <div class="row"><span>Latency, first sample → server (≈)</span><b id="lat">—</b></div>
     <div class="row"><span>Mic tracks live (browser API)</span><b id="live">0</b></div>
     <div class="row"><span>Input rate → output</span><b id="rates">—</b></div>
+    <div class="row"><span>Screen kept awake</span><b id="wake">off</b></div>
     <button id="tap-btn" class="hidden">Tap to start listening</button>
   </section>
 
@@ -76,6 +77,7 @@
     <select id="chunk-sel"><option value="20">20 ms chunks</option><option value="40" selected>40 ms chunks</option><option value="60">60 ms chunks</option><option value="100">100 ms chunks</option></select>
     <button id="start-btn">Start reading turn (60 s)</button>
     <button id="end-btn" class="secondary">End turn</button>
+    <button id="session-end-btn" class="secondary">End session (mic off, screen may sleep)</button>
   </section>
 
   <section class="card privacy">
