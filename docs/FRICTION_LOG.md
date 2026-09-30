@@ -32,3 +32,10 @@ Only problems actually encountered. Format: Date / Environment / Component / Exp
 - **Actual:** only the VS Code (Vega Studio) flow; CLI syntax is in the separate CLI reference.
 - **Workaround:** used `vega project generate --template helloWorld …` from the CLI reference.
 - **Potential improvement:** add the 4 CLI commands (generate, build, virtual-device start, run-app) to the Hello World page. (The same gap was noted on 0.23 during the author's earlier Earshot project.)
+
+## W4 — `expo-font` installed alone fails at bundle time (MEASURED, 2026-09-30)
+- **What happened:** `npm install @amazon-devices/expo-font@~2.0.0` succeeded, but `npm run build:debug` failed in Metro: `Unable to resolve module @amazon-devices/expo-constants from .../expo-font/build/FontLoader.js`. The package's own `package.json` declares only `fontfaceobserver` as a dependency and `expo` as a peer, so npm gives no warning about `expo-constants`/`expo-asset`.
+- **Where the answer was:** the expo-font API page lists five packages to add together (`keplerscript-turbomodule-api`, `expo-asset`, `expo-constants`, `expo-font`, `expo`).
+- **Cost:** one failed build.
+- **Suggestion:** declare `expo-asset`/`expo-constants` as dependencies (or peers) of `@amazon-devices/expo-font` so npm reports them.
+- **Fix in repo:** `apps/vega-tv/setup.sh` installs the documented set.
