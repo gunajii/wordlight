@@ -83,7 +83,8 @@ function Player({ story, fontReady, onExit }: { story: Story; fontReady: boolean
     on('pause', () => { playing.current = false; sampler.current.reset(); log('pause'); });
     on('seeking', () => { sampler.current.reset(); });
     on('ended', () => { playing.current = false; log('ended'); });
-    on('error', () => log('player error'));
+    on('error', () => log(`player error ${JSON.stringify({ code: (p as any).error?.code, message: (p as any).error?.message })}`));
+    for (const ev of ['loadstart', 'loadedmetadata', 'canplay', 'waiting', 'stalled']) on(ev, () => log(`media ${ev} t=${p.currentTime}`));
     p.initialize().then(() => {
       p.autoplay = false;
       p.src = `${SERVER_URL}/content/stories/${story.id}/${AUDIO_FILE}`;
@@ -141,7 +142,17 @@ function Player({ story, fontReady, onExit }: { story: Story; fontReady: boolean
     const p = player.current;
     if (!p) return;
     switch (evt.eventType) {
-      case 'select': case 'playpause': case 'play': case 'pause': if (p.paused) p.play(); else p.pause(); break;
+      case 'select': case 'playpause': case 'play': case 'pause': {
+        // Toggle on OUR state (set by the 'playing'/'pause' events), not p.paused: in build 3
+        // play/OK did nothing while seeking worked, so p.paused is not trusted until verified.
+        const wantPlay = !playing.current;
+        log(`toggle -> ${wantPlay ? 'play' : 'pause'} (p.paused=${String((p as any).paused)})`);
+        try {
+          const r: any = wantPlay ? p.play() : p.pause();
+          if (r && typeof r.then === 'function') r.then(() => log('play/pause resolved'), (e: any) => log(`play/pause rejected: ${e?.message ?? e}`));
+        } catch (e: any) { log(`play/pause threw: ${e?.message ?? e}`); }
+        break;
+      }
       case 'left': seekToLine(view.line - 1); break;
       case 'right': seekToLine(view.line + 1); break;
       case 'up': seekToLine(view.line); break; // hear this line again
