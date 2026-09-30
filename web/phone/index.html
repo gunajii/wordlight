@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark light">
+<title>WordLight phone</title>
+<link rel="icon" href="data:,">
+<style>
+  :root { --bg:#0f1720; --card:#17222e; --ink:#e8eef5; --dim:#93a4b6; --accent:#ffd166; --ok:#5dd39e; --warn:#ff9f80; --line:#253444; }
+  @media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) { --bg:#f6f7f9; --card:#ffffff; --ink:#15202b; --dim:#5b6b7b; --accent:#b7791f; --ok:#1f8a5b; --warn:#c2410c; --line:#dde3ea; } }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink); font: 16px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+  main { max-width: 480px; margin: 0 auto; padding: 16px 16px 40px; }
+  h1 { font-size: 20px; letter-spacing: .04em; margin: 4px 0 12px; }
+  h1 span { color: var(--accent); }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 16px; margin: 12px 0; }
+  .row { display:flex; justify-content:space-between; gap:12px; padding: 4px 0; font-size: 15px; }
+  .row b { font-variant-numeric: tabular-nums; font-weight: 600; }
+  .dim { color: var(--dim); font-size: 14px; }
+  .mic { font-size: 28px; font-weight: 700; letter-spacing: .06em; }
+  .mic.off { color: var(--dim); } .mic.on { color: var(--ok); } .mic.err { color: var(--warn); }
+  .meter { height: 12px; background: var(--line); border-radius: 6px; overflow: hidden; margin-top: 10px; }
+  .meter i { display:block; height:100%; width:0%; background: var(--ok); transition: width 60ms linear; }
+  button { font: inherit; font-weight: 600; width: 100%; padding: 14px; border-radius: 12px; border: 0; background: var(--accent); color: #111; margin-top: 10px; }
+  button.secondary { background: transparent; color: var(--ink); border: 1px solid var(--line); }
+  button:disabled { opacity: .45; }
+  select { font: inherit; padding: 10px; border-radius: 10px; width: 100%; background: var(--card); color: var(--ink); border: 1px solid var(--line); }
+  .hidden { display: none !important; }
+  .privacy { border-left: 3px solid var(--accent); }
+  .err { color: var(--warn); }
+</style>
+</head>
+<body>
+<main>
+  <h1>WORD<span>LIGHT</span> · MIC TEST</h1>
+
+  <section class="card" id="conn-card">
+    <div class="row"><span>Session</span><b id="sid">—</b></div>
+    <div class="row"><span>Connection</span><b id="conn">connecting…</b></div>
+    <div class="row"><span>Reconnects</span><b id="reconnects">0</b></div>
+    <div class="row"><span>Clock sync (min RTT)</span><b id="rtt">—</b></div>
+  </section>
+
+  <section class="card privacy hidden" id="consent-card">
+    <p><b>Before we start</b></p>
+    <p>WordLight uses this phone's microphone <b>only during reading turns</b>, to help recognise the child's reading. The microphone is off at all other times.</p>
+    <p>Audio is sent to the WordLight server while a turn is running and is <b>not stored</b>.</p>
+    <p class="dim">This page is a technical test (spike S3). Please use adult speech or test sounds, not a child's voice.</p>
+    <button id="consent-btn">I agree — use the microphone during reading turns</button>
+  </section>
+
+  <section class="card hidden" id="ready-card">
+    <p>Tap once so this phone can process audio when a reading turn starts. <span class="dim">(The microphone stays off.)</span></p>
+    <button id="ready-btn">Get ready</button>
+  </section>
+
+  <section class="card hidden" id="mic-card">
+    <div class="dim">Microphone</div>
+    <div class="mic off" id="mic">OFF</div>
+    <div class="meter"><i id="level"></i></div>
+    <div class="row"><span>Turn time</span><b id="elapsed">—</b></div>
+    <div class="row"><span>Chunk size</span><b id="chunk">—</b></div>
+    <div class="row"><span>Chunks sent</span><b id="sent">0</b></div>
+    <div class="row"><span>Chunks received by server</span><b id="acked">0</b></div>
+    <div class="row"><span>Lost (server-detected)</span><b id="lost">0</b></div>
+    <div class="row"><span>Not sent (offline/backlog)</span><b id="unsent">0</b></div>
+    <div class="row"><span>Latency, first sample → server (≈)</span><b id="lat">—</b></div>
+    <div class="row"><span>Mic tracks live (browser API)</span><b id="live">0</b></div>
+    <div class="row"><span>Input rate → output</span><b id="rates">—</b></div>
+    <button id="tap-btn" class="hidden">Tap to start listening</button>
+  </section>
+
+  <section class="card hidden" id="test-card">
+    <div class="dim">Manual test turn (test sessions only)</div>
+    <select id="chunk-sel"><option value="20">20 ms chunks</option><option value="40" selected>40 ms chunks</option><option value="60">60 ms chunks</option><option value="100">100 ms chunks</option></select>
+    <button id="start-btn">Start reading turn (60 s)</button>
+    <button id="end-btn" class="secondary">End turn</button>
+  </section>
+
+  <section class="card privacy">
+    <b>Privacy</b>
+    <div class="dim">Microphone is only active during a reading turn. Audio is not stored.</div>
+  </section>
+  <p class="dim err" id="msg"></p>
+</main>
+<script type="module" src="/phone/phone.js"></script>
+</body>
+</html>
