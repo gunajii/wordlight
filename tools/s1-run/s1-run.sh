@@ -13,7 +13,7 @@
 set -uo pipefail
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"; cd "$ROOT"
 LABEL="${1:?usage: s1-run.sh <label> [--audio p1.m4a] [--lead ms] [--seconds N] [--chain]}"; shift
-AUDIO=p1.m4a; LEAD=0; MODE=tv; SECS=205
+AUDIO=p1.m4a; LEAD=0; MODE=tv; SECS=215  # 205 s cut off the last 11 words in run cal-m4a
 while [ $# -gt 0 ]; do case "$1" in
   --audio) AUDIO="$2"; shift 2;; --lead) LEAD="$2"; shift 2;; --seconds) SECS="$2"; shift 2;;
   --chain) MODE=chain; SECS=80; shift;; *) echo "unknown option $1"; exit 2;; esac; done

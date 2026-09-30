@@ -4,7 +4,7 @@ Labels: **MEASURED** (read from instrumentation) · **INFERRED** · **HYPOTHESIZ
 
 | Spike | Question | Pass bar | Result | Fallback |
 |---|---|---|---|---|
-| S1 Vega basics | Can a Vega app play narration, report time, render Devanagari, handle the D-pad? | median offset ≤ 100 ms; stable over 3 min; conjuncts/matras correct | **VVD run 1 (2026-09-30):** uncalibrated offset **FAIL** (−392 ms MP3, −339 ms M4A: words light up *before* they are heard) · stable **PASS** · Devanagari **PASS** (system font) · D-pad **PASS**. Constant offset → calibration run pending. Real hardware UNKNOWN. | Fire OS (React Native TV) build |
+| S1 Vega basics | Can a Vega app play narration, report time, render Devanagari, handle the D-pad? | median offset ≤ 100 ms; stable over 3 min; conjuncts/matras correct | **PASS on the Virtual Device (2026-09-30)** with a per-platform lead: calibrated M4A median **−1.0 ms** (stdev 11.2) · stable **PASS** · Devanagari **PASS** (system font) · D-pad **PASS**. Uncalibrated: −392 ms (MP3), −339 ms (M4A). **Fire TV hardware UNKNOWN.** | Fire OS (React Native TV) build |
 | S2 Child speech | Can Transcribe + matcher follow a child reading hi/en? | ≥ 90 % correct words lit within 1.0 s; ≤ 10 % misreads accepted | **UNKNOWN** — matcher built; no speech tested | Echo mode; browser speech recognition |
 | S3 Phone mic | Do iOS Safari and Android Chrome stream mic audio reliably over HTTPS? | both work; mic → server ≤ 300 ms; no drops in 10 min | **UNKNOWN** — not started | demo on the browser that passes; document the gap |
 | S4 Polly timings | Do Kajal speech marks match the audio? | ≥ 95 % of words within 50 ms of onset | **UNKNOWN** — mapping built; no AWS access yet | Transcribe word timestamps |
@@ -55,6 +55,24 @@ Interpretation:
 - The offset is the sum of (a) VVD emulator audio buffering, (b) macOS audio output, (c) the screen recording's own mic-vs-video alignment, (d) any decoder priming the player does not trim. We have **not** separated these. (a)–(c) are specific to this Mac/emulator setup, so **these numbers do not transfer to Fire TV hardware** — real-device offset is UNKNOWN.
 - MP3 is 53 ms further ahead than M4A. INFERRED cause: encoder-delay/priming handling differs by codec in the Vega pipeline; the offline decode check shows ffmpeg trims both to < 0.3 ms, so the difference comes from the device side. Consequence: calibrate **per audio format**; ship one format.
 - Product consequence: a fixed per-platform lead is needed and must be measured on each target (VVD, each Fire TV model); consider a one-time "sync check" if hardware varies. Not built.
+
+## S1 — results, run 2: calibration check + recording-chain check (2026-09-30)
+
+Same setup as run 1 (full-screen macOS screen recording, 3024×1964, VFR ≈ 9.4 fps; MacBook mic), started with `tools/s1-run/s1-run.sh` (no manual steps).
+
+| | `cal-m4a`: M4A, `leadMs = −339` | `chain`: chain-check.mp4 in QuickTime (no Vega) |
+|---|---|---|
+| pairs | 242 (recording stopped 11 words early; 177.5 s span) | 94 / 95 |
+| **median offset** | **−1.0 ms** | **−28.4 ms** |
+| stdev · range | 11.2 ms · −32.1 … +31.3 | 7.3 ms · −37.6 … +1.7 |
+| first- vs last-minute median | +0.1 vs −2.2 ms | −28.6 vs −28.2 ms |
+| drift | −0.83 ms/min | +0.16 ms/min |
+| S1 bars | median ≤ 100 ms **PASS** · stable **PASS** | n/a |
+
+All MEASURED. Conclusions:
+- **The lead mechanism works as designed:** with a lead equal to the measured offset, the residual is −1.0 ms, and the spread (11 ms) is unchanged from the uncalibrated run. S1's timing criteria pass **on the VVD, with calibration**.
+- **Recording chain:** a file whose flash and click are in sync by construction reads −28 ms through QuickTime → speakers → screen recording + mic. So about 28 ms of the −339 ms is INFERRED to come from the measurement setup (QuickTime's own A/V sync is part of that chain and not separated). The rest, ≈ −311 ms, is the VVD + Mac audio path. Viewer-perceived offset on the VVD after calibration is therefore INFERRED ≈ +27 ms (words light ≈ 27 ms after the sound). That is well inside the bar either way.
+- **Not transferable:** a Fire TV device has a different audio path; the lead must be measured per device type. Real hardware remains UNKNOWN.
 
 ## S1 — one-command runs (added 2026-09-30)
 
