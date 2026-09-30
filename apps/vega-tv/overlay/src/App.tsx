@@ -12,7 +12,24 @@ import { View, Text, Image, StyleSheet, TouchableOpacity } from 'react-native';
 import { AudioPlayer } from '@amazon-devices/react-native-w3cmedia';
 import { useTVEventHandler } from '@amazon-devices/react-native-kepler';
 import { PlayheadSampler, lineIndexAt, phasesAt, wordIndexAt } from './vendor/karaoke-core/index';
-import { SERVER_URL, MEDIA_URL, STORY_ID, AUDIO_FILE, LEAD_MS } from './wordlight.config';
+import { SERVER_URL, SERVER_CANDIDATES, MEDIA_URL, STORY_ID, AUDIO_FILE, LEAD_MS } from './wordlight.config';
+// The Mac's LAN IP changes (DHCP: .35 → .33 → .34 in two days) and a baked IP then means a rebuild. So the app
+// tries candidates in order and keeps the first that answers /healthz: the build-time LAN IP, the Mac's
+// Bonjour name, and 10.0.2.2 (QEMU's usual host alias — whether the VVD provides it is UNKNOWN until logged).
+let serverUrl = SERVER_URL;
+const withTimeout = <T,>(p: Promise<T>, ms: number) => Promise.race([p, new Promise<T>((_, rej) => setTimeout(() => rej(new Error(`timeout ${ms} ms`)), ms))]);
+async function findServer(): Promise<string | null> {
+  const list = [SERVER_URL, ...SERVER_CANDIDATES.filter((u) => u !== SERVER_URL)];
+  for (let round = 0; round < 3; round++) {
+    for (const u of list) {
+      try {
+        const r = await withTimeout(fetch(`${u}/healthz`), 2500);
+        if (r.ok) { serverUrl = u; log(`server ${u} (round ${round})`); return u; }
+      } catch (e: any) { log(`server ${u} unreachable: ${e?.message ?? e}`); }
+    }
+  }
+  return null;
+}
 // Vega's media player refuses http:// sources (VVD log: "isUriSchemeSecure Got an insecure protocol/scheme
 // http, return error", MPB code 50004 → MediaError 4). story.json comes from SERVER_URL (fetch allows http);
 // audio and images come from an https base resolved at RUNTIME from the dev server (/api/config, kept current by
@@ -24,7 +41,7 @@ async function fetchConfig(): Promise<DevConfig> {
   let mediaBase: string | null = MEDIA_URL.startsWith('https://') && !MEDIA_URL.includes('SET-ME') ? MEDIA_URL : null;
   let run: Partial<Run> = {};
   try {
-    const cfg = await (await fetch(`${SERVER_URL}/api/config`)).json();
+    const cfg = await (await withTimeout(fetch(`${serverUrl}/api/config`), 4000)).json();
     if (typeof cfg?.mediaUrl === 'string' && cfg.mediaUrl.startsWith('https://')) mediaBase = cfg.mediaUrl;
     if (cfg?.run && typeof cfg.run === 'object') run = cfg.run;
   } catch (e: any) { log(`config fetch failed: ${e?.message ?? e}`); }
@@ -80,10 +97,14 @@ export const App = () => {
   }, []);
 
   useEffect(() => {
-    const url = `${SERVER_URL}/content/stories/${STORY_ID}/story.json`;
-    fetch(url).then((r) => r.json()).then((st) => { setStory(st); log(`story ${st.id} loaded`); })
-      .catch((e) => setError(`Cannot load ${url}: ${e?.message ?? e}`));
-    resolveMediaBase().then((m) => log(`media base ${m ?? 'NONE (run tools/dev-tunnel/dev-tunnel.sh)'}`));
+    (async () => {
+      const base = await findServer();
+      if (!base) { setError(`No WordLight server answered: ${[SERVER_URL, ...SERVER_CANDIDATES].join(' · ')}`); return; }
+      const url = `${base}/content/stories/${STORY_ID}/story.json`;
+      try { const st = await (await withTimeout(fetch(url), 8000)).json(); setStory(st); log(`story ${st.id} loaded from ${base}`); }
+      catch (e: any) { setError(`Cannot load ${url}: ${e?.message ?? e}`); return; }
+      log(`media base ${(await resolveMediaBase()) ?? 'NONE (run tools/dev-tunnel/dev-tunnel.sh)'}`);
+    })();
   }, []);
 
   useTVEventHandler((evt: any) => {
@@ -94,7 +115,7 @@ export const App = () => {
     else if (screen === 'fonts' && (evt.eventType === 'back' || evt.eventType === 'up')) setScreen('shelf');
   });
 
-  if (error) return <View style={s.root}><Text style={s.err}>{error}</Text><Text style={s.hint}>Is `npm start` running on the Mac? Server: {SERVER_URL}</Text></View>;
+  if (error) return <View style={s.root}><Text style={s.err}>{error}</Text><Text style={s.hint}>Is `npm start` running on the Mac? Then restart this app.</Text></View>;
   if (!story) return <View style={s.root}><Text style={s.hint}>Loading {STORY_ID}…</Text></View>;
   if (screen === 'fonts') return <FontCheck fontReady={fontReady} />;
   if (screen === 'player') return <Player key={playerKey} story={story} fontReady={fontReady} mediaBase={mediaBase} audioFile={run.audioFile} leadMs={run.leadMs} autoplay={autoplay} onExit={() => { setAutoplay(false); setScreen('shelf'); }} />;
