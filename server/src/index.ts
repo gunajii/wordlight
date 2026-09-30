@@ -182,7 +182,7 @@ export function createServer({ hub = new SessionHub({ now: serverNow }), publicU
       if (msg?.t === 'hello') log(`[ws] hello ${msg.role} ${msg.clientId} → ${msg.sessionId} (${req.socket.remoteAddress})`);
       hub.handle(conn, msg);
     });
-    ws.on('close', () => { clearInterval(hb); hub.disconnect(conn, closeReason); });
+    ws.on('close', (code) => { clearInterval(hb); hub.disconnect(conn, closeReason, { code }); });
   });
   return { server, hub, wss, publicUrl };
 }

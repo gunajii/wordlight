@@ -96,6 +96,7 @@ export class SessionHub {
     if (info.role === 'phone' && msg.t === 'clock.report') return this.clockReport(s, info.clientId, msg);
     if (info.role === 'phone' && msg.t === 'phone.status') return this.phoneStatus(s, info.clientId, msg);
     if (info.role === 'phone' && msg.t === 's3.turn') return this.s3TurnRequest(s, conn, info.clientId, msg);
+    if (info.role === 'phone' && msg.t === 'phone.events') return this.phoneEvents(s, info.clientId, msg);
     const v = validateEvent({ ...msg, sessionId: s.id });
     if (!v.ok) return conn.send({ t: 'error', code: 'invalid', message: v.error });
     if (!mayClientSend(info.role, v.event.type)) return conn.send({ t: 'error', code: 'not-allowed', message: `${info.role} may not send ${v.event.type}` });
@@ -131,6 +132,8 @@ export class SessionHub {
         this.log(s, { kind: 'mic-state', clientId: info.clientId, turnId: e.turnId, state: e.state, detail: typeof e.detail === 'string' ? e.detail.slice(0, 500) : undefined });
         if (!s.turn || s.turn.turn.turnId !== e.turnId) return;
         this.toTv(s, e);
+        // The phone gave up the microphone for this turn (hidden, stale socket, denied…): the turn cannot go on.
+        if (s.turn.phoneClientId === info.clientId && (e.state === 'closed' || e.state === 'denied' || e.state === 'error')) this.endTurn(s, e.state === 'closed' ? 'phone-lost' : 'error');
         return;
       }
     }
@@ -159,7 +162,7 @@ export class SessionHub {
     }
   }
 
-  disconnect(conn: Conn, reason: 'closed' | 'timeout' = 'closed'): void {
+  disconnect(conn: Conn, reason: 'closed' | 'timeout' = 'closed', detail: { code?: number } = {}): void {
     const info = this.info.get(conn);
     if (!info) return;
     this.info.delete(conn);
@@ -169,9 +172,9 @@ export class SessionHub {
       if (s.tv === conn) { s.tv = null; this.log(s, { kind: 'tv-leave', reason }); }
       return;
     }
-    if (s.phones.get(info.clientId) !== conn) return; // an old socket closing late
+    if (s.phones.get(info.clientId) !== conn) { this.log(s, { kind: 'old-socket-closed', clientId: info.clientId, reason, code: detail.code }); return; } // an old socket closing late
     s.phones.delete(info.clientId);
-    this.log(s, { kind: 'leave', clientId: info.clientId, reason });
+    this.log(s, { kind: 'leave', clientId: info.clientId, reason, code: detail.code, inTurn: s.turn?.phoneClientId === info.clientId });
     for (const r of s.readers.values()) {
       if (r.phoneClientId === info.clientId) this.toTv(s, { type: 'reader.status', sessionId: s.id, readerId: r.readerId, state: 'disconnected', serverMs: this.o.now() });
     }
@@ -256,6 +259,23 @@ export class SessionHub {
     }
   }
 
+  /** Page lifecycle diagnostics from a phone (visibility, freeze/resume, online/offline, socket close codes, mic and
+   *  wake-lock changes). Events recorded while offline arrive late with their own phone timestamps. Primitive
+   *  fields only, length-capped: never audio, never free text beyond short reasons. */
+  private phoneEvents(s: Session, clientId: string, m: any) {
+    if (!Array.isArray(m.events)) return;
+    for (const e of m.events.slice(0, 100)) {
+      if (!e || typeof e !== 'object' || typeof e.k !== 'string') continue;
+      const row: Record<string, unknown> = { kind: 'phone-event', clientId };
+      for (const [k, v] of Object.entries(e).slice(0, 12)) {
+        if (typeof v === 'number' && Number.isFinite(v)) row[`p_${k}`] = v;
+        else if (typeof v === 'boolean') row[`p_${k}`] = v;
+        else if (typeof v === 'string') row[`p_${k}`] = v.slice(0, 120);
+      }
+      this.log(s, row);
+    }
+  }
+
   private s3TurnRequest(s: Session, conn: Conn, clientId: string, m: any) {
     if (m.action === 'start') {
       const r = this.startTestTurn(s, clientId, { chunkMs: m.chunkMs, durationMs: m.durationMs, detectClicks: false });
@@ -293,7 +313,7 @@ export class SessionHub {
     conn.send({ t: 'welcome', sessionId: s.id, role, readers: this.readerList(s), serverMs: this.o.now() });
     // A phone that reconnects while it owns the active turn lost its stream (the page stops the microphone when
     // its socket drops). Never resume that turn blindly: end it, so the TV decides whether to start a new one.
-    if (role === 'phone' && s.turn?.phoneClientId === clientId) this.endTurn(s, 'phone-lost');
+    if (role === 'phone' && s.turn?.phoneClientId === clientId) { this.log(s, { kind: 'turn-lost-by-rejoin', clientId, turnId: s.turn.turn.turnId }); this.endTurn(s, 'phone-lost'); }
   }
 
   private readerList(s: Session) {

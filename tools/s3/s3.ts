@@ -66,7 +66,7 @@ async function waitReady(sid: string, quiet = false) {
   for (;;) {
     const st = await api(`/api/s3/sessions/${sid}/status`);
     const p = st.phones?.find((x: any) => x.reader);
-    const line = !st.phones?.length ? 'waiting for the phone to open the link…' : !p ? 'phone connected — waiting for consent…' : p.status?.ctx !== 'running' ? 'consent given — waiting for "Get ready" tap…' : 'ready';
+    const line = !st.phones?.length ? 'waiting for the phone to open the link…' : !p ? 'phone connected — waiting for consent…' : p.status?.ctx !== 'running' ? 'consent given — waiting for "Get ready" tap…' : p.status?.visible !== 'visible' ? 'phone page is in the background — bring it back…' : 'ready';
     if (line !== last && !quiet) { say(line); last = line; }
     if (line === 'ready' && p.clock) return st;
     await sleep(700);
@@ -214,6 +214,7 @@ async function main() {
     say(`interruption test: ${mins} min of turns. Do each of these once, about a minute apart, ~10 s each:`);
     say('  (1) Wi-Fi OFF then ON   (2) lock the screen, then unlock   (3) switch to another app, then come back   (4) reload the page (tap "Get ready" again)');
     say('Expected each time: mic stops at once; the turn ends; nothing restarts until this runner starts a NEW turn once the phone is back.');
+    say('The page asks to keep the screen awake during the session; do NOT touch the phone between the steps (tests the screen staying on).');
     let left = mins * 60_000, part = 0;
     while (left > 5000) {
       const t0 = Date.now();

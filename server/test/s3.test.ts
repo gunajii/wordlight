@@ -185,3 +185,29 @@ test('privacy audit: time from turn end to the phone reporting 0 live tracks is 
   hub.handle(phone, { t: 'phone.status', micLive: 0, turnId: null });
   assert.deepEqual(s.micAudit.offAfterEndMs, [120]);
 });
+
+test('phone lifecycle events are logged with primitive fields only; socket close codes are recorded', () => {
+  const { hub, phone, s } = testSession();
+  hub.handle(phone, { t: 'phone.events', events: [{ k: 'visibility', v: 'hidden', t: 123.4, w: 1700000000000 }, { k: 'x', blob: { nested: 1 }, arr: [1, 2] }, 'junk'] });
+  const rows = s.telemetry.filter((r) => r.kind === 'phone-event');
+  assert.equal(rows.length, 2);
+  assert.deepEqual({ k: rows[0].p_k, v: rows[0].p_v, t: rows[0].p_t }, { k: 'visibility', v: 'hidden', t: 123.4 });
+  assert.equal('p_blob' in rows[1], false);
+  hub.disconnect(phone, 'closed', { code: 1001 });
+  assert.equal(s.telemetry.find((r) => r.kind === 'leave')!.code, 1001);
+});
+
+test('the turn ends when its phone reports the mic closed/denied (page hidden, stale socket, permission)', () => {
+  const { hub, phone, s } = testSession();
+  hub.handle(phone, { type: 'reader.save', reader: { readerId: 'r', firstName: 'Test', age: 8, lang: 'en-IN' }, consent: { microphone: true, atMs: 1 } });
+  hub.startTestTurn(s, 'p1');
+  const id = s.turn!.turn.turnId;
+  hub.handle(phone, { type: 'mic.state', turnId: 'other', state: 'closed' }); // not this turn: ignored
+  assert.ok(s.turn);
+  hub.handle(phone, { type: 'mic.state', turnId: id, state: 'closed', detail: 'page-hidden' });
+  assert.equal(s.turn, null);
+  assert.equal(phone.out.at(-1).reason, 'phone-lost');
+  hub.startTestTurn(s, 'p1');
+  hub.handle(phone, { type: 'mic.state', turnId: hub.get(s.id)!.turn!.turn.turnId, state: 'denied' });
+  assert.equal(phone.out.at(-1).reason, 'error');
+});
