@@ -6,7 +6,7 @@ Labels: **MEASURED** (read from instrumentation) · **INFERRED** · **HYPOTHESIZ
 |---|---|---|---|---|
 | S1 Vega basics | Can a Vega app play narration, report time, render Devanagari, handle the D-pad? | median offset ≤ 100 ms; stable over 3 min; conjuncts/matras correct | **PASS on the Virtual Device (2026-09-30)** with a per-platform lead: calibrated M4A median **−1.0 ms** (stdev 11.2) · stable **PASS** · Devanagari **PASS** (system font) · D-pad **PASS**. Uncalibrated: −392 ms (MP3), −339 ms (M4A). **Fire TV hardware UNKNOWN.** | Fire OS (React Native TV) build |
 | S2 Child speech | Can Transcribe + matcher follow a child reading hi/en? | ≥ 90 % correct words lit within 1.0 s; ≤ 10 % misreads accepted | **UNKNOWN** — matcher built; no speech tested | Echo mode; browser speech recognition |
-| S3 Phone mic | Do iOS Safari and Android Chrome stream mic audio reliably over HTTPS? | both work; mic → server ≤ 300 ms; no drops in 10 min | **UNKNOWN** — not started | demo on the browser that passes; document the gap |
+| S3 Phone mic | Do iOS Safari and Android Chrome stream mic audio reliably over HTTPS? | both work; mic → server ≤ 300 ms; no drops in 10 min | **UNKNOWN on real phones** — pipeline built and validated in headless Chromium with a fake microphone (see S3 below); iPhone/Android runs pending | demo on the browser that passes; document the gap |
 | S4 Polly timings | Do Kajal speech marks match the audio? | ≥ 95 % of words within 50 ms of onset | **UNKNOWN** — mapping built; no AWS access yet | Transcribe word timestamps |
 
 ## S1 — method
@@ -82,3 +82,77 @@ After run 1, each further S1 measurement is one command on the Mac, with no rebu
 ## S1 — runbook (Mac)
 
 See the "Next" section of the latest report, or `apps/vega-tv/setup.sh` output.
+
+---
+
+## S3 — phone microphone: design and method (2026-09-30)
+
+**Question.** Can a real iPhone (Safari) and a real Android phone (Chrome) capture microphone audio and stream it reliably to the WordLight server during a reading turn, with first-sample → server latency ≤ 300 ms, no unexplained loss over 10 minutes, over HTTPS — and is the microphone provably off outside turns?
+
+**Scope.** Capture + transport + measurement only. No Transcribe, no reading engine (those are S2). The server's turn driver is a measurement sink (`server/src/s3/sink.ts`) standing exactly where the Transcribe adapter will stand (`TurnDriver`), so S2 replaces the sink, not the phone audio stack.
+
+### HTTPS for phones — decision
+| Option | Works on iOS Safari + Android Chrome? | Setup on each phone | Where audio travels | Chosen |
+|---|---|---|---|---|
+| **Cloudflare quick tunnel** (`tools/dev-tunnel/dev-tunnel.sh`, already used for Vega media) | yes: publicly trusted certificate (INFERRED from TLS; to be confirmed by the runs) | none | phone → internet → Cloudflare → Mac | **yes, for S3** |
+| mkcert local CA on the Mac | needs the root CA installed *and trusted* on every phone; plus a hostname that survives DHCP changes (LAN IP changed 3× in two days) | several manual steps per phone | LAN only | documented alternative, UNTESTED |
+| plain http on LAN | **no**: `getUserMedia` requires a secure context | — | — | no |
+
+Why the tunnel: zero phone setup, reproducible (script), and its path (phone → internet → server) resembles production (phone → internet → AWS) more than a LAN does, so its latency is the more honest number. Cost: **audio crosses Cloudflare's network**, so it is used with synthetic tones and adult test speech only (docs/PRIVACY.md). It is not local-only and is not described as such.
+
+### Audio format
+| | |
+|---|---|
+| Source | `getUserMedia({audio:{channelCount:1, echoCancellation, noiseSuppression, autoGainControl: true}})` → `MediaStreamAudioSourceNode` in the page's `AudioContext` at the **device rate** (not assumed; the page reports `ctxRate` and the track's `getSettings()` in `mic.state` `open`) |
+| Processing | AudioWorklet `web/phone/mic-worklet.js`: stereo→mono average; windowed-sinc low-pass (7.2 kHz, Hann) + fractional decimation to 16 kHz; group delay ≤ 0.7 ms; unit-tested at 48 000 / 44 100 / 16 000 Hz in (1 kHz and 6 kHz kept within 2 %, 12 kHz suppressed — no aliasing) |
+| Output | PCM16 signed, mono, **16 000 Hz** (what Transcribe Streaming accepts for hi-IN/en-IN) |
+| Chunk | 20 / 40 / 60 / 100 ms = 320 / 640 / 960 / 1600 samples = 640 / 1280 / 1920 / 3200 bytes + 16-byte header |
+
+### Chunk protocol (binary WebSocket message, `packages/shared-protocol/src/audio.ts`)
+`u8 version=1 · u8 flags(bit0 last) · u16 tag · u32 seq · f64 capturedAtMs · PCM16…`
+- **tag**: server-assigned per turn in `turn.start.audioTag`; the server drops frames whose tag is not the active turn's (counted as `staleTag`), so frames of an ended turn can never count in the next one.
+- **seq**: 0,1,2… per turn → server counts **missing** (never arrived), **duplicates**, **out-of-order**.
+- **capturedAtMs**: phone clock (`performance.now()`) of the chunk's first sample. Never treated as a server time.
+- sessionId/readerId are not repeated per chunk: the socket is already bound to the session and phone by `hello`, and the turn by `tag`. sampleCount = (bytes − 16)/2.
+- PCM is never logged, stored or written to telemetry; the server keeps per-turn **numbers** only (`bench/runs/s3/<session>/<turn>.json`, gitignored).
+
+### Latency — what exactly is measured
+```
+first-sample latency = serverRecvMs − (capturedAtMs + clockOffsetMs)
+capturedAtMs        = phone performance.now() when the worklet chunk reaches the page − chunk duration
+clockOffsetMs       = phone's NTP-style estimate (server ≈ phone + offset; lowest-RTT samples, drift fit;
+                      Earshot's ClockSync), reported every 2 s; uncertainty ≈ ± minRtt/2
+transport latency   = first-sample latency − chunk duration
+```
+Included: chunk buffering, resampling, worklet → page, WebSocket send, network (incl. tunnel), server receipt. **Not included:** microphone hardware + OS input buffering before the AudioWorklet sees the samples — JavaScript cannot observe it. To bound the true total, the runner plays a **1 kHz test tone** on the Mac (`afplay`) during turns; the server finds its onsets in the stream (onset times only), giving **afplay start → server receipt**, an **upper bound** of the true acoustic latency (it also contains afplay start-up and Mac output latency).
+
+### Privacy mechanisms (what enforces "mic only during a turn")
+- The page never calls `getUserMedia` on load, consent or "Get ready"; only on a server `turn.start`, and only after consent was given on that phone.
+- Every end path stops every track (`MediaStreamTrack.stop()`): `turn.cancel`, `line.done`, socket lost, page hidden, page unload, a replaced turn, and a turn that ends while the permission prompt is still open.
+- **Audit from the browser API, not the UI:** every second the page reports how many of its microphone tracks have `readyState === 'live'`; the server records a **violation** if a phone reports a live track outside its turn for longer than 2 s.
+- The server caps every turn (TV turns 90 s, test turns 11 min): a turn nobody ends still closes the microphone.
+- A phone that reconnects during its turn gets that turn **ended** (`phone-lost`); nothing resumes blindly, and the new socket's frames cannot carry the old tag.
+- iOS/Chrome autoplay rules: audio processing needs one tap per page load ("Get ready", mic stays off). A turn arriving before that tap shows "Tap to start listening" (reported as `mic.state opening needs-tap`).
+
+### How to run (Mac)
+```
+npm start                                   # terminal 1
+bash tools/dev-tunnel/dev-tunnel.sh         # terminal 2 (https for phones)
+npm run s3 -- --label iphone                # terminal 3: QR + link, then runs everything
+```
+Plan `full` (default, ≈ 17 min): 8 s idle privacy check → 4 × 60 s turns at 20/40/60/100 ms chunks with test tones → skip check → 10-min endurance turn. `--plan network` = 3-min turn for the Wi-Fi-off test; `--plan quick` = 30 s smoke test. Report: `bench/runs/s3/<SESSION>/report-<label>-<plan>.json`.
+
+### Results so far
+**Pipeline validation — headless Chromium (Linux) with Chromium's fake microphone, server on localhost (MEASURED 2026-09-30; not a phone, no network):**
+
+| Check | Result |
+|---|---|
+| page load / consent / "Get ready" | no `getUserMedia` call; mic tracks live 0; 0 violations over 8 s idle |
+| turn 20 ms chunks (6 s) | 228 frames, missing 0, dup 0, out-of-order 0, stale 0; first-sample latency median 20.5 ms (p95 21.2, max 24.2) → transport ≈ 0.5 ms; context rate 44 100 → 16 000 Hz; first turn's first frame 1446 ms after start (first `getUserMedia` + worklet start) |
+| turn 100 ms chunks (6 s) | 59 frames, 0 missing; median 100.7 ms; effective sample rate 15 973 Hz; first frame 106 ms after start |
+| turn end / skip / page hidden mid-turn | mic OFF, live tracks 0 (browser API) |
+| reload mid-turn | server ended the turn (`phone-lost`); new page made 0 `getUserMedia` calls; next turn waited for a tap (`needs-tap`) |
+| privacy audit over the run | 56 status reports, 0 violations |
+| synthetic phone (`tools/s3/fake-phone.ts`, Node) | click detector found each 1 kHz tone; sequence and latency accounting match the injected jitter |
+
+**Real phones:** iPhone Safari UNKNOWN · Android Chrome UNKNOWN · 10-minute run UNKNOWN · Wi-Fi interruption UNKNOWN · background/foreground on iOS UNKNOWN · acoustic upper bound UNKNOWN.

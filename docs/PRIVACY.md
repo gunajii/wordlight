@@ -21,3 +21,9 @@ Children use WordLight. Privacy is a product requirement, not a feature.
 - Used for synthetic test media (S1 click tracks) and adult test speech only.
 - **No child audio goes through it.** Any session with a child uses an HTTPS endpoint we control (AWS), after the logging/retention check in this document.
 - Stop the tunnel when not testing (Ctrl-C deletes `.dev/media-url`).
+
+## S3 microphone spike (added 2026-09-30)
+- The server's S3 sink measures the stream and discards it: no PCM is stored, logged, forwarded or put in telemetry. It keeps per-turn **numbers** (counts, latencies, capture gaps, test-tone onset times) in memory and in `bench/runs/s3/` (gitignored).
+- The optional test-tone detector reads the stream only to find onsets of a synthetic 1 kHz tone; it keeps timestamps, not audio.
+- Microphone lifecycle and its browser-API audit: see docs/SPIKES.md, "S3 — privacy mechanisms".
+- S3 runs use test tones and adult speech only, through the dev tunnel (Cloudflare). No child's voice.
