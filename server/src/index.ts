@@ -28,6 +28,16 @@ export function lanAddress(): string {
 }
 const PUBLIC_URL = (process.env.PUBLIC_URL || `http://${lanAddress()}:${PORT}`).replace(/\/$/, '');
 
+// HTTPS base for media. Vega's media player refuses http:// sources (FRICTION_LOG W5), so the TV fetches this at
+// runtime instead of baking it into the build: MEDIA_URL env, else the file tools/dev-tunnel.sh keeps up to date
+// (re-read per request, so a restarted tunnel needs no server restart and no rebuild).
+const MEDIA_URL_FILE = path.join(ROOT, '.dev', 'media-url');
+export async function currentMediaUrl(): Promise<string | null> {
+  if (process.env.MEDIA_URL) return process.env.MEDIA_URL.replace(/\/$/, '');
+  try { const v = (await readFile(MEDIA_URL_FILE, 'utf8')).trim().replace(/\/$/, ''); return v.startsWith('https://') ? v : null; }
+  catch { return null; }
+}
+
 // Monotonic server clock on a wall-clock scale.
 const t0 = performance.timeOrigin;
 export const serverNow = () => t0 + performance.now();
@@ -50,7 +60,7 @@ const STATIC: [string, string][] = [
   ['/pkg/karaoke-core/', path.join(ROOT, 'packages/karaoke-core/src')],
 ];
 
-export function createServer({ hub = new SessionHub({ now: serverNow }), publicUrl = PUBLIC_URL, log = console.log, heartbeat = HEARTBEAT } = {}) {
+export function createServer({ hub = new SessionHub({ now: serverNow }), publicUrl = PUBLIC_URL, log = console.log, heartbeat = HEARTBEAT, mediaUrl = currentMediaUrl } = {}) {
   const joinUrl = (id: string) => `${publicUrl}/j/${id}`;
   const server = http.createServer(async (req, res) => {
     const url = new URL(req.url ?? '/', 'http://x');
@@ -60,6 +70,7 @@ export function createServer({ hub = new SessionHub({ now: serverNow }), publicU
     if (req.method === 'OPTIONS') return void res.writeHead(204).end();
     try {
       if (p === '/healthz') return json(res, 200, { ok: true, sessions: hub.sessions.size, publicUrl });
+      if (p === '/api/config') return json(res, 200, { mediaUrl: await mediaUrl() });
       if (p === '/api/time') return json(res, 200, { c0: Number(url.searchParams.get('c0')), s: serverNow() });
       if (p === '/api/sessions' && req.method === 'POST') {
         const id = hub.createSession();

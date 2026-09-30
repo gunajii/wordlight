@@ -15,7 +15,16 @@ import { PlayheadSampler, lineIndexAt, phasesAt, wordIndexAt } from './vendor/ka
 import { SERVER_URL, MEDIA_URL, STORY_ID, AUDIO_FILE, LEAD_MS } from './wordlight.config';
 // Vega's media player refuses http:// sources (VVD log: "isUriSchemeSecure Got an insecure protocol/scheme
 // http, return error", MPB code 50004 → MediaError 4). story.json comes from SERVER_URL (fetch allows http);
-// audio and images come from MEDIA_URL, which must be https.
+// audio and images come from an https base resolved at RUNTIME from the dev server (/api/config, kept current by
+// tools/dev-tunnel/dev-tunnel.sh), so a new tunnel URL needs no rebuild. The baked MEDIA_URL is the fallback
+// (for a fixed https host such as CloudFront).
+async function resolveMediaBase(): Promise<string | null> {
+  try {
+    const cfg = await (await fetch(`${SERVER_URL}/api/config`)).json();
+    if (typeof cfg?.mediaUrl === 'string' && cfg.mediaUrl.startsWith('https://')) return cfg.mediaUrl;
+  } catch (e: any) { log(`config fetch failed: ${e?.message ?? e}`); }
+  return MEDIA_URL.startsWith('https://') && !MEDIA_URL.includes('SET-ME') ? MEDIA_URL : null;
+}
 import { useDevanagariFont } from './fonts';
 
 type Word = { w: string; t0: number; t1: number };
@@ -34,6 +43,7 @@ const PLAY_KEYS = ['select', 'kpenter', 'enter', 'playpause', 'play', 'pause'];
 export const App = () => {
   const [story, setStory] = useState<Story | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [mediaBase, setMediaBase] = useState<string | null>(null);
   const [screen, setScreen] = useState<'shelf' | 'player' | 'fonts'>('shelf');
   const fontReady = useDevanagariFont();
 
@@ -41,6 +51,7 @@ export const App = () => {
     const url = `${SERVER_URL}/content/stories/${STORY_ID}/story.json`;
     fetch(url).then((r) => r.json()).then((st) => { setStory(st); log(`story ${st.id} loaded`); })
       .catch((e) => setError(`Cannot load ${url}: ${e?.message ?? e}`));
+    resolveMediaBase().then((m) => { setMediaBase(m); log(`media base ${m ?? 'NONE (run tools/dev-tunnel/dev-tunnel.sh)'}`); });
   }, []);
 
   useTVEventHandler((evt: any) => {
@@ -54,21 +65,22 @@ export const App = () => {
   if (error) return <View style={s.root}><Text style={s.err}>{error}</Text><Text style={s.hint}>Is `npm start` running on the Mac? Server: {SERVER_URL}</Text></View>;
   if (!story) return <View style={s.root}><Text style={s.hint}>Loading {STORY_ID}…</Text></View>;
   if (screen === 'fonts') return <FontCheck fontReady={fontReady} />;
-  if (screen === 'player') return <Player story={story} fontReady={fontReady} onExit={() => setScreen('shelf')} />;
+  if (screen === 'player') return <Player story={story} fontReady={fontReady} mediaBase={mediaBase} onExit={() => setScreen('shelf')} />;
   return (
     <View style={s.root}>
       <Text style={s.brand}>WordLight</Text>
       {/* Focusable so OK reaches onPress through Vega's focus system even if the HW listener does not see 'select'. */}
       <TouchableOpacity hasTVPreferredFocus style={[s.card, s.cardFocused]} onPress={() => { log('card onPress'); setScreen('player'); }}>
-        <Image source={{ uri: `${MEDIA_URL}/content/stories/${story.id}/${story.pages[0].image}` }} style={s.cardImg} />
+        {mediaBase ? <Image source={{ uri: `${mediaBase}/content/stories/${story.id}/${story.pages[0].image}` }} style={s.cardImg} /> : <View style={s.cardImg} />}
         <Text style={s.cardTitle}>{story.title}</Text>
       </TouchableOpacity>
       <Text style={s.hint}>Select: open · Down: Devanagari check · audio: {AUDIO_FILE} · lead {LEAD_MS} ms</Text>
+      <Text style={s.hint}>media: {mediaBase ?? 'no https media URL — run tools/dev-tunnel/dev-tunnel.sh on the Mac'}</Text>
     </View>
   );
 };
 
-function Player({ story, fontReady, onExit }: { story: Story; fontReady: boolean; onExit: () => void }) {
+function Player({ story, fontReady, mediaBase, onExit }: { story: Story; fontReady: boolean; mediaBase: string | null; onExit: () => void }) {
   const page = story.pages[0];
   const lines = page.lines;
   const player = useRef<AudioPlayer | null>(null);
@@ -90,14 +102,19 @@ function Player({ story, fontReady, onExit }: { story: Story; fontReady: boolean
     on('pause', () => { playing.current = false; sampler.current.reset(); log('pause'); });
     on('seeking', () => { sampler.current.reset(); });
     on('ended', () => { playing.current = false; log('ended'); });
-    const src = `${MEDIA_URL}/content/stories/${story.id}/${AUDIO_FILE}`;
+    const srcFor = (base: string | null) => `${base ?? '(no-https-media-url)'}/content/stories/${story.id}/${AUDIO_FILE}`;
+    let src = srcFor(mediaBase);
     let retries = 0;
     on('error', () => {
       const err = { code: (p as any).error?.code, message: (p as any).error?.message };
       log(`player error ${JSON.stringify(err)} src=${src}`);
-      setMediaError(`media error ${err.code ?? '?'}${src.startsWith('https:') ? '' : ' (http source: Vega needs https)'}`);
+      setMediaError(`media error ${err.code ?? '?'} · ${src.startsWith('https:') ? src.split('/content/')[0] : 'no https media URL: run tools/dev-tunnel/dev-tunnel.sh'}`);
       // Known VVD cold-start case: the guest network is not ready yet and this surfaces as error 4; retry with backoff.
-      if (retries < 3) { const ms = 500 * 2 ** retries++; setTimeout(() => { log(`retry ${retries} after ${ms} ms`); p.src = src; }, ms); }
+      // The media base is re-resolved on retry, so a restarted dev tunnel is picked up without leaving the player.
+      if (retries < 4) {
+        const ms = 500 * 2 ** retries++;
+        setTimeout(async () => { src = srcFor(await resolveMediaBase()); log(`retry ${retries} after ${ms} ms: ${src}`); p.src = src; }, ms);
+      }
     });
     on('canplay', () => setMediaError(null));
     for (const ev of ['loadstart', 'loadedmetadata', 'canplay', 'waiting', 'stalled']) on(ev, () => log(`media ${ev} t=${p.currentTime}`));
@@ -179,7 +196,7 @@ function Player({ story, fontReady, onExit }: { story: Story; fontReady: boolean
   const phases = phasesAt(line.words, view.pos, LEAD_MS);
   return (
     <View style={s.root}>
-      <Image source={{ uri: `${MEDIA_URL}/content/stories/${story.id}/${page.image}` }} style={s.pageImg} />
+      {mediaBase ? <Image source={{ uri: `${mediaBase}/content/stories/${story.id}/${page.image}` }} style={s.pageImg} /> : null}
       <View style={s.subtitle}>
         <Text style={[s.line, fontReady && s.deva]}>
           {line.words.map((w, i) => (

@@ -4,7 +4,7 @@ import WebSocket from 'ws';
 import { createServer } from '../src/index.ts';
 import { encodeAudioFrame } from '@wordlight/shared-protocol';
 
-const { server, hub } = createServer({ publicUrl: 'http://test.local:1', log: () => {}, heartbeat: { pingMs: 100, deadMs: 600 } });
+const { server, hub } = createServer({ publicUrl: 'http://test.local:1', log: () => {}, heartbeat: { pingMs: 100, deadMs: 600 }, mediaUrl: async () => 'https://media.example' });
 await new Promise<void>((r) => server.listen(0, '127.0.0.1', r));
 const base = `http://127.0.0.1:${(server.address() as any).port}`;
 after(() => new Promise<void>((r) => { server.closeAllConnections?.(); server.close(() => r()); }));
@@ -22,6 +22,7 @@ test('http: session create, QR png, content with Range, TypeScript packages serv
   assert.ok(!/: Lang\)/.test(js), 'type annotations stripped');
   assert.equal((await fetch(`${base}/content/../package.json`)).status, 404);
   assert.equal((await fetch(`${base}/api/sessions/ZZZZ`)).status, 404);
+  assert.deepEqual(await (await fetch(`${base}/api/config`)).json(), { mediaUrl: 'https://media.example' });
 });
 
 test('ws: phone joins, saves a reader; binary audio reaches the driver only during a turn', async () => {

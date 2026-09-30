@@ -15,3 +15,9 @@ Children use WordLight. Privacy is a product requirement, not a feature.
 - Amazon Transcribe streaming data use and retention, and the AI-services opt-out policy for the account.
 - That no server, load-balancer or CloudWatch log captures audio frames or transcripts.
 - Whether any regional or child-privacy law applies to the demo deployment. **We make no compliance claim.**
+
+## Development HTTPS tunnel (added 2026-09-30)
+`tools/dev-tunnel/dev-tunnel.sh` exposes the local dev server through a Cloudflare quick tunnel, because Vega's media player refuses `http://` media (FRICTION_LOG W5). Traffic through it passes Cloudflare's network, and the URL is public while it runs. Rules:
+- Used for synthetic test media (S1 click tracks) and adult test speech only.
+- **No child audio goes through it.** Any session with a child uses an HTTPS endpoint we control (AWS), after the logging/retention check in this document.
+- Stop the tunnel when not testing (Ctrl-C deletes `.dev/media-url`).
