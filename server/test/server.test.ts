@@ -4,7 +4,7 @@ import WebSocket from 'ws';
 import { createServer, sanitizeTvRun } from '../src/index.ts';
 import { encodeAudioFrame } from '@wordlight/shared-protocol';
 
-const { server, hub } = createServer({ publicUrl: 'http://test.local:1', log: () => {}, heartbeat: { pingMs: 100, deadMs: 600 }, mediaUrl: async () => 'https://media.example', tvRun: async () => ({ runId: 'r1', leadMs: -339 }) });
+const { server, hub } = createServer({ publicUrl: 'http://test.local:1', log: () => {}, heartbeat: { pingMs: 100, deadMs: 600 }, s3ResultsDir: null, mediaUrl: async () => 'https://media.example', tvRun: async () => ({ runId: 'r1', leadMs: -339 }) });
 await new Promise<void>((r) => server.listen(0, '127.0.0.1', r));
 const base = `http://127.0.0.1:${(server.address() as any).port}`;
 after(() => new Promise<void>((r) => { server.closeAllConnections?.(); server.close(() => r()); }));
@@ -39,9 +39,10 @@ test('ws: phone joins, saves a reader; binary audio reaches the driver only duri
   phone.send(encodeAudioFrame({ seq: 1, last: false, capturedAtMs: 0, pcm: new Int16Array(160) })); // no turn yet: ignored
   tv.send(JSON.stringify({ type: 'turn.start', turnId: 'T', readerId: 'r1', storyId: 's', page: 0, line: 0, words: ['a', 'b', 'c'], lang: 'en-IN' }));
   await waitFor(() => hub.get(sessionId)!.turn !== null);
-  phone.send(encodeAudioFrame({ seq: 2, last: false, capturedAtMs: 0, pcm: new Int16Array(160) }));
+  phone.send(encodeAudioFrame({ seq: 2, tag: hub.get(sessionId)!.turn!.audioTag, last: false, capturedAtMs: 0, pcm: new Int16Array(160) }));
   await waitFor(() => frames.length > 0);
   assert.deepEqual(frames, [2]);
+  hub.endActiveTurn(hub.get(sessionId)!, 'exit');
   hub.driver = null;
   tv.close(); phone.close();
 });

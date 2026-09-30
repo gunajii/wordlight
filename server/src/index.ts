@@ -17,6 +17,7 @@ import { WebSocketServer } from 'ws';
 import QRCode from 'qrcode';
 import { decodeAudioFrame } from '@wordlight/shared-protocol';
 import { SessionHub, type Conn } from './hub.ts';
+import { S3Sink } from './s3/sink.ts';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const PORT = Number(process.env.PORT || 8787);
@@ -76,8 +77,11 @@ const STATIC: [string, string][] = [
   ['/pkg/karaoke-core/', path.join(ROOT, 'packages/karaoke-core/src')],
 ];
 
-export function createServer({ hub = new SessionHub({ now: serverNow }), publicUrl = PUBLIC_URL, log = console.log, heartbeat = HEARTBEAT, mediaUrl = currentMediaUrl, tvRun = currentTvRun } = {}) {
+export function createServer({ hub = new SessionHub({ now: serverNow }), publicUrl = PUBLIC_URL, log = console.log, heartbeat = HEARTBEAT, mediaUrl = currentMediaUrl, tvRun = currentTvRun, s3ResultsDir = path.join(ROOT, 'bench/runs/s3') as string | null } = {}) {
   const joinUrl = (id: string) => `${publicUrl}/j/${id}`;
+  // Until the Transcribe adapter exists (S2), the S3 measurement sink is the turn driver. It keeps no audio.
+  const s3 = new S3Sink({ now: serverNow, resultsDir: s3ResultsDir ?? undefined, log });
+  hub.driver ??= s3;
   const server = http.createServer(async (req, res) => {
     const url = new URL(req.url ?? '/', 'http://x');
     const p = url.pathname;
@@ -86,6 +90,35 @@ export function createServer({ hub = new SessionHub({ now: serverNow }), publicU
     if (req.method === 'OPTIONS') return void res.writeHead(204).end();
     try {
       if (p === '/healthz') return json(res, 200, { ok: true, sessions: hub.sessions.size, publicUrl });
+      // ---- S3 microphone spike (test sessions only; numbers only, never audio) ----
+      if (p === '/api/s3/sessions' && req.method === 'POST') {
+        const id = hub.createSession({ testMode: true });
+        const https = await mediaUrl();
+        return json(res, 201, { sessionId: id, joinUrl: https ? `${https}/j/${id}` : null, lanJoinUrl: joinUrl(id), note: https ? undefined : 'no https base: run tools/dev-tunnel/dev-tunnel.sh (phones need https for the microphone)' });
+      }
+      let m3 = p.match(/^\/api\/s3\/sessions\/([A-Za-z0-9]+)\/(status|turn)$/);
+      if (m3) {
+        const s = hub.get(m3[1]);
+        if (!s || !s.testMode) return json(res, 404, { error: 'no-test-session' });
+        if (m3[2] === 'status') {
+          return json(res, 200, {
+            sessionId: s.id, serverMs: serverNow(),
+            phones: [...s.phones.keys()].map((c) => ({ clientId: c, status: s.phoneStatus.get(c) ?? null, clock: s.clocks.get(c) ?? null, reader: [...s.readers.values()].some((r) => r.phoneClientId === c) })),
+            turn: s.turn ? { turnId: s.turn.turn.turnId, origin: s.turn.origin, chunkMs: s.turn.chunkMs, audioTag: s.turn.audioTag, startedAtServerMs: s.turn.startedAtServerMs } : null,
+            live: s3.liveSummary(s.id), micAudit: s.micAudit, results: s3.results.get(s.id) ?? [],
+          });
+        }
+        if (req.method !== 'POST') return json(res, 405, { error: 'POST' });
+        const body = await readJson(req);
+        if (body?.action === 'start') {
+          const phone = hub.firstPhoneWithReader(s);
+          if (!phone) return json(res, 409, { error: 'no-ready-phone' });
+          const r = hub.startTestTurn(s, phone, { chunkMs: Number(body.chunkMs) || 40, durationMs: Number(body.durationMs) || 60_000, detectClicks: !!body.clicks });
+          return json(res, r.ok ? 200 : 409, r);
+        }
+        if (body?.action === 'end' || body?.action === 'skip') return json(res, 200, { ended: hub.endActiveTurn(s, body.action === 'skip' ? 'skipped' : 'exit') });
+        return json(res, 400, { error: 'action must be start|end|skip' });
+      }
       if (p === '/api/config') return json(res, 200, { mediaUrl: await mediaUrl(), run: await tvRun() });
       if (p === '/api/time') return json(res, 200, { c0: Number(url.searchParams.get('c0')), s: serverNow() });
       if (p === '/api/sessions' && req.method === 'POST') {
@@ -152,6 +185,12 @@ export function createServer({ hub = new SessionHub({ now: serverNow }), publicU
     ws.on('close', () => { clearInterval(hb); hub.disconnect(conn, closeReason); });
   });
   return { server, hub, wss, publicUrl };
+}
+
+async function readJson(req: http.IncomingMessage, limit = 16 * 1024): Promise<any> {
+  let size = 0; const parts: Buffer[] = [];
+  for await (const c of req) { size += (c as Buffer).length; if (size > limit) return null; parts.push(c as Buffer); }
+  try { return JSON.parse(Buffer.concat(parts).toString('utf8') || '{}'); } catch { return null; }
 }
 
 function json(res: http.ServerResponse, code: number, body: unknown) {
