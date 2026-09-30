@@ -37,6 +37,10 @@ test('audio frames round-trip; malformed frames are rejected', () => {
   assert.equal(f.last, true);
   assert.equal(f.capturedAtMs, 1234.5);
   assert.deepEqual([...f.pcm], [...pcm]);
+  assert.equal(f.tag, 0, 'tag defaults to 0 (pre-S3 encoders)');
+  const tagged = decodeAudioFrame(encodeAudioFrame({ seq: 7, tag: 0xbeef, last: false, capturedAtMs: 1, pcm }))!;
+  assert.equal(tagged.tag, 0xbeef);
+  assert.equal(tagged.seq, 7);
   assert.equal(decodeAudioFrame(buf.subarray(0, 10)), null);
   const bad = new Uint8Array(buf); bad[0] = 9;
   assert.equal(decodeAudioFrame(bad), null);

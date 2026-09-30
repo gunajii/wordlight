@@ -34,6 +34,10 @@ export interface TurnStart extends Envelope {
   line: number;
   words: string[];
   lang: Lang;
+  /** Set by the SERVER when it forwards the turn to the phone: the u16 tag every audio frame must carry. */
+  audioTag?: number;
+  /** Audio chunk duration the phone should use (ms). Server-set; default 40. */
+  chunkMs?: number;
 }
 export interface TurnHelp extends Envelope {
   type: 'turn.help';

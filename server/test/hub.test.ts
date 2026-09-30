@@ -90,8 +90,12 @@ test('driver receives start, audio only from the reader\'s phone, help, and stop
   hub.handle(tv, start);
   const intruder = conn();
   hub.handle(intruder, { t: 'hello', role: 'phone', sessionId: id, clientId: 'p2' });
-  hub.audio(intruder, { seq: 9, last: false, capturedAtMs: 0, pcm: new Int16Array(0) });
-  hub.audio(phone, { seq: 1, last: false, capturedAtMs: 0, pcm: new Int16Array(0) });
+  const tag = hub.get(id)!.turn!.audioTag;
+  assert.equal(phone.out.find((m) => m.type === 'turn.start').audioTag, tag, 'the phone is told the audio tag');
+  hub.audio(intruder, { seq: 9, tag, last: false, capturedAtMs: 0, pcm: new Int16Array(0) });
+  hub.audio(phone, { seq: 0, tag: tag + 1, last: false, capturedAtMs: 0, pcm: new Int16Array(0) }); // wrong tag: dropped
+  hub.audio(phone, { seq: 1, tag, last: false, capturedAtMs: 0, pcm: new Int16Array(0) });
+  assert.equal(hub.get(id)!.turn!.staleFrames, 1);
   hub.handle(tv, { type: 'turn.help', turnId: 'T1', kind: 'next-word' });
   const s = hub.get(id)!;
   hub.emit(s, { type: 'word.read', sessionId: id, turnId: 'T1', index: 0, confidence: 1, atMs: 500 });
