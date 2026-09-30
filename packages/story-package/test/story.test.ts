@@ -78,3 +78,48 @@ test('validator: good package passes; missing attribution, bad timings and bad f
   const s4 = good(); s4.pages[0].lines[0].text = 'The dog ran';
   assert.ok(validateStory(s4).some((i) => /spell the text/.test(i.message)));
 });
+
+// ---- Hindi byte-offset regressions (S4) ----
+import { displayTokens as dt, timeTokens as tt, markByteMismatches } from '../src/index.ts';
+const enc8 = new TextEncoder();
+/** Build Polly-style word marks for `words` at `times`, with byte offsets computed the way Polly reports them. */
+function bytesMarks(text: string, words: string[], times: number[]) {
+  let from = 0;
+  return words.map((w, i) => {
+    const ci = text.indexOf(w, from); from = ci + w.length;
+    const start = enc8.encode(text.slice(0, ci)).length;
+    return { time: times[i], type: 'word' as const, start, end: start + enc8.encode(w).length, value: w };
+  });
+}
+
+test('Hindi: matras, conjuncts, nukta, chandrabindu, anusvara map by BYTES, not string index', () => {
+  const text = 'चिड़िया ने ख़ज़ाना देखा, गाँव में हँसी। क्षमा त्रिकोण ज्ञान!';
+  const words = ['चिड़िया', 'ने', 'ख़ज़ाना', 'देखा', 'गाँव', 'में', 'हँसी', 'क्षमा', 'त्रिकोण', 'ज्ञान'];
+  const times = words.map((_, i) => 100 * (i + 1));
+  const marks = bytesMarks(text, words, times);
+  assert.deepEqual(markByteMismatches(text, marks), []);
+  const toks = tt(text, marks, 2000);
+  assert.deepEqual(toks.map((t) => t.t0), times);
+  assert.deepEqual(toks.map((t) => t.w), ['चिड़िया', 'ने', 'ख़ज़ाना', 'देखा,', 'गाँव', 'में', 'हँसी।', 'क्षमा', 'त्रिकोण', 'ज्ञान!']);
+  // the bug this prevents: using byte offsets as JS string indexes lands mid-word or past the end
+  const m = marks[4];
+  assert.notEqual(text.slice(m.start, m.end), 'गाँव');
+});
+
+test('Hindi: nukta as a separate combining mark (NFD) vs precomposed — the mapping follows the exact bytes sent', () => {
+  const nfd = 'पेड़ पर चिड़िया'.normalize('NFD');
+  const nfc = nfd.normalize('NFC');
+  const words = ['पेड़', 'पर', 'चिड़िया'];
+  const marksNfd = bytesMarks(nfd, words.map((w) => w.normalize('NFD')), [0, 300, 500]);
+  assert.deepEqual(tt(nfd, marksNfd, 1000).map((t) => t.t0), [0, 300, 500]);
+  // Re-normalising the text AFTER synthesis would silently desynchronise offsets whenever the forms differ:
+  if (nfd !== nfc) assert.ok(markByteMismatches(nfc, marksNfd).length > 0, 'mismatch detected, not silently mis-mapped');
+  assert.equal(dt(nfd).length, 3);
+});
+
+test('hyphenated Hindi word with two Polly marks stays one display token, timed by its first mark', () => {
+  const text = 'बिल्ली धीरे-धीरे आई';
+  const marks = bytesMarks(text, ['बिल्ली', 'धीरे', 'धीरे', 'आई'], [0, 400, 700, 1000]);
+  const toks = tt(text, marks, 1500);
+  assert.deepEqual(toks.map((t) => [t.w, t.t0]), [['बिल्ली', 0], ['धीरे-धीरे', 400], ['आई', 1000]]);
+});

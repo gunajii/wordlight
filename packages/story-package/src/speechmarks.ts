@@ -65,3 +65,13 @@ export function timeTokens(text: string, marks: SpeechMark[], endMs: number): Ti
   });
   return out;
 }
+
+/**
+ * Word marks whose [start, end) BYTES do not decode to their own `value` in `text` — a check that the text used
+ * for mapping is byte-for-byte the text that was sent to Polly (no re-normalisation, no trimming in between).
+ */
+export function markByteMismatches(text: string, marks: SpeechMark[]): SpeechMark[] {
+  const bytes = enc.encode(text);
+  const dec = new TextDecoder();
+  return marks.filter((m) => m.type === 'word' && dec.decode(bytes.subarray(m.start, m.end)) !== m.value);
+}
