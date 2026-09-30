@@ -2,7 +2,7 @@
   "name": "wordlight",
   "private": true,
   "type": "module",
-  "description": "WordLight \u2014 read-along stories for Fire TV (Vega OS): words light up as they are spoken, and children read marked lines aloud into a paired phone.",
+  "description": "WordLight — read-along stories for Fire TV (Vega OS): words light up as they are spoken, and children read marked lines aloud into a paired phone.",
   "workspaces": [
     "packages/*",
     "server"
@@ -19,6 +19,7 @@
     "node": ">=22.18"
   },
   "devDependencies": {
+    "@aws-sdk/client-polly": "^3.1143.0",
     "@types/node": "^22.10.0",
     "typescript": "^5.8.3"
   }

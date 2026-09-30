@@ -5,8 +5,9 @@
   "type": "module",
   "description": "WordLight session server: pairing, live events, content, and (later) the reading pipeline.",
   "dependencies": {
-    "@wordlight/shared-protocol": "*",
+    "@aws-sdk/client-transcribe-streaming": "^3.1143.0",
     "@wordlight/reading-engine": "*",
+    "@wordlight/shared-protocol": "*",
     "qrcode": "^1.5.4",
     "ws": "^8.21.0"
   },

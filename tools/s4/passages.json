@@ -1,0 +1,11 @@
+{
+  "_note": "Original test passages written for WordLight S4 (no third-party text). Hindi covers conjuncts, nukta, chandrabindu, anusvara, matras, a hyphenated word and punctuation.",
+  "passages": [
+    { "id": "hi-1", "lang": "hi-IN", "text": "एक छोटी चिड़िया पेड़ की डाल पर बैठी थी। उसने नीचे देखा तो एक बिल्ली धीरे-धीरे आ रही थी। चिड़िया ज़ोर से चहचहाई और उड़कर अपने घोंसले में चली गई। बिल्ली ने ऊपर देखा और मुस्कुराकर बोली, आज नहीं, कल फिर मिलेंगे।" },
+    { "id": "hi-2", "lang": "hi-IN", "text": "मीरा विद्यालय से लौटकर हर शाम अपनी दादी के साथ बैठती है। उसे किताबें पढ़ना और कहानियाँ सुनना बहुत पसंद है। आज दादी ने एक राजा और उसके चतुर मंत्री की कहानी सुनाई। मीरा ने पूछा, क्या मैं भी कभी मंत्री बन सकती हूँ?" },
+    { "id": "hi-3", "lang": "hi-IN", "text": "गाँव के पास एक नदी बहती थी। गर्मी के दिनों में बच्चे वहाँ नहाने जाते थे। एक दिन राजू ने पानी में एक चमकता हुआ पत्थर देखा। उसने सोचा, शायद यह कोई ख़ज़ाना है! उसके दोस्त श्याम ने ध्यान से देखा और हँसकर कहा, यह तो बस एक सीप है।" },
+    { "id": "en-1", "lang": "en-IN", "text": "Tara had a little red kite. Every evening she ran to the hill behind her house. The wind lifted the kite high above the trees, and Tara laughed as it danced in the sky." },
+    { "id": "en-2", "lang": "en-IN", "text": "Sam could not find his left shoe. He looked under the bed, behind the door and inside the toy box. At last his dog Bruno trotted in, wagging his tail, with the shoe in his mouth." },
+    { "id": "en-3", "lang": "en-IN", "text": "The moon was round and bright. Anu and her grandfather sat on the roof and counted the stars. One, two, three, she whispered, until her eyes grew heavy and she fell asleep." }
+  ]
+}
