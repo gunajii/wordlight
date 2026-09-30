@@ -8,7 +8,7 @@
 // Copied into the generated Vega project by apps/vega-tv/setup.sh. Pure timing logic comes from
 // packages/karaoke-core (vendored into src/vendor/karaoke-core by setup.sh).
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { View, Text, Image, StyleSheet } from 'react-native';
+import { View, Text, Image, StyleSheet, TouchableOpacity } from 'react-native';
 import { AudioPlayer } from '@amazon-devices/react-native-w3cmedia';
 import { useTVEventHandler } from '@amazon-devices/react-native-kepler';
 import { PlayheadSampler, lineIndexAt, phasesAt, wordIndexAt } from './vendor/karaoke-core/index';
@@ -21,6 +21,9 @@ type Story = { id: string; title: string; credits: { attribution: string }; page
 
 const POLL_MS = 20;
 const log = (m: string) => console.log(`[wordlight] ${m}`); // vega device start-log-stream
+// Every remote event is logged so key handling can be checked from the log stream.
+const logKey = (where: string, evt: any) => log(`key ${where} type=${evt?.eventType} action=${evt?.eventKeyAction}`);
+const PLAY_KEYS = ['select', 'playpause', 'play', 'pause'];
 
 export const App = () => {
   const [story, setStory] = useState<Story | null>(null);
@@ -35,8 +38,9 @@ export const App = () => {
   }, []);
 
   useTVEventHandler((evt: any) => {
+    logKey(screen, evt);
     if (evt?.eventKeyAction !== 0) return; // key down only
-    if (screen === 'shelf' && evt.eventType === 'select' && story) setScreen('player');
+    if (screen === 'shelf' && PLAY_KEYS.includes(evt.eventType) && story) setScreen('player');
     else if (screen === 'shelf' && evt.eventType === 'down') setScreen('fonts');
     else if (screen === 'fonts' && (evt.eventType === 'back' || evt.eventType === 'up')) setScreen('shelf');
   });
@@ -48,10 +52,11 @@ export const App = () => {
   return (
     <View style={s.root}>
       <Text style={s.brand}>WordLight</Text>
-      <View style={[s.card, s.cardFocused]}>
+      {/* Focusable so OK reaches onPress through Vega's focus system even if the HW listener does not see 'select'. */}
+      <TouchableOpacity hasTVPreferredFocus style={[s.card, s.cardFocused]} onPress={() => { log('card onPress'); setScreen('player'); }}>
         <Image source={{ uri: `${SERVER_URL}/content/stories/${story.id}/${story.pages[0].image}` }} style={s.cardImg} />
         <Text style={s.cardTitle}>{story.title}</Text>
-      </View>
+      </TouchableOpacity>
       <Text style={s.hint}>Select: open · Down: Devanagari check · audio: {AUDIO_FILE} · lead {LEAD_MS} ms</Text>
     </View>
   );
@@ -131,11 +136,12 @@ function Player({ story, fontReady, onExit }: { story: Story; fontReady: boolean
   }, [lines]);
 
   useTVEventHandler((evt: any) => {
+    logKey('player', evt);
     if (evt?.eventKeyAction !== 0) return;
     const p = player.current;
     if (!p) return;
     switch (evt.eventType) {
-      case 'select': case 'playpause': if (p.paused) p.play(); else p.pause(); break;
+      case 'select': case 'playpause': case 'play': case 'pause': if (p.paused) p.play(); else p.pause(); break;
       case 'left': seekToLine(view.line - 1); break;
       case 'right': seekToLine(view.line + 1); break;
       case 'up': seekToLine(view.line); break; // hear this line again
