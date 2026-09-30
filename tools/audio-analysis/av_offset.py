@@ -54,8 +54,13 @@ def video_onsets(path, min_rise):
     thr = base + 0.5 * (peak - base)
     bright = luma > thr
     onsets, last = [], -1e9
+    dt = float(np.median(np.diff(times))) if n > 1 else 0.0
     for i in np.flatnonzero(bright[1:] & ~bright[:-1]) + 1:
-        t = (times[i - 1] + times[i]) / 2  # between the last dark and the first bright frame
+        # Between the last dark and the first bright frame. Screen recordings (macOS) are variable-frame-rate and
+        # emit a frame only when something changes; after a long gap the midpoint would be far too early, so there
+        # the first bright frame's own timestamp is used.
+        gap = times[i] - times[i - 1]
+        t = (times[i - 1] + times[i]) / 2 if gap <= 1.5 * dt else times[i]
         if t - last > 0.15:
             onsets.append(t)
             last = t

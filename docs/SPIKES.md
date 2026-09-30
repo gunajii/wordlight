@@ -28,6 +28,10 @@ Labels: **MEASURED** (read from instrumentation) · **INFERRED** · **HYPOTHESIZ
 
 Stdev is dominated by the synthetic 10 ms jitter and frame quantisation. Median bias −2 to −3 ms.
 
+**Variable-frame-rate recordings (macOS screen recording emits frames only on change).** Simulated by dropping unchanged frames (`ffmpeg -vf mpdecimate -vsync vfr`) from a +60 ms / 60 fps synthetic: 11 100 → 497 frames. Before the fix the analyzer reported **−160.1 ms** (it put each flash at the midpoint of a long frame gap). After the fix (first bright frame's own timestamp when the gap > 1.5 × median frame interval): **+66.9 ms** (stdev 12.7), constant-rate file unchanged at +58.5 ms. So a VFR screen recording reads ≈ +7 ms late (at most one frame) — MEASURED on synthetic data, 2026-09-30.
+
+**Screen recording vs filming.** A macOS screen recording timestamps the frame when the Mac composites it; filming the panel adds the display's own latency. On the VVD the app under test is the same either way, so the screen recording isolates the app's timing; filming answers "what a viewer sees". Results are labelled with the method used.
+
 **What S1 on the Virtual Device does NOT tell us:** physical Fire TV output latency, HDMI/TV audio path, or real speech. Those are Test 10 / S4.
 
 ## S1 — runbook (Mac)
