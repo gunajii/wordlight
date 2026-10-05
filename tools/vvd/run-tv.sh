@@ -17,6 +17,10 @@ ARCH=$(uname -m); case "$ARCH" in arm64|aarch64) A=aarch64;; *) A=x86_64;; esac
 [ "$DEVICE" != VirtualDevice ] && A=armv7 && echo "physical device: using the armv7 build (check 'vega device info' if it differs)"
 VPKG=$(ls "$APP"/build/${A}-debug/*.vpkg | head -1)
 if [ "$DEVICE" = VirtualDevice ]; then vega virtual-device status 2>/dev/null | grep -qi running || vega virtual-device start; fi
+mkdir -p .dev
+# app log → .dev/tv-app.log (lets the session check the run without screenshots); stops when the terminal closes
+( vega device start-log-stream --device "$DEVICE" 2>&1 | grep --line-buffered -i wordlight > .dev/tv-app.log ) &
+LOGPID=$!
 vega run-app "$VPKG" com.wordlight.tv.main -d "$DEVICE"
-echo "launched $(basename "$VPKG") on $DEVICE"
-[ $LOGS = 1 ] && vega device start-log-stream --device "$DEVICE" | grep --line-buffered -i wordlight
+echo "launched $(basename "$VPKG") on $DEVICE · app log: .dev/tv-app.log"
+if [ $LOGS = 1 ]; then tail -f .dev/tv-app.log; else echo "(keep this terminal open to keep logging; Ctrl-C to stop)"; wait $LOGPID; fi
