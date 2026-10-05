@@ -1,0 +1,25 @@
+{
+  "_note": "Original S2 test lines (no third-party text). misread: expected-word index → a DIFFERENT real word a beginner might say instead. omit/repeat/hesitate/pause: word index. Lines are short (Your Turn lines are 3–8 words).",
+  "lines": [
+    { "id": "en-01", "lang": "en-IN", "text": "The little cat ran home.", "misread": { "2": "hat" }, "omit": 1, "repeat": 0, "hesitate": 3, "pause": 3 },
+    { "id": "en-02", "lang": "en-IN", "text": "Tara had a red kite.", "misread": { "3": "bed" }, "omit": 2, "repeat": 4, "hesitate": 4, "pause": 4 },
+    { "id": "en-03", "lang": "en-IN", "text": "The big dog sat down.", "misread": { "1": "bag", "4": "town" }, "omit": 1, "repeat": 2, "hesitate": 2, "pause": 3 },
+    { "id": "en-04", "lang": "en-IN", "text": "Sam looked under the bed.", "misread": { "1": "liked" }, "omit": 3, "repeat": 0, "hesitate": 2, "pause": 4 },
+    { "id": "en-05", "lang": "en-IN", "text": "The moon was round and bright.", "misread": { "1": "man", "5": "night" }, "omit": 4, "repeat": 1, "hesitate": 3, "pause": 5 },
+    { "id": "en-06", "lang": "en-IN", "text": "She found a shell by the sea.", "misread": { "1": "fond", "3": "bell" }, "omit": 2, "repeat": 3, "hesitate": 4, "pause": 6 },
+    { "id": "en-07", "lang": "en-IN", "text": "Anu counted the stars.", "misread": { "1": "counter", "3": "cars" }, "omit": 2, "repeat": 0, "hesitate": 2, "pause": 3 },
+    { "id": "en-08", "lang": "en-IN", "text": "The bus stopped near the school.", "misread": { "1": "bat", "2": "shopped" }, "omit": 3, "repeat": 1, "hesitate": 4, "pause": 5 },
+    { "id": "en-09", "lang": "en-IN", "text": "My grandmother tells funny stories.", "misread": { "2": "sells", "4": "stairs" }, "omit": 3, "repeat": 0, "hesitate": 2, "pause": 4 },
+    { "id": "en-10", "lang": "en-IN", "text": "We planted a tree in the garden.", "misread": { "1": "painted", "6": "golden" }, "omit": 2, "repeat": 3, "hesitate": 4, "pause": 6 },
+    { "id": "hi-01", "lang": "hi-IN", "text": "एक छोटी चिड़िया पेड़ पर बैठी थी।", "misread": { "2": "गुड़िया" }, "omit": 1, "repeat": 2, "hesitate": 3, "pause": 4 },
+    { "id": "hi-02", "lang": "hi-IN", "text": "मीरा को किताबें पढ़ना पसंद है।", "misread": { "2": "कहानियाँ" }, "omit": 4, "repeat": 0, "hesitate": 3, "pause": 3 },
+    { "id": "hi-03", "lang": "hi-IN", "text": "बिल्ली धीरे से दूध पी गई।", "misread": { "0": "बल्ली", "3": "दाल" }, "omit": 1, "repeat": 3, "hesitate": 2, "pause": 4 },
+    { "id": "hi-04", "lang": "hi-IN", "text": "गाँव के पास एक नदी बहती थी।", "misread": { "4": "नानी" }, "omit": 2, "repeat": 0, "hesitate": 4, "pause": 5 },
+    { "id": "hi-05", "lang": "hi-IN", "text": "राजू ने पानी में पत्थर देखा।", "misread": { "2": "रानी", "4": "पत्ते" }, "omit": 1, "repeat": 0, "hesitate": 3, "pause": 4 },
+    { "id": "hi-06", "lang": "hi-IN", "text": "दादी ने एक कहानी सुनाई।", "misread": { "4": "सुनी" }, "omit": 2, "repeat": 3, "hesitate": 3, "pause": 4 },
+    { "id": "hi-07", "lang": "hi-IN", "text": "बच्चे मैदान में खेल रहे थे।", "misread": { "1": "मकान", "3": "खाना" }, "omit": 2, "repeat": 0, "hesitate": 3, "pause": 4 },
+    { "id": "hi-08", "lang": "hi-IN", "text": "आसमान में बादल छा गए।", "misread": { "2": "बालक" }, "omit": 1, "repeat": 0, "hesitate": 2, "pause": 3 },
+    { "id": "hi-09", "lang": "hi-IN", "text": "माँ ने गरम रोटी बनाई।", "misread": { "3": "रोटा", "2": "कम" }, "omit": 1, "repeat": 0, "hesitate": 3, "pause": 4 },
+    { "id": "hi-10", "lang": "hi-IN", "text": "हम सब मिलकर गाना गाते हैं।", "misread": { "3": "खाना" }, "omit": 1, "repeat": 3, "hesitate": 2, "pause": 4 }
+  ]
+}
