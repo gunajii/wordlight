@@ -17,3 +17,7 @@ content/stories/s1-timing/
 .dev/
 __pycache__/
 *.pyc
+content/sources/*/*
+!content/sources/*/source.json
+content/stories/*/*.jpg
+content/stories/*/*.png
