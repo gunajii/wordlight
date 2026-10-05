@@ -26,10 +26,12 @@ if aws cloudformation describe-stacks --region "$REGION" --stack-name $STACK >/d
   CMD=$(aws ssm send-command --region "$REGION" --instance-ids "$ID" --document-name AWS-RunShellScript --parameters 'commands=["/usr/local/bin/wordlight-update"]' --query Command.CommandId --output text)
   echo "update sent ($CMD); waiting…"; aws ssm wait command-executed --region "$REGION" --command-id "$CMD" --instance-id "$ID" || true
 else
-  aws cloudformation deploy --region "$REGION" --stack-name $STACK --template-file infra/aws/wordlight-dev.yaml --capabilities CAPABILITY_IAM --parameter-overrides ArtifactBucket="$BUCKET"
+  aws cloudformation deploy --region "$REGION" --stack-name $STACK --template-file infra/aws/wordlight-dev.yaml --capabilities CAPABILITY_IAM --parameter-overrides ArtifactBucket="$BUCKET" ReadingMode="${READING_MODE:-free}" Summary="${SUMMARY:-template}" BedrockModelId="${BEDROCK_MODEL_ID:-}"
 fi
 IP=$(aws cloudformation describe-stacks --region "$REGION" --stack-name $STACK --query "Stacks[0].Outputs[?OutputKey=='PublicIp'].OutputValue" --output text)
 URL="https://$(echo "$IP" | tr . -).sslip.io"
 echo "WordLight server: $URL   (first boot: allow ~3 min for Node, Caddy and the certificate)"
 for i in $(seq 40); do curl -sf "$URL/healthz" >/dev/null && { echo "healthy: $URL/healthz"; break; }; sleep 10; done
-echo "TV: SERVER_URL=$URL MEDIA_URL=$URL bash apps/vega-tv/setup.sh   (then rebuild)"
+node tools/ops/healthcheck.ts "$URL" || echo "health check reported problems (see above)"
+echo "TV: SERVER_URL=$URL MEDIA_URL=$URL bash apps/vega-tv/setup.sh   (then: bash tools/vvd/run-tv.sh)"
+echo "When you stop testing:  bash infra/aws/deploy.sh --stop   ·   to remove everything:  bash infra/aws/deploy.sh --delete"

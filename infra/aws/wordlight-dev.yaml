@@ -7,7 +7,10 @@ Description: >-
 Parameters:
   ArtifactBucket: { Type: String, Description: S3 bucket holding the code tarball (created by deploy.sh) }
   ArtifactKey: { Type: String, Default: wordlight/app.tgz }
-  InstanceType: { Type: String, Default: t4g.small, AllowedValues: [t4g.micro, t4g.small, t4g.medium] }
+  InstanceType: { Type: String, Default: t4g.micro, AllowedValues: [t4g.micro, t4g.small, t4g.medium], Description: 'micro (1 GiB) is enough for one family session; small if memory runs short' }
+  ReadingMode: { Type: String, Default: free, AllowedValues: [free, echo], Description: 'free = child reads first; echo = TV reads, child repeats (S2 fallback)' }
+  Summary: { Type: String, Default: template, AllowedValues: [template, bedrock], Description: 'bedrock also needs BedrockModelId; always falls back to the template' }
+  BedrockModelId: { Type: String, Default: '' }
   ImageId: { Type: 'AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>', Default: /aws/service/ami-amazon-linux-latest/al2023-ami-kernel-default-arm64 }
   NodeVersion: { Type: String, Default: 22.20.0 }
 
@@ -26,6 +29,7 @@ Resources:
             Statement:
               - { Effect: Allow, Action: [transcribe:StartStreamTranscription, transcribe:StartStreamTranscriptionWebSocket, polly:SynthesizeSpeech, polly:DescribeVoices], Resource: '*' }
               - { Effect: Allow, Action: [s3:GetObject], Resource: !Sub 'arn:aws:s3:::${ArtifactBucket}/*' }
+              - { Effect: Allow, Action: [bedrock:InvokeModel, bedrock:Converse], Resource: '*' }  # used only when Summary=bedrock
   Profile:
     Type: AWS::IAM::InstanceProfile
     Properties: { Roles: [!Ref Role] }
@@ -84,7 +88,7 @@ Resources:
           [Service]
           User=wordlight
           WorkingDirectory=/opt/wordlight/app
-          Environment=PORT=8787 HOST=127.0.0.1 AWS_REGION=${AWS::Region} PUBLIC_URL=https://$HOST MEDIA_URL=https://$HOST SPEECH=transcribe
+          Environment=NODE_ENV=production PORT=8787 HOST=127.0.0.1 AWS_REGION=${AWS::Region} PUBLIC_URL=https://$HOST MEDIA_URL=https://$HOST SPEECH=transcribe READING_MODE=${ReadingMode} SUMMARY=${Summary} BEDROCK_MODEL_ID=${BedrockModelId}
           ExecStart=/usr/local/bin/node server/src/index.ts
           Restart=always
           [Install]
@@ -101,6 +105,11 @@ Resources:
           [Install]
           WantedBy=multi-user.target
           UNIT
+          # Logs: journald only (no CloudWatch, no access logs; the server logs counts and ids, never audio or text),
+          # capped and short-lived.
+          mkdir -p /etc/systemd/journald.conf.d
+          printf '[Journal]\nSystemMaxUse=50M\nMaxRetentionSec=7day\n' > /etc/systemd/journald.conf.d/wordlight.conf
+          systemctl restart systemd-journald
           systemctl daemon-reload
           systemctl enable --now wordlight caddy
           systemctl restart wordlight caddy

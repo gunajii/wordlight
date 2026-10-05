@@ -49,3 +49,13 @@ test('observed scoring refuses mismatched sheets and scores from the sheet', () 
   assert.equal(rows[0].words[0].latencyMs, 500);
   assert.throws(() => scoreObserved([tr], 'R R\n'), /2 marks for 3 words/);
 });
+
+test('end-to-end latency joins spoken (recogniser), emitted (server) and lit (TV telemetry) per word', async () => {
+  const { e2eRows } = await import('../../tools/e2e/word-lit-latency.ts');
+  const traces = [{ turnId: 'T', events: [{ index: 0, kind: 'read', emitServerMs: 1600, spokenServerMs: 1000 }, { index: 1, kind: 'helped', emitServerMs: 5000, spokenServerMs: null }, { index: 2, kind: 'read', emitServerMs: 2700, spokenServerMs: 2000 }] }];
+  const tel = [{ kind: 'word-lit', turnId: 'T', index: 0, tvServerMs: 1650 }, { kind: 'word-lit', turnId: 'T', index: 2, tvServerMs: 2790 }];
+  const r = e2eRows(traces, tel);
+  assert.deepEqual(r.rows.map((x) => x.e2eMs), [650, 790]);
+  assert.deepEqual(r.rows.map((x) => x.serverToTvMs), [50, 90]);
+  assert.equal(r.summary.within1s, 2);
+});

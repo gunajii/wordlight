@@ -32,4 +32,18 @@ bash infra/aws/deploy.sh          # again after changes: uploads code + built st
 bash infra/aws/deploy.sh --stop   # stop the instance when not testing (Elastic IP still billed)
 bash infra/aws/deploy.sh --delete # remove everything
 ```
-Stack: EC2 t4g.small (Amazon Linux 2023, arm64) · Elastic IP · security group 80/443 only (no SSH; SSM Session Manager) · instance role: Transcribe streaming, Polly, read the artifact object · Caddy terminates TLS with a certificate for `<ip-with-dashes>.sslip.io` · Node runs `server/src/index.ts` with `SPEECH=transcribe`. The phone, the TV and child audio use only this HTTPS endpoint; the Cloudflare tunnel is not involved.
+Stack: EC2 t4g.micro by default (t4g.small if memory runs short; Amazon Linux 2023, arm64) · Elastic IP · security group 80/443 only (no SSH; SSM Session Manager) · instance role: Transcribe streaming, Polly, read the artifact object · Caddy terminates TLS with a certificate for `<ip-with-dashes>.sslip.io` · Node runs `server/src/index.ts` with `NODE_ENV=production SPEECH=transcribe READING_MODE=free|echo SUMMARY=template|bedrock` (the scripted simulation refuses to start in production). The phone, the TV and child audio use only this HTTPS endpoint; the Cloudflare tunnel is not involved.
+
+**Logs.** journald only, capped at 50 MB and kept for 7 days. There is no CloudWatch and no access log. The server
+logs ids and counts, never audio and never transcript text (`DEV_TRANSCRIPTS` is never set on AWS).
+
+**Health check.** `node tools/ops/healthcheck.ts https://<host>`. `deploy.sh` runs it after each deploy. It checks:
+- TLS and the certificate
+- `/healthz`
+- that speech is real (not simulated)
+- that the media and join links are on this host (not a tunnel)
+- WSS hello and ping
+
+**Runbook** for the day the account works: `docs/AFTER_AWS.md`. **Teardown:** `deploy.sh --stop` after each session,
+and `deploy.sh --delete` at the end. Delete removes the stack (instance, Elastic IP, role, security group) and the
+artifact bucket.
