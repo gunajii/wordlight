@@ -26,6 +26,12 @@ let clientId = store.get('wordlight.clientId');
 if (!clientId) { clientId = 'ph-' + Math.random().toString(36).slice(2, 10); store.set('wordlight.clientId', clientId); }
 const CONSENT_KEY = 'wordlight.micConsent.v1';
 const MANUAL = new URLSearchParams(location.search).get('manual') === '1';
+const DIAG = new URLSearchParams(location.search).get('diag') === '1'; // S3 measurement view
+if (DIAG) document.body.classList.add('diag');
+const READER_KEY = 'wordlight.reader.v1';
+let reader = null; try { reader = JSON.parse(store.get(READER_KEY) || 'null'); } catch {}
+let editingReader = false;
+let lineWords = [], lineMarks = [], lastDone = null, summaryText = null;
 const now = () => performance.now();
 
 // ---------- diagnostics event log ----------
@@ -77,7 +83,9 @@ const wake = new WakeLockKeeper({ onChange: (st) => { S.wake = st; render(); }, 
 function msg(t) { $('msg').textContent = t || ''; }
 function sendReader() {
   if (!S.consent) return;
-  client.send({ type: 'reader.save', reader: { readerId: 'rd-' + clientId.slice(3, 11), firstName: 'Test reader', age: 8, lang: 'en-IN' }, consent: { microphone: true, atMs: S.consent } });
+  const r = reader ?? (DIAG ? { name: 'Test reader', age: 8, lang: 'en-IN' } : null);
+  if (!r) return;
+  client.send({ type: 'reader.save', reader: { readerId: 'rd-' + clientId.slice(3, 11), firstName: r.name, age: Number(r.age), lang: r.lang }, consent: { microphone: true, atMs: S.consent } });
 }
 function micLive() { let n = 0; for (const t of S.tracks) if (t.readyState === 'live') n++; return n; }
 function sendStatus() {
@@ -121,7 +129,14 @@ function onStatus(st) {
 function onMessage(m) {
   if (m.t === 'error') msg(`${m.code}: ${m.message}`);
   if (m.t === 's3.ack' && L.turn && m.turnId === L.turn.turnId) { S.acked = m.frames; S.lost = m.missing; S.latMs = m.latencyMedianMs; }
+  if (m.type === 'session.summary') { summaryText = m.text; render(); }
+  if (L.turn && m.turnId === L.turn.turnId) {
+    const mark = (k) => { if (m.index >= 0 && m.index < lineMarks.length && lineMarks[m.index] === 'pending') lineMarks[m.index] = k; };
+    if (m.type === 'word.read') mark('read'); if (m.type === 'word.helped') mark('helped'); if (m.type === 'word.skipped') mark('skipped');
+    if (m.type === 'line.done') lastDone = { at: now(), read: m.read, helped: m.helped };
+  }
   if (m.type === 'turn.start') {
+    lineWords = Array.isArray(m.words) ? m.words : []; lineMarks = lineWords.map(() => 'pending'); lastDone = null;
     ev('turn-start', { turnId: m.turnId, chunk: m.chunkMs });
     Object.assign(S, { seq: 0, sent: 0, unsent: 0, acked: 0, lost: 0, latMs: null, turnStartedAt: now() });
     dispatch({ type: 'turn-start', turnId: m.turnId, tag: m.audioTag, chunkMs: m.chunkMs });
@@ -219,9 +234,14 @@ function render() {
   $('conn').textContent = S.status;
   $('reconnects').textContent = S.reconnects;
   $('rtt').textContent = clock.ready ? `${Math.round(clock.minRtt)} ms` : '—';
+  const hasReader = !!reader || DIAG;
   $('consent-card').classList.toggle('hidden', !!S.consent);
-  $('ready-card').classList.toggle('hidden', !S.consent || L.ready);
-  $('mic-card').classList.toggle('hidden', !S.consent);
+  $('reader-card').classList.toggle('hidden', !S.consent || (hasReader && !editingReader));
+  $('ready-card').classList.toggle('hidden', !S.consent || !hasReader || editingReader || L.ready);
+  $('ready-name').textContent = reader?.name ?? 'Test reader';
+  $('mic-card').classList.toggle('hidden', !S.consent || !L.ready);
+  $('summary-card').classList.toggle('hidden', !summaryText);
+  $('summary').textContent = summaryText ?? '';
   // Manual turn buttons only with ?manual=1: in run 2 a tap on them started a turn that collided with the runner's.
   $('test-card').classList.toggle('hidden', !MANUAL || !S.consent || !L.ready);
   $('session-end-btn').classList.toggle('hidden', !L.ready || L.session !== 'active');
@@ -230,6 +250,10 @@ function render() {
   mic.textContent = live > 0 ? 'LISTENING' : L.turn ? (needsTap(L) ? 'TAP TO LISTEN' : 'OPENING…') : 'OFF';
   mic.className = 'mic ' + (live > 0 ? 'on' : 'off');
   $('live').textContent = live;
+  const showDone = !L.turn && lastDone && now() - lastDone.at < 4000;
+  $('state').textContent = L.turn ? (live > 0 ? 'Your turn! Read the line on the TV.' : needsTap(L) ? 'Tap below to start listening' : 'Getting the microphone ready…')
+    : showDone ? `Well read! ${lastDone.read} on your own${lastDone.helped ? `, ${lastDone.helped} with help` : ''}.` : 'Waiting for your turn…';
+  $('words').innerHTML = L.turn || showDone ? lineWords.map((w, i) => `<span class="${lineMarks[i] === 'pending' ? (i === lineMarks.indexOf('pending') ? 'w-next' : '') : 'w-' + lineMarks[i]}">${w.replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[c])}</span>`).join(' ') : '';
   $('chunk').textContent = L.turn ? `${L.turn.chunkMs} ms` : '—';
   $('sent').textContent = S.sent; $('acked').textContent = S.acked; $('lost').textContent = S.lost; $('unsent').textContent = S.unsent;
   $('lat').textContent = S.latMs == null ? '—' : `${S.latMs} ms`;
@@ -242,7 +266,15 @@ function render() {
 }
 
 async function startSession() { ev('session-start'); wake.enable(); /* requested inside the tap */ dispatch({ type: 'session-start' }); await unlockAudio(); }
-$('consent-btn').onclick = () => { S.consent = Date.now(); store.set(CONSENT_KEY, String(S.consent)); ev('consent'); dispatch({ type: 'consent' }); sendReader(); startSession(); };
+$('consent-btn').onclick = () => { S.consent = Date.now(); store.set(CONSENT_KEY, String(S.consent)); ev('consent'); dispatch({ type: 'consent' }); sendReader(); if (DIAG) startSession(); else render(); };
+$('reader-save').onclick = () => {
+  const name = $('reader-name').value.trim().replace(/\s+/g, ' ').slice(0, 20);
+  if (!name) { msg('Please type a first name.'); return; }
+  reader = { name, age: Number($('reader-age').value), lang: $('reader-lang').value };
+  store.set(READER_KEY, JSON.stringify(reader)); editingReader = false; msg('');
+  sendReader(); render();
+};
+$('reader-change').onclick = () => { editingReader = true; if (reader) { $('reader-name').value = reader.name; $('reader-age').value = String(reader.age); $('reader-lang').value = reader.lang; } render(); };
 $('ready-btn').onclick = () => startSession();
 $('tap-btn').onclick = () => unlockAudio();
 $('start-btn').onclick = () => client.send({ t: 's3.turn', action: 'start', chunkMs: Number($('chunk-sel').value), durationMs: 60_000 });

@@ -29,13 +29,19 @@
   .hidden { display: none !important; }
   .privacy { border-left: 3px solid var(--accent); }
   .err { color: var(--warn); }
+  input, select { font: inherit; padding: 12px; border-radius: 10px; width: 100%; background: var(--bg); color: var(--ink); border: 1px solid var(--line); margin-top: 8px; }
+  label { display: block; margin-top: 12px; color: var(--dim); font-size: 14px; }
+  .state { font-size: 26px; font-weight: 700; margin: 4px 0 8px; }
+  .words { font-size: 22px; line-height: 1.6; margin-top: 10px; }
+  .w-read { color: var(--ok); } .w-helped { background: #ffb347; color: #111; border-radius: 4px; padding: 0 3px; } .w-skipped { color: var(--dim); } .w-next { text-decoration: underline; }
+  body:not(.diag) .diag { display: none !important; }
 </style>
 </head>
 <body>
 <main>
-  <h1>WORD<span>LIGHT</span> · MIC TEST</h1>
+  <h1>WORD<span>LIGHT</span><span class="diag"> · MIC TEST</span></h1>
 
-  <section class="card" id="conn-card">
+  <section class="card diag" id="conn-card">
     <div class="row"><span>Session</span><b id="sid">—</b></div>
     <div class="row"><span>Connection</span><b id="conn">connecting…</b></div>
     <div class="row"><span>Reconnects</span><b id="reconnects">0</b></div>
@@ -43,33 +49,55 @@
   </section>
 
   <section class="card privacy hidden" id="consent-card">
-    <p><b>Before we start</b></p>
-    <p>WordLight uses this phone's microphone <b>only during reading turns</b>, to help recognise the child's reading. The microphone is off at all other times.</p>
-    <p>Audio is sent to the WordLight server while a turn is running and is <b>not stored</b>.</p>
-    <p class="dim">This page is a technical test (spike S3). Please use adult speech or test sounds, not a child's voice.</p>
+    <p><b>Before we start (for the parent)</b></p>
+    <p>WordLight uses this phone's microphone <b>only during reading turns</b>, so the TV can follow your child reading a line aloud. The microphone is off at all other times, and this page shows when it is on.</p>
+    <p>During a turn the sound is streamed to the WordLight server for speech recognition and is <b>not stored</b> by WordLight.</p>
+    <p class="dim diag">This page is a technical test (spike S3). Please use adult speech or test sounds, not a child's voice.</p>
     <button id="consent-btn">I agree — use the microphone during reading turns</button>
   </section>
 
+  <section class="card hidden" id="reader-card">
+    <p><b>Who is reading?</b></p>
+    <label for="reader-name">First name (shown on the TV)</label>
+    <input id="reader-name" maxlength="20" autocomplete="off" placeholder="e.g. Riya">
+    <label for="reader-age">Age</label>
+    <select id="reader-age"><option>5</option><option>6</option><option selected>7</option><option>8</option><option>9</option><option>10</option><option>11</option><option>12</option></select>
+    <label for="reader-lang">Reads in</label>
+    <select id="reader-lang"><option value="en-IN">English</option><option value="hi-IN">हिंदी (Hindi)</option></select>
+    <button id="reader-save">Save</button>
+  </section>
+
   <section class="card hidden" id="ready-card">
-    <p>Tap once so this phone can process audio when a reading turn starts. <span class="dim">(The microphone stays off.)</span></p>
-    <button id="ready-btn">Get ready</button>
+    <p>Reading as <b id="ready-name">—</b>. Keep this page open near your child; the TV will say when it is their turn.</p>
+    <button id="ready-btn">Start reading session</button>
+    <button id="reader-change" class="secondary">Change reader</button>
   </section>
 
   <section class="card hidden" id="mic-card">
+    <div class="state" id="state">Waiting for your turn…</div>
     <div class="dim">Microphone</div>
     <div class="mic off" id="mic">OFF</div>
     <div class="meter"><i id="level"></i></div>
-    <div class="row"><span>Turn time</span><b id="elapsed">—</b></div>
-    <div class="row"><span>Chunk size</span><b id="chunk">—</b></div>
-    <div class="row"><span>Chunks sent</span><b id="sent">0</b></div>
-    <div class="row"><span>Chunks received by server</span><b id="acked">0</b></div>
-    <div class="row"><span>Lost (server-detected)</span><b id="lost">0</b></div>
-    <div class="row"><span>Not sent (offline/backlog)</span><b id="unsent">0</b></div>
-    <div class="row"><span>Latency, first sample → server (≈)</span><b id="lat">—</b></div>
-    <div class="row"><span>Mic tracks live (browser API)</span><b id="live">0</b></div>
-    <div class="row"><span>Input rate → output</span><b id="rates">—</b></div>
-    <div class="row"><span>Screen kept awake</span><b id="wake">off</b></div>
+    <div class="words" id="words"></div>
     <button id="tap-btn" class="hidden">Tap to start listening</button>
+    <div class="diag">
+      <div class="row"><span>Turn time</span><b id="elapsed">—</b></div>
+      <div class="row"><span>Chunk size</span><b id="chunk">—</b></div>
+      <div class="row"><span>Chunks sent</span><b id="sent">0</b></div>
+      <div class="row"><span>Chunks received by server</span><b id="acked">0</b></div>
+      <div class="row"><span>Lost (server-detected)</span><b id="lost">0</b></div>
+      <div class="row"><span>Not sent (offline/backlog)</span><b id="unsent">0</b></div>
+      <div class="row"><span>Latency, first sample → server (≈)</span><b id="lat">—</b></div>
+      <div class="row"><span>Mic tracks live (browser API)</span><b id="live">0</b></div>
+      <div class="row"><span>Input rate → output</span><b id="rates">—</b></div>
+    </div>
+    <div class="row"><span>Screen kept awake</span><b id="wake">off</b></div>
+    <button id="session-end-btn" class="secondary">End reading session</button>
+  </section>
+
+  <section class="card hidden" id="summary-card">
+    <div class="dim">Tonight</div>
+    <p id="summary"></p>
   </section>
 
   <section class="card hidden" id="test-card">
@@ -77,12 +105,11 @@
     <select id="chunk-sel"><option value="20">20 ms chunks</option><option value="40" selected>40 ms chunks</option><option value="60">60 ms chunks</option><option value="100">100 ms chunks</option></select>
     <button id="start-btn">Start reading turn (60 s)</button>
     <button id="end-btn" class="secondary">End turn</button>
-    <button id="session-end-btn" class="secondary">End session (mic off, screen may sleep)</button>
   </section>
 
   <section class="card privacy">
     <b>Privacy</b>
-    <div class="dim">Microphone is only active during a reading turn. Audio is not stored.</div>
+    <div class="dim">The microphone is only active during a reading turn. Audio is not stored by WordLight.</div>
   </section>
   <p class="dim err" id="msg"></p>
 </main>

@@ -105,7 +105,7 @@ export function createServer({ hub = new SessionHub({ now: serverNow }), publicU
       if (p === '/api/s3/sessions' && req.method === 'POST') {
         const id = hub.createSession({ testMode: true });
         const https = await mediaUrl();
-        return json(res, 201, { sessionId: id, joinUrl: https ? `${https}/j/${id}` : null, lanJoinUrl: joinUrl(id), note: https ? undefined : 'no https base: run tools/dev-tunnel/dev-tunnel.sh (phones need https for the microphone)' });
+        return json(res, 201, { sessionId: id, joinUrl: https ? `${https}/j/${id}?diag=1` : null, lanJoinUrl: joinUrl(id), note: https ? undefined : 'no https base: run tools/dev-tunnel/dev-tunnel.sh (phones need https for the microphone)' });
       }
       let m3 = p.match(/^\/api\/s3\/sessions\/([A-Za-z0-9]+)\/(status|turn)$/);
       if (m3) {
@@ -129,6 +129,20 @@ export function createServer({ hub = new SessionHub({ now: serverNow }), publicU
         }
         if (body?.action === 'end' || body?.action === 'skip') return json(res, 200, { ended: hub.endActiveTurn(s, body.action === 'skip' ? 'skipped' : 'exit') });
         return json(res, 400, { error: 'action must be start|end|skip' });
+      }
+      // story shelf: every content/stories/<id>/story.json (title, language, cover, credits line)
+      if (p === '/api/stories') {
+        const { readdir } = await import('node:fs/promises');
+        const dir = path.join(ROOT, 'content/stories');
+        const out: unknown[] = [];
+        for (const id of (await readdir(dir).catch(() => [] as string[])).sort()) {
+          try {
+            const st = JSON.parse(await readFile(path.join(dir, id, 'story.json'), 'utf8'));
+            if (url.searchParams.get('all') !== '1' && st.timing?.source === 'synthetic') continue; // hide test content
+            out.push({ id: st.id, title: st.title, lang: st.lang, level: st.level, cover: st.pages?.[0]?.image ?? null, attribution: st.credits?.attribution ?? '', turns: st.pages?.reduce((n: number, pg: any) => n + pg.lines.filter((l: any) => l.turn).length, 0) ?? 0 });
+          } catch {}
+        }
+        return json(res, 200, out);
       }
       // reading traces (numbers; heard text only with DEV_TRANSCRIPTS=1) for the S2 harness and diagnostics
       if (p === '/api/reading/traces') {
