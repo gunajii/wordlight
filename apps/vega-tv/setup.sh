@@ -73,14 +73,9 @@ fi
 
 say "Copying WordLight sources"
 [ -f src/App.tsx ] && [ ! -f src/App.template.tsx ] && cp src/App.tsx src/App.template.tsx
-cp "$HERE/overlay/src/App.tsx" src/App.tsx
 if [ "$FONT_OK" = 1 ]; then cp "$HERE/overlay/src/fonts.ts" src/fonts.ts; else cp "$HERE/overlay/src/fonts.fallback.ts" src/fonts.ts; echo "expo-font unavailable: using the system font"; fi
 mkdir -p assets/fonts && cp "$HERE"/overlay/assets/fonts/* assets/fonts/
-rm -rf src/vendor/karaoke-core && mkdir -p src/vendor/karaoke-core
-for f in "$ROOT"/packages/karaoke-core/src/*.ts; do
-  # Metro resolves extension-less imports; our Node sources import './x.ts'
-  sed -E "s#(from '\./[a-z-]+)\.ts'#\1'#g" "$f" > "src/vendor/karaoke-core/$(basename "$f")"
-done
+bash "$HERE/sync.sh"
 
 if [ -z "${SERVER_URL:-}" ]; then
   IP=$( (ipconfig getifaddr en0 || ipconfig getifaddr en1 || hostname -I 2>/dev/null | awk '{print $1}') 2>/dev/null | head -1)

@@ -1,81 +1,48 @@
-// WordLight TV — S1 spike build (Vega OS, React Native for Vega).
-//
-// Proves only: play narration with the W3C media AudioPlayer, read its playback time, render an
-// English/Devanagari subtitle line, light each word at its timing, handle the D-pad — and makes
-// the timing MEASURABLE: a white marker flashes whenever the lit word changes, so filming the TV
-// and running tools/audio-analysis/av_offset.py gives the highlight-vs-audio offset.
-//
-// Copied into the generated Vega project by apps/vega-tv/setup.sh. Pure timing logic comes from
-// packages/karaoke-core (vendored into src/vendor/karaoke-core by setup.sh).
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+// WordLight TV (Vega OS, React Native for Vega).
+//   Home: story shelf + "Pair a phone to read aloud" QR (the phone page needs no app install).
+//   Story: narration with word highlighting; Your Turn lines read aloud into the paired phone (StoryPlayer).
+//   End card: words read tonight — on your own / with help — from real line results; parent summary from the server.
+// Dev tools kept: S1 timing player (driven by tools/s1-run via /api/config) and the Devanagari check (Down on Home).
+import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, Image, StyleSheet, TouchableOpacity } from 'react-native';
-import { AudioPlayer } from '@amazon-devices/react-native-w3cmedia';
 import { useTVEventHandler } from '@amazon-devices/react-native-kepler';
-import { PlayheadSampler, lineIndexAt, phasesAt, wordIndexAt } from './vendor/karaoke-core/index';
-import { SERVER_URL, SERVER_CANDIDATES, MEDIA_URL, STORY_ID, AUDIO_FILE, LEAD_MS } from './wordlight.config';
-// The Mac's LAN IP changes (DHCP: .35 → .33 → .34 in two days) and a baked IP then means a rebuild. So the app
-// tries candidates in order and keeps the first that answers /healthz: the build-time LAN IP, the Mac's
-// Bonjour name, and 10.0.2.2 (QEMU's usual host alias — whether the VVD provides it is UNKNOWN until logged).
-let serverUrl = SERVER_URL;
-const withTimeout = <T,>(p: Promise<T>, ms: number) => Promise.race([p, new Promise<T>((_, rej) => setTimeout(() => rej(new Error(`timeout ${ms} ms`)), ms))]);
-async function findServer(): Promise<string | null> {
-  const list = [SERVER_URL, ...SERVER_CANDIDATES.filter((u) => u !== SERVER_URL)];
-  for (let round = 0; round < 3; round++) {
-    for (const u of list) {
-      try {
-        const r = await withTimeout(fetch(`${u}/healthz`), 2500);
-        if (r.ok) { serverUrl = u; log(`server ${u} (round ${round})`); return u; }
-      } catch (e: any) { log(`server ${u} unreachable: ${e?.message ?? e}`); }
-    }
-  }
-  return null;
-}
-// Vega's media player refuses http:// sources (VVD log: "isUriSchemeSecure Got an insecure protocol/scheme
-// http, return error", MPB code 50004 → MediaError 4). story.json comes from SERVER_URL (fetch allows http);
-// audio and images come from an https base resolved at RUNTIME from the dev server (/api/config, kept current by
-// tools/dev-tunnel/dev-tunnel.sh), so a new tunnel URL needs no rebuild. The baked MEDIA_URL is the fallback
-// (for a fixed https host such as CloudFront).
-type Run = { runId?: string; audioFile: string; leadMs: number; autorun?: boolean };
-type DevConfig = { mediaBase: string | null; run: Partial<Run> };
-async function fetchConfig(): Promise<DevConfig> {
-  let mediaBase: string | null = MEDIA_URL.startsWith('https://') && !MEDIA_URL.includes('SET-ME') ? MEDIA_URL : null;
-  let run: Partial<Run> = {};
-  try {
-    const cfg = await (await withTimeout(fetch(`${serverUrl}/api/config`), 4000)).json();
-    if (typeof cfg?.mediaUrl === 'string' && cfg.mediaUrl.startsWith('https://')) mediaBase = cfg.mediaUrl;
-    if (cfg?.run && typeof cfg.run === 'object') run = cfg.run;
-  } catch (e: any) { log(`config fetch failed: ${e?.message ?? e}`); }
-  return { mediaBase, run };
-}
-async function resolveMediaBase(): Promise<string | null> { return (await fetchConfig()).mediaBase; }
+import { totals } from './vendor/tv-core/index';
+import { SERVER_URL, SERVER_CANDIDATES, AUDIO_FILE, LEAD_MS } from './wordlight.config';
+import { log, logKey, findServer, fetchConfig, withTimeout, type Run } from './net';
+import { TvSession } from './session';
+import { StoryPlayer, type LineResult } from './StoryPlayer';
+import { Player as S1Player, FontCheck, type Story } from './S1Player';
 import { useDevanagariFont } from './fonts';
 
-declare const performance: { now(): number }; // provided by the Vega JS runtime (used by the S1 build); not in the RN type libs
-type Word = { w: string; t0: number; t1: number };
-type Line = { text: string; words: Word[]; turn: boolean };
-type Story = { id: string; title: string; credits: { attribution: string }; pages: { image: string; audio: string; durationMs: number; lines: Line[] }[] };
-
-const POLL_MS = 20;
-const log = (m: string) => console.log(`[wordlight] ${m}`); // vega device start-log-stream
-// Every remote event is logged so key handling can be checked from the log stream.
-const logKey = (where: string, evt: any) => log(`key ${where} type=${evt?.eventType} action=${evt?.eventKeyAction}`);
-const PLAY_KEYS = ['select', 'kpenter', 'enter', 'playpause', 'play', 'pause'];
-// In the player, OK arrives as 'select' on a remote and 'kpenter' from the VVD/keyboard. The media keys
-// (play/pause/playpause) are NOT handled here: Vega's Player Session already acts on them, and handling them
-// too made play→pause within 100 ms (VVD log, build 4).
+type ShelfItem = { id: string; title: string; lang: string; cover: string | null; attribution: string; turns: number };
+type Screen = { name: 'home' } | { name: 'story'; story: Story } | { name: 'end'; story: Story; results: LineResult[] } | { name: 's1'; run: Run; key: string } | { name: 'fonts' };
 
 export const App = () => {
-  const [story, setStory] = useState<Story | null>(null);
+  const [base, setBase] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [mediaBase, setMediaBase] = useState<string | null>(null);
-  const [screen, setScreen] = useState<'shelf' | 'player' | 'fonts'>('shelf');
+  const [shelf, setShelf] = useState<ShelfItem[]>([]);
+  const [screen, setScreen] = useState<Screen>({ name: 'home' });
+  const [, force] = useState(0);
+  const [summary, setSummary] = useState<string | null>(null);
+  const session = useRef<TvSession | null>(null);
   const fontReady = useDevanagariFont();
-  // Dev run control (tools/s1-run/s1-run.sh via /api/config): baked values are defaults; a NEW runId with
-  // autorun starts the player from 0 with that run's audio file and lead — no rebuild, relaunch or key press.
-  const [run, setRun] = useState<Run>({ audioFile: AUDIO_FILE, leadMs: LEAD_MS });
-  const [playerKey, setPlayerKey] = useState('manual');
-  const [autoplay, setAutoplay] = useState(false);
-  const baselineRunId = useRef<string | undefined | null>(null); // null = not polled yet
+  const baselineRunId = useRef<string | undefined | null>(null);
+
+  useEffect(() => {
+    (async () => {
+      const b = await findServer();
+      if (!b) { setError(`No WordLight server answered: ${[SERVER_URL, ...SERVER_CANDIDATES].join(' · ')}`); return; }
+      setBase(b);
+      try { setShelf(await (await withTimeout(fetch(`${b}/api/stories`), 6000)).json()); } catch (e: any) { log(`shelf: ${e?.message ?? e}`); }
+      const s = new TvSession(() => force((n) => n + 1));
+      session.current = s;
+      s.on((m: any) => { if (m?.type === 'session.summary') setSummary(m.text); });
+      s.start(b).catch((e) => setError(`Could not start a session: ${e?.message ?? e}`));
+    })();
+  }, []);
+
+  // media base (https) + S1 dev run control, polled
   useEffect(() => {
     let alive = true;
     const poll = async () => {
@@ -83,12 +50,10 @@ export const App = () => {
       if (!alive) return;
       setMediaBase((m) => (m === cfg.mediaBase ? m : cfg.mediaBase));
       const id = cfg.run.runId;
-      if (baselineRunId.current === null) { baselineRunId.current = id; return; } // ignore a run that predates this launch
+      if (baselineRunId.current === null) { baselineRunId.current = id; return; }
       if (id && id !== baselineRunId.current && cfg.run.autorun) {
         baselineRunId.current = id;
-        const next: Run = { runId: id, audioFile: cfg.run.audioFile ?? AUDIO_FILE, leadMs: cfg.run.leadMs ?? LEAD_MS };
-        log(`autorun ${JSON.stringify(next)}`);
-        setRun(next); setAutoplay(true); setPlayerKey(id); setScreen('player');
+        setScreen({ name: 's1', key: id, run: { runId: id, audioFile: cfg.run.audioFile ?? AUDIO_FILE, leadMs: cfg.run.leadMs ?? LEAD_MS, autorun: true } });
       }
     };
     poll();
@@ -96,232 +61,103 @@ export const App = () => {
     return () => { alive = false; clearInterval(t); };
   }, []);
 
-  useEffect(() => {
-    (async () => {
-      const base = await findServer();
-      if (!base) { setError(`No WordLight server answered: ${[SERVER_URL, ...SERVER_CANDIDATES].join(' · ')}`); return; }
-      const url = `${base}/content/stories/${STORY_ID}/story.json`;
-      try { const st = await (await withTimeout(fetch(url), 8000)).json(); setStory(st); log(`story ${st.id} loaded from ${base}`); }
-      catch (e: any) { setError(`Cannot load ${url}: ${e?.message ?? e}`); return; }
-      log(`media base ${(await resolveMediaBase()) ?? 'NONE (run tools/dev-tunnel/dev-tunnel.sh)'}`);
-    })();
-  }, []);
+  async function openStory(id: string) {
+    if (!base) return;
+    try {
+      const st: Story = await (await withTimeout(fetch(`${base}/content/stories/${id}/story.json`), 8000)).json();
+      setSummary(null);
+      setScreen({ name: 'story', story: st });
+    } catch (e: any) { log(`open ${id}: ${e?.message ?? e}`); }
+  }
 
   useTVEventHandler((evt: any) => {
-    logKey(screen, evt);
-    if (evt?.eventKeyAction !== 0) return; // key down only
-    if (screen === 'shelf' && PLAY_KEYS.includes(evt.eventType) && story) setScreen('player');
-    else if (screen === 'shelf' && evt.eventType === 'down') setScreen('fonts');
-    else if (screen === 'fonts' && (evt.eventType === 'back' || evt.eventType === 'up')) setScreen('shelf');
+    logKey(screen.name, evt);
+    if (evt?.eventKeyAction !== 0) return;
+    if (screen.name === 'home' && evt.eventType === 'down' && shelf.length === 0) setScreen({ name: 'fonts' });
+    else if (screen.name === 'fonts' && (evt.eventType === 'back' || evt.eventType === 'up')) setScreen({ name: 'home' });
+    else if (screen.name === 'end' && ['select', 'kpenter', 'enter', 'back'].includes(evt.eventType)) setScreen({ name: 'home' });
   });
 
   if (error) return <View style={s.root}><Text style={s.err}>{error}</Text><Text style={s.hint}>Is `npm start` running on the Mac? Then restart this app.</Text></View>;
-  if (!story) return <View style={s.root}><Text style={s.hint}>Loading {STORY_ID}…</Text></View>;
-  if (screen === 'fonts') return <FontCheck fontReady={fontReady} />;
-  if (screen === 'player') return <Player key={playerKey} story={story} fontReady={fontReady} mediaBase={mediaBase} audioFile={run.audioFile} leadMs={run.leadMs} autoplay={autoplay} onExit={() => { setAutoplay(false); setScreen('shelf'); }} />;
+  if (!base) return <View style={s.root}><Text style={s.hint}>Finding the WordLight server…</Text></View>;
+  if (screen.name === 'fonts') return <FontCheck fontReady={fontReady} />;
+  if (screen.name === 's1') return <S1PlayerLoader base={base} mediaBase={mediaBase} run={screen.run} k={screen.key} fontReady={fontReady} onExit={() => setScreen({ name: 'home' })} />;
+  if (screen.name === 'story' && mediaBase && session.current) {
+    return <StoryPlayer story={screen.story} mediaBase={mediaBase} session={session.current} leadMs={LEAD_MS}
+      onEnd={(results) => { session.current?.send({ t: 'session.end' }); setScreen({ name: 'end', story: screen.story, results }); }} />;
+  }
+  if (screen.name === 'end') {
+    const t = totals(screen.results);
+    return (
+      <View style={s.root}>
+        <Text style={s.endBig}>{t.words > 0 ? `You read ${t.words} word${t.words === 1 ? '' : 's'}!` : 'The end'}</Text>
+        {t.words > 0 ? <Text style={s.endSub}>{t.onOwn} on your own{t.withHelp ? ` · ${t.withHelp} with help` : ''}</Text> : <Text style={s.endSub}>Pair a phone next time to read some lines yourself.</Text>}
+        {summary ? <Text style={s.hint}>Sent to the phone: “{summary}”</Text> : null}
+        <Text style={s.credit}>{screen.story.credits.attribution}</Text>
+        <Text style={s.hint}>OK: back to stories</Text>
+      </View>
+    );
+  }
+  const sess = session.current;
+  const readers = sess?.readers ?? [];
   return (
-    <View style={s.root}>
-      <Text style={s.brand}>WordLight</Text>
-      {/* Focusable so OK reaches onPress through Vega's focus system even if the HW listener does not see 'select'. */}
-      <TouchableOpacity hasTVPreferredFocus style={[s.card, s.cardFocused]} onPress={() => { log('card onPress'); setAutoplay(false); setPlayerKey(`manual-${Date.now()}`); setScreen('player'); }}>
-        {mediaBase ? <Image source={{ uri: `${mediaBase}/content/stories/${story.id}/${story.pages[0].image}` }} style={s.cardImg} /> : <View style={s.cardImg} />}
-        <Text style={s.cardTitle}>{story.title}</Text>
-      </TouchableOpacity>
-      <Text style={s.hint}>Select: open · Down: Devanagari check · audio: {run.audioFile} · lead {run.leadMs} ms</Text>
-      <Text style={s.hint}>media: {mediaBase ?? 'no https media URL — run tools/dev-tunnel/dev-tunnel.sh on the Mac'}</Text>
+    <View style={s.homeRoot}>
+      <View style={s.left}>
+        <Text style={s.brand}>WordLight</Text>
+        <Text style={s.tag}>Listen to a story. Then read it yourself.</Text>
+        <View style={s.shelf}>
+          {shelf.length === 0 ? <Text style={s.hint}>No stories yet on the server.</Text> : shelf.map((it, i) => (
+            <TouchableOpacity key={it.id} hasTVPreferredFocus={i === 0} style={s.card} onPress={() => openStory(it.id)}>
+              {mediaBase && it.cover ? <Image source={{ uri: `${mediaBase}/content/stories/${it.id}/${it.cover}` }} style={s.cardImg} /> : <View style={s.cardImg} />}
+              <Text style={s.cardTitle}>{it.title}</Text>
+              <Text style={s.cardMeta}>{it.lang === 'hi-IN' ? 'हिंदी' : 'English'} · {it.turns} reading turns</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+        {!mediaBase ? <Text style={s.err}>No https media address — start tools/dev-tunnel/dev-tunnel.sh on the Mac.</Text> : null}
+      </View>
+      <View style={s.right}>
+        <Text style={s.pairTitle}>Pair a phone to read aloud</Text>
+        {sess?.id && mediaBase ? <Image source={{ uri: `${mediaBase}/api/sessions/${sess.id}/qr.png?size=360` }} style={s.qr} /> : <View style={s.qr} />}
+        <Text style={s.code}>{sess?.id ? `code ${sess.id}` : 'starting…'}</Text>
+        {readers.length === 0 ? <Text style={s.small}>Scan with the phone camera. No app needed.</Text> : readers.map((r) => (
+          <Text key={r.readerId} style={s.reader}>{r.online ? '●' : '○'} {r.firstName}{r.online ? ' is ready to read' : ' (phone away)'}</Text>
+        ))}
+        <Text style={s.small}>The phone’s microphone is only on during a reading turn.</Text>
+      </View>
     </View>
   );
 };
 
-function Player({ story, fontReady, mediaBase, audioFile, leadMs, autoplay, onExit }: {
-  story: Story; fontReady: boolean; mediaBase: string | null; audioFile: string; leadMs: number; autoplay: boolean; onExit: () => void;
-}) {
-  const LEAD = leadMs; // per-run lead (see Run); the timing loop reads it through leadRef
-  const leadRef = useRef(leadMs); leadRef.current = leadMs;
-  const page = story.pages[0];
-  const lines = page.lines;
-  const player = useRef<AudioPlayer | null>(null);
-  const sampler = useRef(new PlayheadSampler());
-  const playing = useRef(false);
-  const [view, setView] = useState({ line: 0, word: -1, pos: 0 });
-  const [marker, setMarker] = useState(false);
-  const [diag, setDiag] = useState<Record<string, string>>({});
-  const [mediaError, setMediaError] = useState<string | null>(null);
-  const lastWord = useRef<string>('');
-  const pollGaps = useRef<number[]>([]);
-
-  // player lifecycle (API as used in Amazon's vega-audio-sample: new AudioPlayer → initialize → src)
-  useEffect(() => {
-    const p = new AudioPlayer();
-    player.current = p;
-    const on = (ev: string, fn: () => void) => p.addEventListener(ev as any, fn as any);
-    on('playing', () => { playing.current = true; sampler.current.reset(); log('playing'); });
-    on('pause', () => { playing.current = false; sampler.current.reset(); log('pause'); });
-    on('seeking', () => { sampler.current.reset(); });
-    on('ended', () => { playing.current = false; log('ended'); });
-    const srcFor = (base: string | null) => `${base ?? '(no-https-media-url)'}/content/stories/${story.id}/${audioFile}`;
-    let src = srcFor(mediaBase);
-    let retries = 0;
-    on('error', () => {
-      const err = { code: (p as any).error?.code, message: (p as any).error?.message };
-      log(`player error ${JSON.stringify(err)} src=${src}`);
-      setMediaError(`media error ${err.code ?? '?'} · ${src.startsWith('https:') ? src.split('/content/')[0] : 'no https media URL: run tools/dev-tunnel/dev-tunnel.sh'}`);
-      // Known VVD cold-start case: the guest network is not ready yet and this surfaces as error 4; retry with backoff.
-      // The media base is re-resolved on retry, so a restarted dev tunnel is picked up without leaving the player.
-      if (retries < 4) {
-        const ms = 500 * 2 ** retries++;
-        setTimeout(async () => { src = srcFor(await resolveMediaBase()); log(`retry ${retries} after ${ms} ms: ${src}`); p.src = src; }, ms);
-      }
-    });
-    let autoStarted = false;
-    on('canplay', () => {
-      setMediaError(null);
-      // autorun: start 3 s after the media is ready, so a screen recording started just before has a clean lead-in
-      if (autoplay && !autoStarted) { autoStarted = true; log('autorun: playing in 3 s'); setTimeout(() => { const r: any = p.play(); r?.catch?.((e: any) => log(`autorun play rejected: ${e?.message ?? e}`)); }, 3000); }
-    });
-    for (const ev of ['loadstart', 'loadedmetadata', 'canplay', 'waiting', 'stalled']) on(ev, () => log(`media ${ev} t=${p.currentTime}`));
-    p.initialize().then(() => {
-      p.autoplay = false;
-      p.src = src;
-      log(`player initialised, src ${src}`);
-    }).catch((e: any) => log(`initialize failed: ${e?.message ?? e}`));
-    return () => { try { p.pause(); } catch {} p.deinitialize().catch(() => {}); };
-  }, [story.id]);
-
-  // timing loop: sample currentTime, derive the lit word, flash the marker when it changes
-  useEffect(() => {
-    let last = performance.now();
-    const id = setInterval(() => {
-      const p = player.current;
-      if (!p) return;
-      const now = performance.now();
-      pollGaps.current.push(now - last); if (pollGaps.current.length > 100) pollGaps.current.shift();
-      last = now;
-      sampler.current.sample((p.currentTime ?? 0) * 1000, now, playing.current);
-      const pos = sampler.current.positionAt(now, playing.current) ?? 0;
-      const li = lineIndexAt(lines, pos + leadRef.current);
-      const wi = wordIndexAt(lines[li].words, pos + leadRef.current);
-      const key = `${li}:${wi}`;
-      if (key !== lastWord.current) {
-        lastWord.current = key;
-        setView({ line: li, word: wi, pos });
-        if (wi >= 0 && playing.current) { setMarker(true); setTimeout(() => setMarker(false), 100); }
-      }
-    }, POLL_MS);
-    const d = setInterval(() => {
-      const gaps = [...pollGaps.current].sort((a, b) => a - b);
-      const p = player.current;
-      const info = {
-        'currentTime update period': `${sampler.current.updatePeriodMs?.toFixed(0) ?? '—'} ms`,
-        'poll gap median / max': `${gaps[gaps.length >> 1]?.toFixed(1) ?? '—'} / ${gaps[gaps.length - 1]?.toFixed(1) ?? '—'} ms`,
-        'position': `${(p?.currentTime ?? 0).toFixed(3)} s`,
-        'state': playing.current ? 'playing' : 'paused',
-      };
-      setDiag(info);
-      log(`diag ${JSON.stringify(info)}`);
-    }, 1000);
-    return () => { clearInterval(id); clearInterval(d); };
-  }, [lines]);
-
-  const seekToLine = useCallback((i: number) => {
-    const p = player.current;
-    const l = lines[Math.max(0, Math.min(lines.length - 1, i))];
-    if (!p || !l) return;
-    p.currentTime = Math.max(0, (l.words[0].t0 - 300) / 1000);
-    sampler.current.reset();
-  }, [lines]);
-
-  useTVEventHandler((evt: any) => {
-    logKey('player', evt);
-    if (evt?.eventKeyAction !== 0) return;
-    const p = player.current;
-    if (!p) return;
-    switch (evt.eventType) {
-      case 'select': case 'kpenter': case 'enter': {
-        // Toggle on our event-driven state. (Build 4 log: p.paused was correct; audio failed because the source was http.)
-        const wantPlay = !playing.current;
-        log(`toggle -> ${wantPlay ? 'play' : 'pause'} (p.paused=${String((p as any).paused)})`);
-        try {
-          const r: any = wantPlay ? p.play() : p.pause();
-          if (r && typeof r.then === 'function') r.then(() => log('play/pause resolved'), (e: any) => log(`play/pause rejected: ${e?.message ?? e}`));
-        } catch (e: any) { log(`play/pause threw: ${e?.message ?? e}`); }
-        break;
-      }
-      case 'left': seekToLine(view.line - 1); break;
-      case 'right': seekToLine(view.line + 1); break;
-      case 'up': seekToLine(view.line); break; // hear this line again
-      case 'back': p.pause(); onExit(); break;
-    }
-  });
-
-  const line = lines[view.line];
-  const phases = phasesAt(line.words, view.pos, LEAD);
-  return (
-    <View style={s.root}>
-      {mediaBase ? <Image source={{ uri: `${mediaBase}/content/stories/${story.id}/${page.image}` }} style={s.pageImg} /> : null}
-      <View style={s.subtitle}>
-        <Text style={[s.line, fontReady && s.deva]}>
-          {line.words.map((w, i) => (
-            <Text key={i} style={phases[i] === 'current' ? s.current : phases[i] === 'spoken' ? s.spoken : s.upcoming}>{w.w}{i < line.words.length - 1 ? ' ' : ''}</Text>
-          ))}
-        </Text>
-      </View>
-      {/* S1 timing marker: filmed together with the audio clicks */}
-      <View style={[s.marker, marker ? s.markerOn : null]} />
-      <View style={s.diag}>
-        {Object.entries(diag).map(([k, v]) => <Text key={k} style={s.diagText}>{k}: {v}</Text>)}
-        <Text style={s.diagText}>line {view.line + 1}/{lines.length} · word {view.word + 1} · audio {audioFile} · lead {LEAD} ms</Text>
-        {mediaError ? <Text style={[s.diagText, { color: '#ff9f80' }]}>{mediaError}</Text> : null}
-        <Text style={s.diagText}>OK or ▶: play/pause · ←/→ line · ↑ again · Back: shelf</Text>
-      </View>
-      <Text style={s.credit}>{story.credits.attribution}</Text>
-    </View>
-  );
-}
-
-const SAMPLES = ['एक छोटा चूहा था।', 'विद्यालय में बच्चे पढ़ते हैं।', 'क्षमा त्रिकोण ज्ञान श्रम।', 'कृष्ण ने दूध पिया।', 'हिंदी और हिन्दी · क़लम ज़मीन फ़ूल', 'The little cat ran home.'];
-function FontCheck({ fontReady }: { fontReady: boolean }) {
-  return (
-    <View style={s.root}>
-      <Text style={s.brand}>Devanagari check</Text>
-      <View style={s.fontCols}>
-        <View style={s.fontCol}>
-          <Text style={s.hint}>System font</Text>
-          {SAMPLES.map((t) => <Text key={t} style={s.sample}>{t}</Text>)}
-        </View>
-        <View style={s.fontCol}>
-          <Text style={s.hint}>Noto Sans Devanagari {fontReady ? '(loaded)' : '(NOT loaded)'}</Text>
-          {SAMPLES.map((t) => <Text key={t} style={[s.sample, fontReady && s.deva]}>{t}</Text>)}
-        </View>
-      </View>
-      <Text style={s.hint}>Photograph this screen for the S1 record. Back/Up: return.</Text>
-    </View>
-  );
+/** S1 dev tool: loads the timing test story and hands it to the S1 player. */
+function S1PlayerLoader({ base, mediaBase, run, k, fontReady, onExit }: { base: string; mediaBase: string | null; run: Run; k: string; fontReady: boolean; onExit: () => void }) {
+  const [story, setStory] = useState<Story | null>(null);
+  useEffect(() => { fetch(`${base}/content/stories/s1-timing/story.json`).then((r) => r.json()).then(setStory).catch(() => {}); }, [k]);
+  if (!story) return <View style={s.root}><Text style={s.hint}>Loading S1…</Text></View>;
+  return <S1Player key={k} story={story} fontReady={fontReady} mediaBase={mediaBase} audioFile={run.audioFile} leadMs={run.leadMs} autoplay={!!run.autorun} onExit={onExit} />;
 }
 
 const s = StyleSheet.create({
-  root: { flex: 1, backgroundColor: '#101820', alignItems: 'center', justifyContent: 'center' },
-  brand: { color: '#ffd166', fontSize: 64, fontWeight: '700', marginBottom: 32 },
-  card: { width: 420, backgroundColor: '#1d2b3a', borderRadius: 16, padding: 16, borderWidth: 4, borderColor: 'transparent' },
-  cardFocused: { borderColor: '#ffd166' },
-  cardImg: { width: 388, height: 218, borderRadius: 8 },
-  cardTitle: { color: '#fff', fontSize: 32, marginTop: 12 },
-  hint: { color: '#9fb3c8', fontSize: 24, marginTop: 24 },
-  err: { color: '#ff8080', fontSize: 30, padding: 40 },
-  pageImg: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 },
-  subtitle: { position: 'absolute', bottom: 120, left: 80, right: 80, backgroundColor: 'rgba(0,0,0,0.65)', borderRadius: 20, paddingVertical: 24, paddingHorizontal: 36 },
-  line: { fontSize: 64, textAlign: 'center', color: '#8899aa' },
-  deva: { fontFamily: 'NotoSansDevanagari-Regular' },
-  spoken: { color: '#ffffff' },
-  current: { color: '#101820', backgroundColor: '#ffd166' },
-  upcoming: { color: '#8899aa' },
-  marker: { position: 'absolute', top: 40, right: 40, width: 160, height: 160, backgroundColor: '#101820' },
-  markerOn: { backgroundColor: '#ffffff' },
-  diag: { position: 'absolute', top: 30, left: 30, backgroundColor: 'rgba(0,0,0,0.6)', padding: 12, borderRadius: 8 },
-  diagText: { color: '#cfe3f5', fontSize: 18 },
-  credit: { position: 'absolute', bottom: 24, color: '#9fb3c8', fontSize: 18 },
-  fontCols: { flexDirection: 'row' },
-  fontCol: { marginHorizontal: 40 },
-  sample: { color: '#fff', fontSize: 40, marginVertical: 6 },
+  root: { flex: 1, backgroundColor: '#101820', alignItems: 'center', justifyContent: 'center', padding: 40 },
+  homeRoot: { flex: 1, backgroundColor: '#101820', flexDirection: 'row', padding: 56 },
+  left: { flex: 2, justifyContent: 'center' },
+  right: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: '#17222e', borderRadius: 24, padding: 28, marginLeft: 40 },
+  brand: { color: '#ffd166', fontSize: 72, fontWeight: '700' },
+  tag: { color: '#cfe3f5', fontSize: 30, marginTop: 6, marginBottom: 30 },
+  shelf: { flexDirection: 'row', flexWrap: 'wrap' },
+  card: { width: 380, backgroundColor: '#1d2b3a', borderRadius: 16, padding: 14, marginRight: 24, marginBottom: 24, borderWidth: 4, borderColor: '#ffd166' },
+  cardImg: { width: 348, height: 196, borderRadius: 8, backgroundColor: '#0c131a' },
+  cardTitle: { color: '#fff', fontSize: 30, marginTop: 10 },
+  cardMeta: { color: '#9fb3c8', fontSize: 20, marginTop: 4 },
+  pairTitle: { color: '#fff', fontSize: 30, fontWeight: '700', textAlign: 'center', marginBottom: 16 },
+  qr: { width: 300, height: 300, backgroundColor: '#fff', borderRadius: 8 },
+  code: { color: '#ffd166', fontSize: 26, marginTop: 12 },
+  reader: { color: '#5dd39e', fontSize: 26, marginTop: 10 },
+  small: { color: '#9fb3c8', fontSize: 18, marginTop: 14, textAlign: 'center' },
+  hint: { color: '#9fb3c8', fontSize: 24, marginTop: 24, textAlign: 'center' },
+  err: { color: '#ff9f80', fontSize: 24, marginTop: 16 },
+  endBig: { color: '#ffd166', fontSize: 80, fontWeight: '700' },
+  endSub: { color: '#ffffff', fontSize: 40, marginTop: 12 },
+  credit: { color: '#8fa3b8', fontSize: 18, marginTop: 30 },
 });
 export default App;
