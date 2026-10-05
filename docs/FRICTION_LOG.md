@@ -47,3 +47,50 @@ Only problems actually encountered. Format: Date / Environment / Component / Exp
 - **Cost:** ~40 min and three rebuilds (key handling was suspected first).
 - **Suggestion:** document the https requirement on the URL-mode page, and put the scheme reason in `MediaError.message`.
 - **Fix in repo:** audio/images come from `MEDIA_URL` (https); for local runs, an HTTPS tunnel to the dev server.
+
+## W6 — Polly fails on a new AWS account with an error that doesn't say why (MEASURED, 2026-10-05)
+- **Environment:** a new AWS account, root credentials via AWS CLI v2, region ap-south-1.
+- **Component:** Amazon Polly (`DescribeVoices`, `SynthesizeSpeech`).
+- **Expected:** Polly works, or an error that names the missing step (account activation, payment verification,
+  or plan).
+- **Actual:** `SubscriptionRequiredException: The AWS Access Key Id needs a subscription for the service`. In the
+  same session AWS Budgets and AWS Organizations calls worked. The Billing console showed "Unable to load" for
+  costs, and Credits showed USD 0.00.
+- **Tried:** checked the identity (`sts get-caller-identity`), the region and the Billing pages.
+- **Worked:** not resolved yet. We are waiting for account activation and hackathon credits.
+- **Potential improvement:** say in the error which condition failed and where to fix it in the console.
+- **Severity:** high for a time-boxed project. It blocks the whole speech pipeline.
+
+## W7 — Opting out of AI-service data use changes the billing plan (MEASURED, 2026-10-05)
+- **Environment:** a new account on the Free plan. AWS CLI `organizations create-organization`, then an
+  `AISERVICES_OPT_OUT_POLICY`.
+- **Component:** AWS Organizations / AI services opt-out / Free plan.
+- **Expected:** opting a children's app out of Transcribe/Polly content use for service improvement would not
+  change the account's plan.
+- **Actual:** the opt-out policy needs AWS Organizations. The Billing docs ("Choosing a plan") state that a Free
+  plan account that joins Organizations is upgraded to the Paid plan automatically. The CLI showed no warning
+  before `create-organization`. Right after attaching the policy, the effective policy printed `{}`.
+- **Workaround:** none needed for our use. The Paid plan still spends credits first, and Transcribe needs the
+  Paid plan anyway.
+- **Potential improvement:** a per-account opt-out setting that doesn't require Organizations, or a warning on
+  the opt-out documentation page.
+- **Severity:** medium. It surprised a student developer who didn't want to pay.
+
+## W8 — Free plan includes Polly but not Transcribe (MEASURED, 2026-10-05)
+- **Component:** AWS Free plan service list ("Supported AWS services", Account Management docs).
+- **Expected:** both speech services available while trying them out on the Free plan.
+- **Actual:** Polly is on the Free plan list; Transcribe appears only under the Paid plan. We found this from the
+  docs after the error in W6, not during sign-up.
+- **Potential improvement:** show which services need the Paid plan during sign-up, or on each service's
+  console landing page.
+- **Severity:** medium.
+
+## W9 — Vega TypeScript environment has no `TextEncoder` type (MEASURED, 2026-10-05, SDK 0.24.12112)
+- **Component:** React Native for Vega app (`tsc --noEmit` in the generated project).
+- **Expected:** standard web text APIs (`TextEncoder` / `TextDecoder`) available, as in browsers and Node.
+- **Actual:** `error TS2304: Cannot find name 'TextEncoder'` when shared code that maps Polly's UTF-8 byte offsets
+  was vendored into the app. Runtime availability on Vega is UNKNOWN; we didn't test it.
+- **Workaround:** a 10-line UTF-8 encoder in `@wordlight/karaoke-vega` (`utf8()`), tested against `TextEncoder` in
+  Node.
+- **Potential improvement:** document which Web APIs Vega's JS runtime provides, and ship types for them.
+- **Severity:** low.

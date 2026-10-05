@@ -15,7 +15,22 @@
 
 ## Automated tests
 
-`npm test` — 109 tests pass (2026-10-05): protocol 4, reading engine 19, karaoke core 7, story package 5, session client 7 (reused), server 26 (incl. S3 stats/sink/hub 15), phone audio worklet 4. `npm run typecheck` clean.
+`npm test`: **165 tests pass** (2026-10-05). `npm run typecheck` is clean, and the Vega app passes its own
+`tsc --noEmit` after `sync.sh`.
+
+| Suite | Tests |
+|---|---|
+| reading engine | 25 |
+| karaoke-vega (open source) | 11 |
+| story package | 8 |
+| protocol | 4 |
+| session client (reused) | 7 |
+| TV core | 8 |
+| server | 64 |
+| phone | 38 |
+
+Server tests cover: hub, S3, reading driver, scripted simulation, S2 harness, S4 analysis, content, summary, config
+and the local demo loop. Phone tests cover: lifecycle, the privacy invariant table, the resampler and the wake lock.
 
 | Area | Covered |
 |---|---|
@@ -25,10 +40,17 @@
 | Reading pipeline / TV | Transcribe adapter (stream, partial/stable mapping, timing, retry without stabilisation, close) · reading driver (in-order lighting, misread not lit, stall help, TV help, speech error ends the turn, traces without transcript text) · template summary from real counts · TV Your Turn state machine (all transitions, impossible ones rejected, never backwards) · playback plan (stop/resume/help span/totals) |
 | S3 audio | frame tag round-trip; seq missing/duplicate/out-of-order; latency needs a clock estimate (never raw client time); capture-gap detection; 1 kHz click detector; stale-tag frames dropped; test turns need consent; turn cap; mic-live-outside-turn audit with grace; reconnect during a turn ends it; resampler 48k/44.1k/16k passband + anti-alias; worklet chunk size |
 | Protocol / server | join, wrong session, missing hello, roles, reader ownership, duplicate turn.start, stale help, cancel, phone lost mid-turn, reconnect, audio only from the active phone, heartbeat timeout, HTTP routes, TS served to browsers |
+| Scripted speech (SIMULATED) | starts only on the first audio chunk; partials before stable words; the real engine still rejects misreads (one and two), accepts corrections and ASR spelling slips, helps on a stall, helps every word on silence; Hindi vowel-change misread rejected; deterministic scripts; refused in production |
+| S2 harness | labels derived from cases (never results); cases.json = generator output; metrics (recall ≤ 1 s, false accepts, verdict per language); observed-sheet scoring; end-to-end latency join |
+| S4 analysis | fixture data with known reference errors reproduced exactly; acoustic onsets within 10 ms; SIMULATED label |
+| Content | fixture marks decode to their words (Hindi/English); build-story end to end against a fake Polly client; validator: overlaps, credits, language, turn word counts, schema, Hindi text (combining marks, zero-width, NFC); missing assets and id mismatch on disk |
+| Summary | template from counts; Bedrock text only if it keeps exactly the given numbers, names the child and makes no claims; timeout, error and budget fall back |
+| Privacy invariants | mic OFF on home, shelf, narration, waiting, turn end, cancel, disconnect, reconnect, hidden, visible again, unload, session end, reload, no consent, offline; ON only at turn start; TV phases |
+| Local demo loop (SIMULATED) | story → 2 turns → words lit, one help per turn, mic closed after every turn, summary with real counts, labelled simulated |
 
 ## Not yet tested
 
-Real speech (S2), Polly (S4), AWS, end-to-end latency, physical Fire TV.
+Real speech (S2), Polly (S4), AWS deployment, end-to-end latency, physical Fire TV. **The latest TV build (Your Turn UI, echo mode, diagnostics, `<KaraokeLine>`) type-checks but has not yet been built or run on the Virtual Device.**
 
 ## S3 — real-phone tests (to run: `npm run s3 -- --label <device>`)
 

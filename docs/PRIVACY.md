@@ -31,8 +31,27 @@ Children use WordLight. Privacy is a product requirement, not a feature.
 ## AWS processing (added 2026-09-30, before any AWS use)
 - Transcribe and Polly may retain content for service improvement unless the account opts out; WordLight requires the AI services opt-out policy (docs/AWS.md) before any child audio is sent. Verify the effective policy; do not assume.
 - Speech is streamed to Transcribe during a turn and not stored by WordLight. What Transcribe itself retains after opt-out is governed by AWS's terms; WordLight makes no stronger claim.
-- Child audio never goes through the Cloudflare dev tunnel; only through the AWS-hosted HTTPS endpoint (not built yet).
+- Child audio never goes through the Cloudflare dev tunnel; only through the AWS-hosted HTTPS endpoint (template and deploy script written 2026-10-05; not deployed yet).
 
 ## S3 run 2 observations (2026-10-05)
 - Android switched to mobile data when Wi-Fi was turned off, and a later turn streamed over it (TLS end to end). Whether a family wants that is a product choice; the page can show the connection type (`navigator.connection` is available on Chrome, not Safari).
 - In every interruption tested (Wi-Fi loss, lock, app switch, reload), the microphone stopped at the interruption itself; 0 live-mic reports outside turns.
+
+## Built-in safeguards (2026-10-05)
+- **Simulation can't pass as recognition.** With the scripted local speech source, `/api/config` says
+  `simulated: true`, the TV shows "SIMULATED SPEECH" on every screen, the phone shows a "Local simulation" banner,
+  and every trace is marked simulated. The S2 tools refuse simulated traces. The server refuses to run it with
+  `NODE_ENV=production`.
+- **Privacy invariant tests** (`web/phone/test/privacy-invariants.test.js`) cover each product state: home, shelf,
+  narration, waiting, turn start, turn end, cancel, disconnect, reload, page hidden and session end. The microphone
+  is ON only at turn start.
+- **AWS server logs.** journald only, capped at 50 MB and kept 7 days. No access logs, no CloudWatch. Counts and
+  ids are logged, never audio or transcript text. `tools/ops/healthcheck.ts` checks that the deployed path uses
+  real speech, TLS and its own host (not a tunnel) before any child session.
+- **Parent summary.** The counts are computed by the server. Optional Bedrock wording gets only the first name and
+  counts, never audio or transcripts. Its text is rejected if it changes a number or makes a claim about ability
+  or progress.
+- **Child testing protocol:** `docs/CHILD_TESTING.md`. It requires written permission, uses the AWS path only and
+  prefers no recording. If recordings are made, they stay outside Git and are deleted after scoring.
+- **Still to verify on the real account:** that the effective AI opt-out policy shows `optOut` (the first check,
+  on 2026-10-05, printed `{}`), and what Transcribe retains under that policy. We make no compliance claim.

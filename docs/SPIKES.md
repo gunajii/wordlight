@@ -5,9 +5,9 @@ Labels: **MEASURED** (read from instrumentation) · **INFERRED** · **HYPOTHESIZ
 | Spike | Question | Pass bar | Result | Fallback |
 |---|---|---|---|---|
 | S1 Vega basics | Can a Vega app play narration, report time, render Devanagari, handle the D-pad? | median offset ≤ 100 ms; stable over 3 min; conjuncts/matras correct | **PASS on the Virtual Device (2026-09-30)** with a per-platform lead: calibrated M4A median **−1.0 ms** (stdev 11.2) · stable **PASS** · Devanagari **PASS** (system font) · D-pad **PASS**. Uncalibrated: −392 ms (MP3), −339 ms (M4A). **Fire TV hardware UNKNOWN.** | Fire OS (React Native TV) build |
-| S2 Child speech | Can Transcribe + matcher follow a child reading hi/en? | ≥ 90 % correct words lit within 1.0 s; ≤ 10 % misreads accepted | **UNKNOWN** — pipeline built and tested with fakes (Transcribe adapter, reading driver, harness); waiting for AWS credentials to run `tools/s2/run-synth.ts` | Echo mode; browser speech recognition |
+| S2 Child speech | Can Transcribe + matcher follow a child reading hi/en? | ≥ 90 % correct words lit within 1.0 s; ≤ 10 % misreads accepted | **UNKNOWN** — not measured. The pipeline and the evaluation harness (`tools/s2/eval.ts`, 169 cases) are built and self-checked with a SIMULATED scripted engine. Waiting for AWS (Transcribe needs the Paid plan plus credits). | **Echo mode** (built: `READING_MODE=echo`) |
 | S3 Phone mic | Do iOS Safari and Android Chrome stream mic audio reliably over HTTPS? | both work; mic → server ≤ 300 ms; no drops in 10 min | **PASS (tested conditions), 2026-10-05:** iPhone Safari + Android Chrome; ≈ 52 000 chunks, 0 lost/duplicated/out of order; median 50–90 ms; correct mic lifecycle under Wi-Fi loss, lock, app switch, reload (Android); 0 privacy violations. Open: iPhone reload, untouched 10-min run with wake lock, run-1 Android reconnect cause | demo on the browser that passes; document the gap |
-| S4 Polly timings | Do Kajal speech marks match the audio? | ≥ 95 % of words within 50 ms of onset | **UNKNOWN** — mapping built; no AWS access yet | Transcribe word timestamps |
+| S4 Polly timings | Do Kajal speech marks match the audio? | ≥ 95 % of words within 50 ms of onset | **UNKNOWN** — not measured. Mapping, fixture mode and report generator are built and tested (`npm run s4`). Polly returned `SubscriptionRequiredException` on 2026-10-05 (account not active yet). | per-language lead offset; Transcribe word timestamps |
 
 ## S1 — method
 
@@ -226,8 +226,53 @@ Production child audio will use the AWS endpoint, not this tunnel; S3 re-checks 
 
 ---
 
-## S2 — speech recognition: what exists (2026-10-05), not yet measured
-- `server/src/reading/speech.ts` **TranscribeSource**: Amazon Transcribe Streaming, 16 kHz PCM, partial results with stabilisation (`high`; retried without it if a language rejects it), word start/end times, error → turn ends `error`. `SimSource`: DEV ONLY timer reader, logged as such, never used for measurement.
-- `server/src/reading/driver.ts` **ReadingDriver**: wraps the unchanged reading engine; the engine clock starts at the first audio chunk (mic start-up is not a stall); help after 3 s (5 s before the first word); per-word trace (spoken time from Transcribe's word start via the phone's capture clock, update arrival, emit time).
-- `tools/s2/run-synth.ts` **harness**: 20 original lines (10 en-IN, 10 hi-IN) × variants correct / misread / omit / repeat / hesitate 1.2 s / pause 4.5 s, spoken by Polly and streamed in real time through the real pipeline. Exact ground truth from speech marks. Reports recall@1s, false-accept rate, latency (median/p95/max) per language and variant. Synthetic adult voices: characterises the pipeline, **not child reading** (child performance stays UNKNOWN unless tested with consent).
-- Verified so far only with fakes (unit tests) and the dev simulator through a real phone page (headless Chromium): TV gets mic.state → word.read ×4 → word.helped (stall 3.06 s) → line.done; phone mic off after line.done; template summary on phone and TV.
+## S2 — speech recognition (2026-10-05): built, NOT measured
+
+**What exists**
+- **The service boundary.** `server/src/reading/speech.ts` defines `SpeechSource` (= SpeechRecognitionService).
+  `TranscribeSource` is Amazon Transcribe Streaming: 16 kHz PCM, partial results with stabilisation, word times;
+  an error ends the turn. `ScriptedSource` (`scripted.ts`) is a **LOCAL SIMULATION**. It waits for the first audio
+  chunk, then plays a script of partial and stable transcripts with fixed timing. Its scenarios are: correct, slip,
+  hesitation, misread, two misreads, correction, repeat, omit, stall, silence and demo. It never reads the audio,
+  and everything it produces is labelled simulated: the trace, `/api/config`, the TV badge and the phone banner.
+  It refuses to start with `NODE_ENV=production`.
+- **The harness.** `tools/s2/eval.ts` runs one set of cases through the production path (SessionHub →
+  ReadingDriver → SpeechSource → ReadingTurn) with any of these engines:
+  - `scripted` (simulation);
+  - `polly-transcribe` (Polly speaks each case, streamed in real time, 40 ms frames);
+  - `wav` (recordings kept outside the repo);
+  - live sessions scored against an observer's sheet (`score-observed.ts`; nothing recorded).
+
+  Per word it records label, outcome, recogniser output, spoken / recognised / lit times and latency. Output is
+  `results.json` plus `report.md`. Real engines write to `docs/results/s2/`; simulations write to `bench/` and are
+  not committed.
+- **The cases.** `tools/s2/cases.json` holds 169 cases from 10 English and 10 Hindi original lines. Categories:
+  correct, slip, missing, repeated, hesitation, long pause, wrong word, multiple wrong, correction, Hindi Unicode
+  (nukta, chandrabindu, nasal virama, ये/ए, digits, vowel-change misreads), and English edge (quotes, apostrophes,
+  hyphens, digits, abbreviations, British spelling).
+- **The pass rule, fixed in advance.** Per language: ≥ 90 % of correctly read words lit within 1 s, and ≤ 10 %
+  of deliberately misread words accepted. PARTIAL means one language passes. FAIL switches the product to Echo Mode.
+- **Child testing.** `docs/CHILD_TESTING.md` is the protocol: written permission, AWS path only, no recording
+  preferred. No child has taken part.
+
+**What the SIMULATED scripted run showed** (`npm run s2:sim`). This is evidence about the reading engine, not
+about recognition. Before the fixes below, 9 of 169 cases did not behave as labelled:
+1. **Two misreads in one line.** After two wrong words, the engine could not find the child again. It used up its
+   one-word skip budget on the first substitution, so it went on to *help* words the child had read correctly.
+   **Fix:** a substitution (a different word was heard in that word's place) no longer uses the omission budget.
+   After two different words heard in place, the word after next may match. Lookahead is never more than two words.
+   Substituted words are still never lit.
+2. **Hyphenated book words** ("ice-cream", heard as "ice cream") now match only when the two heard words join to
+   exactly the expected word.
+3. **Known limitations, left unfixed (the matcher stays strict):** "Mr." vs "Mister", and "colour" vs "color".
+   Turn-line selection should avoid such words.
+
+After the fixes the scripted set gives 99.8 % lit (≤ 1 s by construction) and 0 % misreads accepted. These numbers
+describe the script, not Transcribe.
+
+**Still UNKNOWN:**
+- Transcribe's recognition of these lines (adult synthetic voice);
+- its latency;
+- any child-speech performance.
+
+**After AWS:** `docs/AFTER_AWS.md` step 3.

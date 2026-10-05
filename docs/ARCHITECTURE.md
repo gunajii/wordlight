@@ -3,27 +3,28 @@
 ## Components
 
 ```
-                         build time                                   live
- StoryWeaver story ─► content pipeline ─► story package ─► S3/CloudFront ─► Fire TV app (Vega)
-                      (Polly Kajal: audio +                               │  words light from
-                       word speech marks)                                 │  audio position
-                                                                          │
- Phone web page ─── audio frames (16 kHz PCM, only in a turn) ─► session server ◄─ turn.start/help/cancel
-   consent, reader,                                               │ reading engine ◄─ Transcribe streaming
-   listening, summary ◄── line.done / session.summary ─────────── │ word.read/helped/skipped ─► TV
-                                                                  └─► DynamoDB (counts only)
+ build time:  StoryWeaver ePub ─► import ─► NarrationService (Amazon Polly | fixture) ─► story package (validated)
+                                             audio + word speech marks (UTF-8 bytes)      served by the WordLight server
+
+ live:        Fire TV app (Vega) ── turn.start / help / cancel ──►  WordLight server (EC2, HTTPS/WSS) ──► Amazon Transcribe
+                 ▲  narration + <KaraokeLine>                         │ SpeechSource → ReadingDriver →     Streaming
+                 └── word.read / helped / skipped / line.done ◄──────┤   ReadingTurn (strict, deterministic)
+              Phone web page ── 16 kHz PCM, 40 ms, ONLY during a turn ┘ SummaryService (template | Bedrock, optional)
+                 consent · reader · mic ON/OFF · summary ◄── session.summary
 ```
 
-| Part | Where | Pure / platform | Tests |
-|---|---|---|---|
-| Reading engine | `packages/reading-engine` | pure TS, clock injected | 19 |
-| Timing core | `packages/karaoke-core` | pure TS | 7 |
-| Story package | `packages/story-package` | pure TS | 5 |
-| Protocol | `packages/shared-protocol` | pure TS | 4 |
-| Session client | `packages/session-client` | JS (from Earshot) | 7 |
-| Server | `server/` | Node | 11 |
-| TV app | `apps/vega-tv` | React Native for Vega | on-device only |
-| Phone page | `web/phone` | browser | not started |
+| Part | Where | Notes |
+|---|---|---|
+| Reading engine | `packages/reading-engine` | pure TS, clock injected, 25 tests |
+| Speech service | `server/src/reading/speech.ts`, `scripted.ts` | Transcribe (production) or scripted LOCAL SIMULATION, behind one interface |
+| Reading driver | `server/src/reading/driver.ts` | engine clock starts at the first audio chunk; traces numbers only |
+| Turn plan + state machine | `packages/tv-core` | free mode stops before the line; echo mode stops after it |
+| Timing / subtitles | `oss/karaoke-vega` | open-source package; the TV's subtitle is `<KaraokeLine>` |
+| Story package | `packages/story-package`, `server/src/content.ts` | validated on build and again before the shelf lists it |
+| Summary | `server/src/summary.ts` | counts always deterministic; wording by template or guarded Bedrock |
+| TV app | `apps/vega-tv` | React Native for Vega |
+| Phone page | `web/phone` | browser, no install |
+| Infra | `infra/aws` | one EC2 instance, Caddy TLS, instance role; no database (counts are per session, in memory) |
 
 ## Decisions
 
@@ -40,10 +41,19 @@
 - Alternative: separate Polly clips per turn line / help word (schema already allows `clip`).
 
 **The model never judges the child.**
-- The reading engine is a deterministic state machine (cursor, last progress, 3 s stall). Bedrock (Should tier) only chooses turn lines and phrases the parent summary from counts, with a template fallback.
+- The reading engine is a deterministic state machine (cursor, last progress, 3 s stall). Bedrock is optional and
+  only rewords the parent summary. Its text must contain exactly the given numbers and make no claims, or the
+  template is used. Turn lines are chosen deterministically.
+
+**Free reading vs Echo Mode is configuration, not code** (`READING_MODE`). Echo Mode is the S2 fallback and is
+weaker: the child repeats a line they just heard, which is not the same as reading it.
+
+**Mockable service boundaries.** Speech recognition (`SpeechSource`), narration (`NarrationService`) and summary
+(`SummaryService`) each have an AWS implementation and a deterministic local one. Local ones are labelled
+simulated wherever their output appears, and the scripted speech source refuses to run in production.
 
 **Matching is deliberately strict.**
-- Exact match up to 4 code points; longer words may differ by 1 edit (2 from 8 code points) only if they sound alike AND the edit is not a vowel change. The price: ASR spelling variants like colour/color are rejected. Revisited with S2 data.
+- Exact match up to 4 code points; longer words may differ by 1 edit (2 from 8 code points) only if they sound alike AND the edit is not a vowel change. The price: ASR spelling variants like colour/color are rejected. The scripted S2 run found two resync gaps (two misreads in a line; hyphenated words), now fixed without loosening matching (docs/SPIKES.md, S2).
 
 ## Protocol
 
