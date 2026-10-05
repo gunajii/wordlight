@@ -1,0 +1,9 @@
+{
+  "name": "@wordlight/tv-core",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Pure TV-side logic for WordLight: the Your Turn state machine, story playback plan (where to pause, what to replay for help) and session counts. Vendored into the Vega app.",
+  "exports": { ".": "./src/index.ts" },
+  "license": "MIT"
+}
