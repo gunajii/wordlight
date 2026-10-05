@@ -2,6 +2,9 @@
 // Amazon Transcribe Streaming run on the SAME audio. Runs on the Mac with the developer's AWS credentials
 // (~/.aws; never in the repo or chat). Output (gitignored): content/build/s4/<id>.{txt,pcm,mp3,marks.ndjson,tokens.json,transcribe.json}
 //   AWS_REGION=ap-south-1 node tools/s4/polly-s4.ts [--only hi-1] [--no-transcribe]
+//   node tools/s4/polly-s4.ts --fixture      SIMULATED: fixture narration (tones, exact marks) and a synthetic
+//                                            "Transcribe" reference with known errors → content/build/s4-fixture.
+//                                            Exercises the analysis/report code; it is not an S4 result.
 // The analysis runs separately (tools/s4/analyze.py) so it can be re-run without AWS calls.
 import { PollyClient, SynthesizeSpeechCommand, DescribeVoicesCommand } from '@aws-sdk/client-polly';
 import { TranscribeStreamingClient, StartStreamTranscriptionCommand } from '@aws-sdk/client-transcribe-streaming';
@@ -9,12 +12,13 @@ import { mkdirSync, writeFileSync, readFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { parseSpeechMarks, timeTokens, displayTokens, markByteMismatches } from '@wordlight/story-package';
+import { parseSpeechMarks, timeTokens, displayTokens, markByteMismatches, fixtureMarks, fixturePcm } from '@wordlight/story-package';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
-const OUT = path.join(ROOT, 'content/build/s4');
 const region = process.env.AWS_REGION || 'ap-south-1';
 const args = process.argv.slice(2);
+const FIXTURE = args.includes('--fixture');
+const OUT = path.join(ROOT, FIXTURE ? 'content/build/s4-fixture' : 'content/build/s4');
 const only = args.includes('--only') ? args[args.indexOf('--only') + 1] : null;
 const doTranscribe = !args.includes('--no-transcribe');
 const VOICE = 'Kajal';
@@ -47,10 +51,31 @@ async function transcribePcm(pcm: Buffer, lang: string) {
   return items;
 }
 
-async function main() {
+/** Known reference errors (ms) for the fixture run: reference start = mark − error. 3 of 4 within 50 ms. */
+export const FIXTURE_REF_ERRORS = [-20, 10, 35, 70];
+async function fixtureRun() {
   mkdirSync(OUT, { recursive: true });
   const { passages } = JSON.parse(readFileSync(path.join(ROOT, 'tools/s4/passages.json'), 'utf8'));
-  const summary: any = { region, voice: VOICE, at: new Date().toISOString(), voices: {}, passages: [] };
+  const summary: any = { simulated: true, voice: 'fixture-tones', at: new Date().toISOString(), passages: [] };
+  for (const p of passages) {
+    const { marks, durationMs, spans } = fixtureMarks(p.text);
+    const pcm = Buffer.from(fixturePcm(spans, durationMs).buffer);
+    const tokens = timeTokens(p.text, marks, durationMs);
+    const tItems = marks.map((m, k) => ({ content: m.value, start: m.time - FIXTURE_REF_ERRORS[k % FIXTURE_REF_ERRORS.length], end: m.time + 200, confidence: 1, type: 'pronunciation' }));
+    writeFileSync(path.join(OUT, `${p.id}.pcm`), pcm);
+    writeFileSync(path.join(OUT, `${p.id}.tokens.json`), JSON.stringify(tokens, null, 1));
+    writeFileSync(path.join(OUT, `${p.id}.transcribe.json`), JSON.stringify(tItems, null, 1));
+    summary.passages.push({ id: p.id, lang: p.lang, durMs: durationMs, wordMarks: marks.length, byteMismatch: markByteMismatches(p.text, marks) });
+  }
+  writeFileSync(path.join(OUT, 'summary.json'), JSON.stringify(summary, null, 1));
+  console.log(`SIMULATED fixture S4 data → ${path.relative(ROOT, OUT)} (python3 tools/s4/analyze.py ${path.relative(ROOT, OUT)})`);
+}
+
+async function main() {
+  if (FIXTURE) return fixtureRun();
+  mkdirSync(OUT, { recursive: true });
+  const { passages } = JSON.parse(readFileSync(path.join(ROOT, 'tools/s4/passages.json'), 'utf8'));
+  const summary: any = { simulated: false, region, voice: VOICE, at: new Date().toISOString(), voices: {}, passages: [] };
   for (const lang of ['hi-IN', 'en-IN']) {
     const v = await polly.send(new DescribeVoicesCommand({ LanguageCode: lang as any, Engine: 'neural' }));
     summary.voices[lang] = (v.Voices ?? []).map((x) => ({ id: x.Id, engines: x.SupportedEngines, lang: x.LanguageCode, extra: x.AdditionalLanguageCodes }));
@@ -85,4 +110,4 @@ async function main() {
   writeFileSync(path.join(OUT, 'summary.json'), JSON.stringify(summary, null, 1));
   console.log(`\nwrote ${OUT} — tell Claude "S4 synthesized" to run the analysis.`);
 }
-main().catch((e) => { console.error(e?.name ?? '', e?.message ?? e); process.exit(1); });
+if (import.meta.url === `file://${process.argv[1]}`) main().catch((e) => { console.error(e?.name ?? '', e?.message ?? e); process.exit(1); });
