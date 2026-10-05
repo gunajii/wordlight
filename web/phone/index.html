@@ -40,6 +40,7 @@
 <body>
 <main>
   <h1>WORD<span>LIGHT</span><span class="diag"> · MIC TEST</span></h1>
+  <div class="card hidden" id="sim-banner" style="border-color:var(--warn)"><b class="err">Local simulation</b><div class="dim">Speech recognition is simulated on this server (development mode). Words light from a script, not from the microphone.</div></div>
 
   <section class="card diag" id="conn-card">
     <div class="row"><span>Session</span><b id="sid">—</b></div>
@@ -50,8 +51,8 @@
 
   <section class="card privacy hidden" id="consent-card">
     <p><b>Before we start (for the parent)</b></p>
-    <p>WordLight uses this phone's microphone <b>only during reading turns</b>, so the TV can follow your child reading a line aloud. The microphone is off at all other times, and this page shows when it is on.</p>
-    <p>During a turn the sound is streamed to the WordLight server for speech recognition and is <b>not stored</b> by WordLight.</p>
+    <p>WordLight uses the microphone <b>only during reading turns</b> to recognise the words your child reads aloud. <b>Your child's voice is not stored</b> by WordLight.</p>
+    <p class="dim">The microphone is off before, between and after turns, and this page always shows whether it is ON or OFF. During a turn the sound goes over an encrypted connection to the WordLight server, which passes it to Amazon Transcribe for speech recognition and keeps only which words were read.</p>
     <p class="dim diag">This page is a technical test (spike S3). Please use adult speech or test sounds, not a child's voice.</p>
     <button id="consent-btn">I agree — use the microphone during reading turns</button>
   </section>

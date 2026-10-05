@@ -26,6 +26,7 @@ export function validateEvent(msg: unknown): Result {
       if (!isInt(m.page, 0, 10_000) || !isInt(m.line, 0, 10_000)) return fail('page/line');
       if (!Array.isArray(m.words) || m.words.length === 0 || m.words.length > 40 || !m.words.every((w) => isStr(w, 64))) return fail('words');
       if (!LANGS.includes(m.lang as never)) return fail('lang');
+      if (m.mode !== undefined && m.mode !== 'free' && m.mode !== 'echo') return fail('mode');
       break;
     case 'turn.help':
       if (!isStr(m.turnId, 64)) return fail('turnId');

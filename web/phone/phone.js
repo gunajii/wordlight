@@ -31,7 +31,9 @@ if (DIAG) document.body.classList.add('diag');
 const READER_KEY = 'wordlight.reader.v1';
 let reader = null; try { reader = JSON.parse(store.get(READER_KEY) || 'null'); } catch {}
 let editingReader = false;
-let lineWords = [], lineMarks = [], lastDone = null, summaryText = null;
+let lineWords = [], lineMarks = [], lastDone = null, summaryText = null, lineMode = 'free', simulated = false;
+// A local simulation must never look like real recognition: the server says when its speech source is scripted.
+fetch('/api/config').then((r) => r.json()).then((c) => { simulated = !!c?.speech?.simulated; render(); }).catch(() => {});
 const now = () => performance.now();
 
 // ---------- diagnostics event log ----------
@@ -136,7 +138,7 @@ function onMessage(m) {
     if (m.type === 'line.done') lastDone = { at: now(), read: m.read, helped: m.helped };
   }
   if (m.type === 'turn.start') {
-    lineWords = Array.isArray(m.words) ? m.words : []; lineMarks = lineWords.map(() => 'pending'); lastDone = null;
+    lineWords = Array.isArray(m.words) ? m.words : []; lineMarks = lineWords.map(() => 'pending'); lastDone = null; lineMode = m.mode === 'echo' ? 'echo' : 'free';
     ev('turn-start', { turnId: m.turnId, chunk: m.chunkMs });
     Object.assign(S, { seq: 0, sent: 0, unsent: 0, acked: 0, lost: 0, latMs: null, turnStartedAt: now() });
     dispatch({ type: 'turn-start', turnId: m.turnId, tag: m.audioTag, chunkMs: m.chunkMs });
@@ -251,7 +253,8 @@ function render() {
   mic.className = 'mic ' + (live > 0 ? 'on' : 'off');
   $('live').textContent = live;
   const showDone = !L.turn && lastDone && now() - lastDone.at < 4000;
-  $('state').textContent = L.turn ? (live > 0 ? 'Your turn! Read the line on the TV.' : needsTap(L) ? 'Tap below to start listening' : 'Getting the microphone ready…')
+  $('sim-banner').classList.toggle('hidden', !simulated);
+  $('state').textContent = L.turn ? (live > 0 ? (lineMode === 'echo' ? 'Your turn! Say the line you just heard.' : 'Your turn! Read the line on the TV.') : needsTap(L) ? 'Tap below to start listening' : 'Getting the microphone ready…')
     : showDone ? `Well read! ${lastDone.read} on your own${lastDone.helped ? `, ${lastDone.helped} with help` : ''}.` : 'Waiting for your turn…';
   $('words').innerHTML = L.turn || showDone ? lineWords.map((w, i) => `<span class="${lineMarks[i] === 'pending' ? (i === lineMarks.indexOf('pending') ? 'w-next' : '') : 'w-' + lineMarks[i]}">${w.replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[c])}</span>`).join(' ') : '';
   $('chunk').textContent = L.turn ? `${L.turn.chunkMs} ms` : '—';

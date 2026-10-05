@@ -1,0 +1,20 @@
+{
+ "id": "wl-test-kite",
+ "lang": "en-IN",
+ "level": 1,
+ "title": "Mina's Red Kite",
+ "credits": {
+  "source": "WordLight test content",
+  "license": "original",
+  "title": "Mina's Red Kite",
+  "author": "WordLight project",
+  "illustrator": "WordLight project (generated shapes, tools/content/make-test-art.py)",
+  "attribution": "Test story and pictures made for WordLight (original, for development and rehearsal)."
+ },
+ "pages": [
+  { "image": "p1.png", "text": "Mina has a red kite. The wind is soft and warm." },
+  { "image": "p2.png", "text": "Mina runs up the green hill. Her kite goes up and up." },
+  { "image": "p3.png", "text": "A big bird flies near the kite. Look at the bird!" },
+  { "image": "p4.png", "text": "The sun goes down. Mina and her kite go home." }
+ ]
+}

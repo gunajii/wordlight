@@ -38,7 +38,10 @@ export interface TurnStart extends Envelope {
   audioTag?: number;
   /** Audio chunk duration the phone should use (ms). Server-set; default 40. */
   chunkMs?: number;
+  /** 'free' = the child reads the line first (default); 'echo' = the TV reads it, then the child repeats it. */
+  mode?: ReadingMode;
 }
+export type ReadingMode = 'free' | 'echo';
 export interface TurnHelp extends Envelope {
   type: 'turn.help';
   turnId: string;

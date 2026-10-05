@@ -1,0 +1,321 @@
+{
+ "packageVersion": 1,
+ "id": "wl-test-kite",
+ "lang": "en-IN",
+ "level": 1,
+ "title": "Mina's Red Kite",
+ "credits": {
+  "source": "WordLight test content",
+  "license": "original",
+  "title": "Mina's Red Kite",
+  "author": "WordLight project",
+  "illustrator": "WordLight project (generated shapes, tools/content/make-test-art.py)",
+  "attribution": "Test story and pictures made for WordLight (original, for development and rehearsal)."
+ },
+ "voice": {
+  "engine": "synthetic-clicks",
+  "id": "fixture-tones"
+ },
+ "timing": {
+  "source": "synthetic",
+  "verified": false
+ },
+ "pages": [
+  {
+   "image": "p1.png",
+   "audio": "p1.mp3",
+   "durationMs": 5010,
+   "lines": [
+    {
+     "text": "Mina has a red kite.",
+     "words": [
+      {
+       "w": "Mina",
+       "t0": 300,
+       "t1": 610
+      },
+      {
+       "w": "has",
+       "t0": 610,
+       "t1": 920
+      },
+      {
+       "w": "a",
+       "t0": 920,
+       "t1": 1230
+      },
+      {
+       "w": "red",
+       "t0": 1230,
+       "t1": 1540
+      },
+      {
+       "w": "kite.",
+       "t0": 1540,
+       "t1": 2300
+      }
+     ],
+     "turn": false
+    },
+    {
+     "text": "The wind is soft and warm.",
+     "words": [
+      {
+       "w": "The",
+       "t0": 2300,
+       "t1": 2610
+      },
+      {
+       "w": "wind",
+       "t0": 2610,
+       "t1": 2920
+      },
+      {
+       "w": "is",
+       "t0": 2920,
+       "t1": 3230
+      },
+      {
+       "w": "soft",
+       "t0": 3230,
+       "t1": 3540
+      },
+      {
+       "w": "and",
+       "t0": 3540,
+       "t1": 3850
+      },
+      {
+       "w": "warm.",
+       "t0": 3850,
+       "t1": 5010
+      }
+     ],
+     "turn": false
+    }
+   ]
+  },
+  {
+   "image": "p2.png",
+   "audio": "p2.mp3",
+   "durationMs": 5375,
+   "lines": [
+    {
+     "text": "Mina runs up the green hill.",
+     "words": [
+      {
+       "w": "Mina",
+       "t0": 300,
+       "t1": 610
+      },
+      {
+       "w": "runs",
+       "t0": 610,
+       "t1": 920
+      },
+      {
+       "w": "up",
+       "t0": 920,
+       "t1": 1230
+      },
+      {
+       "w": "the",
+       "t0": 1230,
+       "t1": 1540
+      },
+      {
+       "w": "green",
+       "t0": 1540,
+       "t1": 1905
+      },
+      {
+       "w": "hill.",
+       "t0": 1905,
+       "t1": 2665
+      }
+     ],
+     "turn": false
+    },
+    {
+     "text": "Her kite goes up and up.",
+     "words": [
+      {
+       "w": "Her",
+       "t0": 2665,
+       "t1": 2975
+      },
+      {
+       "w": "kite",
+       "t0": 2975,
+       "t1": 3285
+      },
+      {
+       "w": "goes",
+       "t0": 3285,
+       "t1": 3595
+      },
+      {
+       "w": "up",
+       "t0": 3595,
+       "t1": 3905
+      },
+      {
+       "w": "and",
+       "t0": 3905,
+       "t1": 4215
+      },
+      {
+       "w": "up.",
+       "t0": 4215,
+       "t1": 5375
+      }
+     ],
+     "turn": true
+    }
+   ]
+  },
+  {
+   "image": "p3.png",
+   "audio": "p3.mp3",
+   "durationMs": 5065,
+   "lines": [
+    {
+     "text": "A big bird flies near the kite.",
+     "words": [
+      {
+       "w": "A",
+       "t0": 300,
+       "t1": 610
+      },
+      {
+       "w": "big",
+       "t0": 610,
+       "t1": 920
+      },
+      {
+       "w": "bird",
+       "t0": 920,
+       "t1": 1230
+      },
+      {
+       "w": "flies",
+       "t0": 1230,
+       "t1": 1595
+      },
+      {
+       "w": "near",
+       "t0": 1595,
+       "t1": 1905
+      },
+      {
+       "w": "the",
+       "t0": 1905,
+       "t1": 2215
+      },
+      {
+       "w": "kite.",
+       "t0": 2215,
+       "t1": 2975
+      }
+     ],
+     "turn": false
+    },
+    {
+     "text": "Look at the bird!",
+     "words": [
+      {
+       "w": "Look",
+       "t0": 2975,
+       "t1": 3285
+      },
+      {
+       "w": "at",
+       "t0": 3285,
+       "t1": 3595
+      },
+      {
+       "w": "the",
+       "t0": 3595,
+       "t1": 3905
+      },
+      {
+       "w": "bird!",
+       "t0": 3905,
+       "t1": 5065
+      }
+     ],
+     "turn": true
+    }
+   ]
+  },
+  {
+   "image": "p4.png",
+   "audio": "p4.mp3",
+   "durationMs": 4700,
+   "lines": [
+    {
+     "text": "The sun goes down.",
+     "words": [
+      {
+       "w": "The",
+       "t0": 300,
+       "t1": 610
+      },
+      {
+       "w": "sun",
+       "t0": 610,
+       "t1": 920
+      },
+      {
+       "w": "goes",
+       "t0": 920,
+       "t1": 1230
+      },
+      {
+       "w": "down.",
+       "t0": 1230,
+       "t1": 1990
+      }
+     ],
+     "turn": false
+    },
+    {
+     "text": "Mina and her kite go home.",
+     "words": [
+      {
+       "w": "Mina",
+       "t0": 1990,
+       "t1": 2300
+      },
+      {
+       "w": "and",
+       "t0": 2300,
+       "t1": 2610
+      },
+      {
+       "w": "her",
+       "t0": 2610,
+       "t1": 2920
+      },
+      {
+       "w": "kite",
+       "t0": 2920,
+       "t1": 3230
+      },
+      {
+       "w": "go",
+       "t0": 3230,
+       "t1": 3540
+      },
+      {
+       "w": "home.",
+       "t0": 3540,
+       "t1": 4700
+      }
+     ],
+     "turn": false
+    }
+   ]
+  }
+ ]
+}

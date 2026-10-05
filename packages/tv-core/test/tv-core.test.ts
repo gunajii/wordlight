@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { idle, turnReduce, micShouldBeOn, nextTurn, resumeAt, helpSpan, totals, type TurnEvent, type PPage } from '../src/index.ts';
+import { idle, turnReduce, micShouldBeOn, nextTurn, resumeAt, helpSpan, totals, turnStopAt, ECHO_STOP_AFTER_MS, type TurnEvent, type PPage } from '../src/index.ts';
 
 const run = (...evs: TurnEvent[]) => { let s = idle(); const rej: string[] = []; for (const e of evs) { const r = turnReduce(s, e); s = r.state; if (r.rejected) rej.push(r.rejected); } return { s, rej }; };
 const begin: TurnEvent = { type: 'begin', turnId: 't', readerName: 'Riya', words: ['The', 'little', 'cat'] };
@@ -56,4 +56,17 @@ test('plan: stop before the turn line, resume at the next line, help span stays 
 test('end-card totals come only from line.done results', () => {
   assert.deepEqual(totals([{ read: 5, helped: 1, skipped: 0 }, { read: 3, helped: 0, skipped: 1 }]), { words: 9, onOwn: 8, withHelp: 1, turns: 2 });
   assert.deepEqual(totals([]), { words: 0, onOwn: 0, withHelp: 0, turns: 0 });
+});
+
+test('echo mode: narration stops AFTER the turn line (TV reads it, child repeats); free mode stops before it', () => {
+  const page: PPage = { durationMs: 5000, lines: [
+    { text: 'Once upon a time', turn: false, words: [{ w: 'Once', t0: 0, t1: 300 }, { w: 'upon', t0: 300, t1: 600 }, { w: 'a', t0: 600, t1: 700 }, { w: 'time', t0: 700, t1: 1200 }] },
+    { text: 'the cat sat', turn: true, words: [{ w: 'the', t0: 1500, t1: 1700 }, { w: 'cat', t0: 1700, t1: 2100 }, { w: 'sat', t0: 2100, t1: 2600 }] },
+    { text: 'and slept', turn: false, words: [{ w: 'and', t0: 3000, t1: 3200 }, { w: 'slept', t0: 3200, t1: 3800 }] },
+  ] };
+  assert.equal(turnStopAt(page.lines[1], 'free'), 1380);
+  assert.equal(turnStopAt(page.lines[1], 'echo'), 2600 + ECHO_STOP_AFTER_MS);
+  assert.deepEqual(nextTurn(page, 1500, new Set(), 'echo'), { index: 1, stopAtMs: 2750 }, 'in echo mode the narrator is allowed into the line');
+  assert.equal(nextTurn(page, 1500, new Set(), 'free'), null, 'in free mode that position is already too late');
+  assert.equal(resumeAt(page, 1), 2940, 'both modes resume just before the next line');
 });

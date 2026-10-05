@@ -10,12 +10,25 @@ export const TURN_STOP_LEAD_MS = 120;
 export function lineStart(l: PLine) { return l.words[0]?.t0 ?? 0; }
 export function lineEnd(l: PLine) { return l.words[l.words.length - 1]?.t1 ?? lineStart(l); }
 
+/** Echo mode: stop this many ms after the narrator finished the line (the last word's sound must end). */
+export const ECHO_STOP_AFTER_MS = 150;
+export type ReadingMode = 'free' | 'echo';
+
+/**
+ * Where narration stops for a turn line.
+ *   free: just before the line — the child reads it first (the narrator never says it before the child).
+ *   echo: just after the line — the TV reads it, the child repeats it (fallback when free reading isn't reliable).
+ */
+export function turnStopAt(l: PLine, mode: ReadingMode = 'free'): number {
+  return mode === 'echo' ? lineEnd(l) + ECHO_STOP_AFTER_MS : Math.max(0, lineStart(l) - TURN_STOP_LEAD_MS);
+}
+
 /** Next turn line at or after playback position `posMs` (only lines whose stop point is still ahead). */
-export function nextTurn(page: PPage, posMs: number, done: Set<number>): { index: number; stopAtMs: number } | null {
+export function nextTurn(page: PPage, posMs: number, done: Set<number>, mode: ReadingMode = 'free'): { index: number; stopAtMs: number } | null {
   for (let i = 0; i < page.lines.length; i++) {
     const l = page.lines[i];
     if (!l.turn || done.has(i) || !l.words.length) continue;
-    const stopAt = Math.max(0, lineStart(l) - TURN_STOP_LEAD_MS);
+    const stopAt = turnStopAt(l, mode);
     if (stopAt >= posMs - 40) return { index: i, stopAtMs: stopAt };
   }
   return null;

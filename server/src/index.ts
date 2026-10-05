@@ -21,6 +21,7 @@ import { S3Sink } from './s3/sink.ts';
 import { ReadingDriver, RouterDriver, type TurnTrace } from './reading/driver.ts';
 import { TranscribeSource, type SpeechSource } from './reading/speech.ts';
 import { scriptedFromEnv } from './reading/scripted.ts';
+import { checkAllStories } from './content.ts';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const PORT = Number(process.env.PORT || 8787);
@@ -80,8 +81,11 @@ const STATIC: [string, string][] = [
   ['/pkg/karaoke-core/', path.join(ROOT, 'packages/karaoke-core/src')],
 ];
 
-export function createServer({ hub = new SessionHub({ now: serverNow }), publicUrl = PUBLIC_URL, log = console.log, heartbeat = HEARTBEAT, mediaUrl = currentMediaUrl, tvRun = currentTvRun, s3ResultsDir = path.join(ROOT, 'bench/runs/s3') as string | null, speechSource = (process.env.SPEECH ?? 'transcribe') as string, traceSink = null as null | ((t: TurnTrace) => void) } = {}) {
+export function createServer({ hub = new SessionHub({ now: serverNow }), publicUrl = PUBLIC_URL, log = console.log, heartbeat = HEARTBEAT, mediaUrl = currentMediaUrl, tvRun = currentTvRun, s3ResultsDir = path.join(ROOT, 'bench/runs/s3') as string | null, speechSource = (process.env.SPEECH ?? 'transcribe') as string, traceSink = null as null | ((t: TurnTrace) => void), readingModeOpt = null as null | 'free' | 'echo' } = {}) {
   let reading: ReadingDriver | null = null;
+  // Reading strategy (config, not code): 'free' = the child reads the line first; 'echo' = the TV reads it, the child repeats.
+  const readingMode: 'free' | 'echo' = (readingModeOpt ?? process.env.READING_MODE) === 'echo' ? 'echo' : 'free';
+  let speechName = 'unknown', speechSimulated = false;
   // Phones need https (microphone). The join link/QR uses the https base when one exists (AWS hostname or the
   // dev tunnel), else the LAN URL (which can pair, but cannot open the microphone).
   const joinUrlAsync = async (id: string) => `${(await mediaUrl()) ?? publicUrl}/j/${id}`;
@@ -93,6 +97,7 @@ export function createServer({ hub = new SessionHub({ now: serverNow }), publicU
     if (simulated && process.env.NODE_ENV === 'production') throw new Error('SPEECH=scripted is a local simulation and is refused when NODE_ENV=production');
     const speech: SpeechSource = simulated ? scriptedFromEnv(process.env.SPEECH_SCRIPT) : new TranscribeSource({ region: process.env.AWS_REGION });
     if (simulated) log(`[reading] SPEECH=scripted (${process.env.SPEECH_SCRIPT ?? 'demo'}) — LOCAL SIMULATION: transcripts come from a script, not from the audio. Not real speech recognition.`);
+    speechName = speech.name; speechSimulated = !!speech.simulated;
     reading = new ReadingDriver({ hub, source: speech, now: serverNow, log, devTranscripts: process.env.DEV_TRANSCRIPTS === '1', onTrace: (t) => traceSink?.(t) });
     hub.driver = new RouterDriver({ test: s3, reading });
   }
@@ -133,17 +138,16 @@ export function createServer({ hub = new SessionHub({ now: serverNow }), publicU
         if (body?.action === 'end' || body?.action === 'skip') return json(res, 200, { ended: hub.endActiveTurn(s, body.action === 'skip' ? 'skipped' : 'exit') });
         return json(res, 400, { error: 'action must be start|end|skip' });
       }
-      // story shelf: every content/stories/<id>/story.json (title, language, cover, credits line)
+      // story shelf: every content/stories/<id> package that passes validation (bad packages are logged, never served
+      // to the shelf). Test content (synthetic narration) only with ?all=1 or SHOW_TEST_CONTENT=1 (local demo mode).
       if (p === '/api/stories') {
-        const { readdir } = await import('node:fs/promises');
-        const dir = path.join(ROOT, 'content/stories');
+        const showTest = url.searchParams.get('all') === '1' || process.env.SHOW_TEST_CONTENT === '1';
         const out: unknown[] = [];
-        for (const id of (await readdir(dir).catch(() => [] as string[])).sort()) {
-          try {
-            const st = JSON.parse(await readFile(path.join(dir, id, 'story.json'), 'utf8'));
-            if (url.searchParams.get('all') !== '1' && st.timing?.source === 'synthetic') continue; // hide test content
-            out.push({ id: st.id, title: st.title, lang: st.lang, level: st.level, cover: st.pages?.[0]?.image ?? null, attribution: st.credits?.attribution ?? '', turns: st.pages?.reduce((n: number, pg: any) => n + pg.lines.filter((l: any) => l.turn).length, 0) ?? 0 });
-          } catch {}
+        for (const c of await checkAllStories(path.join(ROOT, 'content/stories'))) {
+          if (!c.ok) { log(`[content] ${c.id} refused: ${c.issues.filter((i) => i.level === 'error').map((i) => `${i.path}: ${i.message}`).slice(0, 3).join('; ')}`); continue; }
+          if (c.test && !showTest) continue;
+          const st = c.story!;
+          out.push({ id: st.id, title: st.title, lang: st.lang, level: st.level, cover: st.pages[0]?.image ?? null, attribution: st.credits?.attribution ?? '', turns: st.pages.reduce((n, pg) => n + pg.lines.filter((l) => l.turn).length, 0), test: c.test });
         }
         return json(res, 200, out);
       }
@@ -152,7 +156,7 @@ export function createServer({ hub = new SessionHub({ now: serverNow }), publicU
         const sid = url.searchParams.get('session')?.toUpperCase();
         return json(res, 200, (reading?.traces ?? []).filter((t) => !sid || t.sessionId === sid));
       }
-      if (p === '/api/config') return json(res, 200, { mediaUrl: await mediaUrl(), run: await tvRun() });
+      if (p === '/api/config') return json(res, 200, { mediaUrl: await mediaUrl(), run: await tvRun(), readingMode, speech: { source: speechName, simulated: speechSimulated } });
       if (p === '/api/time') return json(res, 200, { c0: Number(url.searchParams.get('c0')), s: serverNow() });
       if (p === '/api/sessions' && req.method === 'POST') {
         const id = hub.createSession();

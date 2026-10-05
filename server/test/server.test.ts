@@ -22,7 +22,7 @@ test('http: session create, QR png, content with Range, TypeScript packages serv
   assert.ok(!/: Lang\)/.test(js), 'type annotations stripped');
   assert.equal((await fetch(`${base}/content/../package.json`)).status, 404);
   assert.equal((await fetch(`${base}/api/sessions/ZZZZ`)).status, 404);
-  assert.deepEqual(await (await fetch(`${base}/api/config`)).json(), { mediaUrl: 'https://media.example', run: { runId: 'r1', leadMs: -339 } });
+  assert.deepEqual(await (await fetch(`${base}/api/config`)).json(), { mediaUrl: 'https://media.example', run: { runId: 'r1', leadMs: -339 }, readingMode: 'free', speech: { source: 'transcribe', simulated: false } });
 });
 
 test('ws: phone joins, saves a reader; binary audio reaches the driver only during a turn', async () => {
@@ -59,4 +59,22 @@ test('heartbeat: a silent connection that answers no pings is dropped as timeout
 test('dev run control: only well-formed fields pass', () => {
   assert.deepEqual(sanitizeTvRun({ runId: 'cal-m4a:1', audioFile: 'p1.m4a', leadMs: -339, autorun: true }), { runId: 'cal-m4a:1', audioFile: 'p1.m4a', leadMs: -339, autorun: true });
   assert.deepEqual(sanitizeTvRun({ runId: 'x y', audioFile: '../../etc/passwd', leadMs: 1e9, autorun: 'yes' }), {});
+});
+
+test('config: a scripted (simulated) speech source and echo mode are announced to the TV and phone', async () => {
+  const { server: srv } = createServer({ publicUrl: 'http://t:1', log: () => {}, s3ResultsDir: null, mediaUrl: async () => null, tvRun: async () => ({}), speechSource: 'scripted', readingModeOpt: 'echo' });
+  await new Promise<void>((r) => srv.listen(0, '127.0.0.1', () => r()));
+  const port = (srv.address() as any).port;
+  const cfg = await (await fetch(`http://127.0.0.1:${port}/api/config`)).json();
+  assert.equal(cfg.readingMode, 'echo');
+  assert.deepEqual(cfg.speech, { source: 'scripted', simulated: true });
+  const shelf = await (await fetch(`http://127.0.0.1:${port}/api/stories`)).json();
+  assert.ok(shelf.every((s: any) => !s.test), 'test content hidden from the shelf by default');
+  srv.close();
+});
+
+test('config: the scripted simulation is refused in production', () => {
+  const prev = process.env.NODE_ENV; process.env.NODE_ENV = 'production';
+  try { assert.throws(() => createServer({ log: () => {}, s3ResultsDir: null, speechSource: 'scripted' }), /refused when NODE_ENV=production/); }
+  finally { process.env.NODE_ENV = prev; }
 });
