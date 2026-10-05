@@ -2,7 +2,8 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { SessionHub, summaryText } from '../src/hub.ts';
 import { ReadingDriver } from '../src/reading/driver.ts';
-import { TranscribeSource, SimSource, type SpeechSource, type SpeechHandlers, type SpeechUpdate } from '../src/reading/speech.ts';
+import { TranscribeSource, type SpeechSource, type SpeechHandlers, type SpeechUpdate } from '../src/reading/speech.ts';
+import { ScriptedSource, scriptFor, misreadOf, slipOf, type Scenario } from '../src/reading/scripted.ts';
 
 const conn = () => { const out: any[] = []; return { out, send: (m: any) => out.push(m) }; };
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
@@ -145,10 +146,91 @@ test('TranscribeSource: retries once without stabilisation if the language rejec
   assert.equal(err, null);
 });
 
-test('SimSource (dev only) reads the expected words and can stall at one', async () => {
+// ---- ScriptedSource: local simulation through the REAL reading engine ----
+const FAST = { paceMs: 30, leadMs: 10, partialDelayMs: 8, stableDelayMs: 20, finalDelayMs: 40, hesitationMs: 60, correctionGapMs: 40, stallSilenceMs: 200 };
+async function scripted(scenario: Scenario, words: string[], lang: 'en-IN' | 'hi-IN' = 'en-IN', stallMs = 150, timing: Record<string, number> = {}) {
+  const now = () => performance.timeOrigin + performance.now();
+  const hub = new SessionHub({ now });
+  const src = new ScriptedSource({ scenario, timing: { ...FAST, ...timing } });
+  const driver = new ReadingDriver({ hub, source: src, now, stallMs, firstStallMs: stallMs });
+  hub.driver = driver;
+  const id = hub.createSession();
+  const tv = conn(), phone = conn();
+  hub.handle(tv, { t: 'hello', role: 'tv', sessionId: id, clientId: 'tv' });
+  hub.handle(phone, { t: 'hello', role: 'phone', sessionId: id, clientId: 'p1' });
+  hub.handle(phone, { type: 'reader.save', reader: { readerId: 'r1', firstName: 'Riya', age: 7, lang }, consent: { microphone: true, atMs: 1 } });
+  hub.handle(phone, { t: 'clock.report', offsetMs: 0, minRttMs: 5 });
+  hub.handle(tv, { type: 'turn.start', turnId: 'T1', readerId: 'r1', storyId: 'demo', page: 0, line: 0, words, lang });
+  const s = hub.get(id)!;
+  const tag = s.turn!.audioTag;
+  for (let i = 0; i < 150 && s.turn; i++) { hub.audio(phone, { seq: i, tag, last: false, capturedAtMs: now(), pcm: new Int16Array(640) }); await sleep(10); }
+  const marks = words.map((_, i) => { const m = tv.out.find((x) => (x.type === 'word.read' || x.type === 'word.helped' || x.type === 'word.skipped') && x.index === i); return m ? m.type.split('.')[1] : 'none'; });
+  return { marks, done: tv.out.find((m) => m.type === 'line.done'), trace: driver.traces[0], src };
+}
+const LINE = ['The', 'little', 'rabbit', 'ran', 'home.'];
+
+test('scripted (simulation): nothing happens until the first audio chunk', async () => {
   const ups: SpeechUpdate[] = [];
-  const sess = new SimSource({ paceMs: 10, leadMs: 5, stallAt: null }).open({ lang: 'en-IN', expected: ['a', 'b', 'c'] }, { onUpdate: (u) => ups.push(u), onError: () => {}, onClose: () => {} });
+  const sess = new ScriptedSource({ scenario: 'correct', timing: FAST }).open({ lang: 'en-IN', expected: ['a', 'b'] }, { onUpdate: (u) => ups.push(u), onError: () => {}, onClose: () => {} });
   await sleep(80);
+  assert.equal(ups.length, 0, 'no microphone stream → no transcript');
+  sess.push(new Int16Array(640));
+  await sleep(120);
   sess.end();
-  assert.deepEqual(ups.at(-1)!.words.map((w) => w.text), ['a', 'b', 'c']);
+  assert.deepEqual(ups.at(-1)!.words.map((w) => w.text), ['a', 'b']);
+  assert.ok(ups.some((u) => u.words.some((w) => w.stable === false)), 'partials come first, unstable');
+});
+
+test('scripted correct reading: the real engine lights every word; trace is marked simulated', async () => {
+  const r = await scripted('correct', LINE);
+  assert.deepEqual(r.marks, ['read', 'read', 'read', 'read', 'read']);
+  assert.equal(r.trace.simulated, true);
+  assert.equal(r.trace.source, 'scripted');
+});
+
+test('scripted misread: the engine does NOT light the misread word (the mock does not make turns succeed)', async () => {
+  const r = await scripted('misread', LINE);
+  assert.notEqual(r.marks[2], 'read');
+  assert.deepEqual([r.marks[0], r.marks[1], r.marks[3], r.marks[4]], ['read', 'read', 'read', 'read']);
+});
+
+test('scripted two misreads: neither lights', async () => {
+  const r = await scripted('misread2', LINE);
+  assert.notEqual(r.marks[2], 'read'); assert.notEqual(r.marks[4], 'read');
+});
+
+test('scripted correction: wrong word, then the right one → the word lights after the correction', async () => {
+  const r = await scripted('correction', LINE);
+  assert.deepEqual(r.marks, ['read', 'read', 'read', 'read', 'read']);
+});
+
+test('scripted stall: silence on the middle word → the TV helps it (amber), the rest is read', async () => {
+  const r = await scripted('stall', LINE, 'en-IN', 300, { stallSilenceMs: 450 }); // silence between one and two help times (ticker is 100 ms)
+  assert.deepEqual(r.marks, ['read', 'read', 'helped', 'read', 'read']);
+});
+
+test('scripted silence: no speech at all → every word is helped, never read', async () => {
+  const r = await scripted('silence', ['big', 'red', 'bus']);
+  assert.deepEqual(r.marks, ['helped', 'helped', 'helped']);
+});
+
+test('scripted slip: an ASR spelling slip of a long word (rabbit → rabit) is accepted by the strict matcher', async () => {
+  assert.equal(slipOf('rabbit'), 'rabit');
+  assert.equal(slipOf('elephant'), 'elefant');
+  assert.equal(slipOf('cat'), null);
+  const r = await scripted('slip', LINE);
+  assert.deepEqual(r.marks, ['read', 'read', 'read', 'read', 'read']);
+});
+
+test('scripted Hindi misread (vowel change) is rejected', async () => {
+  assert.notEqual(misreadOf('बिल्ली'), 'बिल्ली');
+  const r = await scripted('misread', ['मेरी', 'बिल्ली', 'काली', 'है।']);
+  assert.notEqual(r.marks[2], 'read');
+});
+
+test('scriptFor is deterministic and the demo scenario stalls on the longest word', () => {
+  assert.deepEqual(scriptFor('demo', LINE), scriptFor('demo', LINE));
+  const steps = scriptFor('demo', LINE);
+  const said = steps.filter((s: any) => 'say' in s).map((s: any) => s.expectIndex);
+  assert.deepEqual(said, [0, 1, 3, 4], 'word 2 ("rabbit") is left for the TV to help');
 });

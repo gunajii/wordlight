@@ -19,7 +19,8 @@ import { decodeAudioFrame } from '@wordlight/shared-protocol';
 import { SessionHub, type Conn } from './hub.ts';
 import { S3Sink } from './s3/sink.ts';
 import { ReadingDriver, RouterDriver, type TurnTrace } from './reading/driver.ts';
-import { TranscribeSource, SimSource, type SpeechSource } from './reading/speech.ts';
+import { TranscribeSource, type SpeechSource } from './reading/speech.ts';
+import { scriptedFromEnv } from './reading/scripted.ts';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const PORT = Number(process.env.PORT || 8787);
@@ -88,8 +89,10 @@ export function createServer({ hub = new SessionHub({ now: serverNow }), publicU
   // Until the Transcribe adapter exists (S2), the S3 measurement sink is the turn driver. It keeps no audio.
   const s3 = new S3Sink({ now: serverNow, resultsDir: s3ResultsDir ?? undefined, log });
   if (!hub.driver) {
-    const speech: SpeechSource = speechSource === 'sim' ? new SimSource({ stallAt: Number(process.env.SIM_STALL_AT ?? 2) }) : new TranscribeSource({ region: process.env.AWS_REGION });
-    if (speechSource === 'sim') log('[reading] SPEECH=sim — DEVELOPMENT ONLY: turns are "read" by a timer, not recognised from audio');
+    const simulated = speechSource === 'scripted' || speechSource === 'sim';
+    if (simulated && process.env.NODE_ENV === 'production') throw new Error('SPEECH=scripted is a local simulation and is refused when NODE_ENV=production');
+    const speech: SpeechSource = simulated ? scriptedFromEnv(process.env.SPEECH_SCRIPT) : new TranscribeSource({ region: process.env.AWS_REGION });
+    if (simulated) log(`[reading] SPEECH=scripted (${process.env.SPEECH_SCRIPT ?? 'demo'}) — LOCAL SIMULATION: transcripts come from a script, not from the audio. Not real speech recognition.`);
     reading = new ReadingDriver({ hub, source: speech, now: serverNow, log, devTranscripts: process.env.DEV_TRANSCRIPTS === '1', onTrace: (t) => traceSink?.(t) });
     hub.driver = new RouterDriver({ test: s3, reading });
   }

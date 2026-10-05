@@ -102,3 +102,42 @@ test('confidence combines match similarity and ASR confidence', () => {
   const ev = t.feed({ segmentId: 's', words: [{ text: 'elefant', confidence: 0.5 }], final: true }, 10);
   assert.equal((ev[0] as any).confidence, 0.38); // similarity 0.75 (2 edits of 8) × ASR 0.5
 });
+
+// ---- found by the S2 harness (scripted set): substitutions and compounds ----
+test('two misreads in one line: each misread word is NOT lit, and the correctly read words after them still light', () => {
+  const t = en('She found a shell by the sea.');
+  const ev = say(t, 'she fond a bell by the sea', 100);
+  assert.deepEqual(kinds(ev), ['word.read:0', 'word.skipped:1', 'word.read:2', 'word.skipped:3', 'word.read:4', 'word.read:5', 'word.read:6', 'line.done']);
+  assert.deepEqual(t.counts(), { read: 5, helped: 0, skipped: 2 });
+});
+
+test('omissions still use the per-line skip budget (no different word was heard in their place)', () => {
+  const t = en('a b1 c1 d1 e1', 0, { maxSkipsPerLine: 1 });
+  assert.deepEqual(kinds(say(t, 'a c1', 100)), ['word.read:0', 'word.skipped:1', 'word.read:2']);
+  assert.deepEqual(kinds(say(t, 'a c1 e1', 200)), [], 'second omission refused: budget used');
+});
+
+test('a misread word followed by silence is helped, never lit', () => {
+  const t = en('the big dog', 0);
+  assert.deepEqual(kinds(say(t, 'the bag', 100)), ['word.read:0']);
+  assert.deepEqual(kinds(t.tick(3100)), ['word.helped:1']);
+});
+
+test('hyphenated word read as two words lights only when the two words join to exactly that word', () => {
+  const t = en('We ate ice-cream today.');
+  assert.deepEqual(kinds(say(t, 'we ate ice cream today', 100)), ['word.read:0', 'word.read:1', 'word.read:2', 'word.read:3', 'line.done']);
+  const t2 = en('We ate ice-cream today.');
+  assert.deepEqual(kinds(say(t2, 'we ate ice cold today', 100)), ['word.read:0', 'word.read:1', 'word.skipped:2', 'word.read:3', 'line.done'], 'ice + cold ≠ ice-cream');
+});
+
+test('two consecutive misreads: both stay unlit, the engine re-finds the child at the word after', () => {
+  const t = en('The bus stopped near the school.');
+  assert.deepEqual(kinds(say(t, 'the bat shopped near the school', 100)), ['word.read:0', 'word.skipped:1', 'word.skipped:2', 'word.read:3', 'word.read:4', 'word.read:5', 'line.done']);
+});
+
+test('lookahead is never more than two words, and two only after two different words were heard', () => {
+  const t = en('one two three four five');
+  assert.deepEqual(kinds(say(t, 'one four', 100)), ['word.read:0'], 'jumping two ahead with nothing heard in between is refused');
+  const t2 = en('one two three four five');
+  assert.deepEqual(kinds(say(t2, 'one x y z five', 100)), ['word.read:0'], 'three misses never jump three ahead');
+});

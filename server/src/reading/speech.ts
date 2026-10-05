@@ -1,9 +1,9 @@
-// Speech sources for a reading turn. The reading engine consumes TranscriptUpdate; a SpeechSource turns a
-// stream of 16 kHz PCM16 chunks into those updates.
-//   • TranscribeSource — Amazon Transcribe Streaming (the real path).
-//   • SimSource        — DEV ONLY: ignores the audio and "reads" the expected words on a timer (optionally
-//                        stalling), so the TV loop can be developed without AWS. Never used for measurements
-//                        or the demo; the server logs loudly when it is active.
+// The speech-recognition service boundary. The reading engine consumes TranscriptUpdate; a SpeechSource
+// (= SpeechRecognitionService) turns a stream of 16 kHz PCM16 chunks (40 ms) into those updates.
+//   • TranscribeSource — Amazon Transcribe Streaming (production; the only path any S2 result may come from).
+//   • ScriptedSource   — ./scripted.ts, LOCAL SIMULATION for development: plays a deterministic script of
+//                        partial/stable transcripts (correct, slip, hesitation, misread, correction, stall,
+//                        silence). It never reads the audio. Results from it are labelled SIMULATED everywhere.
 import { StartStreamTranscriptionCommand, TranscribeStreamingClient } from '@aws-sdk/client-transcribe-streaming';
 import type { TranscriptUpdate } from '@wordlight/reading-engine';
 
@@ -12,7 +12,14 @@ export interface SpeechWord { text: string; stable?: boolean; confidence?: numbe
 export interface SpeechUpdate extends TranscriptUpdate { words: SpeechWord[]; receivedAtMs: number }
 export interface SpeechHandlers { onUpdate: (u: SpeechUpdate) => void; onError: (e: Error) => void; onClose: () => void }
 export interface SpeechSession { push(pcm: Int16Array): void; end(): void; readonly stats: { chunks: number; bytes: number; updates: number } }
-export interface SpeechSource { readonly name: string; open(o: { lang: 'hi-IN' | 'en-IN'; expected?: string[] }, h: SpeechHandlers): SpeechSession }
+export interface SpeechSource {
+  /** 'transcribe' for the real service; anything else is not real recognition */
+  readonly name: string;
+  /** true for a local simulation — callers must label every result SIMULATED */
+  readonly simulated?: boolean;
+  open(o: { lang: 'hi-IN' | 'en-IN'; expected?: string[] }, h: SpeechHandlers): SpeechSession;
+}
+export type SpeechRecognitionService = SpeechSource;
 
 // ---------------- Amazon Transcribe Streaming ----------------
 type ClientLike = { send(cmd: any): Promise<any> };
@@ -82,34 +89,4 @@ export class TranscribeSource implements SpeechSource {
   }
 }
 
-// ---------------- DEV ONLY: simulated reader ----------------
-/** Reads `expected` words one by one every `paceMs`, after `leadMs`; stalls (says nothing) at word `stallAt`. */
-export class SimSource implements SpeechSource {
-  readonly name = 'sim';
-  private readonly o: { paceMs: number; leadMs: number; stallAt: number | null; now: () => number };
-  constructor(o: Partial<{ paceMs: number; leadMs: number; stallAt: number | null; now: () => number }> = {}) {
-    this.o = { paceMs: o.paceMs ?? 550, leadMs: o.leadMs ?? 800, stallAt: o.stallAt ?? null, now: o.now ?? (() => performance.timeOrigin + performance.now()) };
-  }
-  open(o: { lang: 'hi-IN' | 'en-IN'; expected?: string[] }, h: SpeechHandlers): SpeechSession {
-    const words = o.expected ?? [];
-    const stats = { chunks: 0, bytes: 0, updates: 0 };
-    let i = 0, stopped = false;
-    const said: SpeechWord[] = [];
-    const step = () => {
-      if (stopped) return;
-      if (i >= words.length) return;
-      if (this.o.stallAt === i) { i++; timer = setTimeout(step, 3500 + this.o.paceMs); return; } // stall: let help fire, then go on
-      said.push({ text: words[i], stable: true, confidence: 0.9 });
-      i++;
-      stats.updates++;
-      h.onUpdate({ segmentId: 'sim', final: i >= words.length, words: said.slice(), receivedAtMs: this.o.now() });
-      timer = setTimeout(step, this.o.paceMs);
-    };
-    let timer: ReturnType<typeof setTimeout> = setTimeout(step, this.o.leadMs);
-    return {
-      stats,
-      push(pcm: Int16Array) { stats.chunks++; stats.bytes += pcm.byteLength; },
-      end() { stopped = true; clearTimeout(timer); h.onClose(); },
-    };
-  }
-}
+// The local development adapter (ScriptedSource) lives in ./scripted.ts.

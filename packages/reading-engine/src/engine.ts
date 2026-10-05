@@ -5,7 +5,14 @@
 // lastProgressMs   when the cursor last moved (read, helped or skipped)
 // Stall rule       no progress for `stallMs` → help the next word (TV says it, marks it amber)
 // Skip rule        a heard word that matches the word AFTER the cursor skips at most one word,
-//                  and at most `maxSkipsPerLine` per line
+//                  and at most `maxSkipsPerLine` per line (omissions). A SUBSTITUTION — a different word was
+//                  already heard in the cursor word's place, then the next word — skips without using that
+//                  budget; after two different words heard in place, the word after next may match (two
+//                  consecutive substitutions). Found by the S2 harness (multiple-wrong cases: after two misreads
+//                  the engine lost the child and helped words the child had read correctly). Substituted words
+//                  are never lit.
+// Compound         a hyphenated book word read as two heard words (ice-cream / "ice cream") matches only if
+//                  the two heard words joined are EXACTLY the expected word (S2 harness, english-edge).
 // Never backwards  a word once read/helped/skipped keeps that state
 
 import { normalizeWord, tokenize, type Lang } from './normalize.ts';
@@ -58,6 +65,8 @@ export class ReadingTurn {
   private readonly maxSkips: number;
   private readonly policy: MatchPolicy;
   private skips = 0;
+  /** stable non-matching words heard at the current cursor since the last progress (substitutions) */
+  private missCount = 0;
   /** Heard words consumed per segment (accepted or confirmed extra); never decreases. */
   private consumed = new Map<string, number>();
 
@@ -91,20 +100,36 @@ export class ReadingTurn {
         h++;
         continue;
       }
-      const next = this.nextPending(this.cursor + 1);
-      const s1 = next >= 0 && this.skips < this.maxSkips ? wordScore(this.expected[next], t, this.lang, this.policy) : 0;
-      if (s1 > 0) {
-        this.states[this.cursor] = 'skipped';
-        this.skips++;
-        out.push({ type: 'word.skipped', index: this.cursor, atMs: nowMs - this.startMs });
-        this.cursor = next;
-        out.push(this.accept(this.cursor, s1 * (conf ?? 1), t, nowMs));
+      if (h + 1 < heard.length && t + heard[h + 1].t === this.expected[this.cursor] && [...this.expected[this.cursor]].length > [...t].length) {
+        const c2 = Math.min(conf ?? 1, heard[h + 1].conf ?? 1);
+        out.push(this.accept(this.cursor, c2, `${t} ${heard[h + 1].t}`, nowMs));
+        h += 2;
+        continue;
+      }
+      // Look ahead one word (an omission, or a substitution if a different word was heard here), or two words
+      // only after two different words were heard here (two consecutive substitutions). Never further.
+      const next1 = this.nextPending(this.cursor + 1);
+      const next2 = next1 >= 0 ? this.nextPending(next1 + 1) : -1;
+      const sub = this.missCount;
+      const s1 = next1 >= 0 && (sub >= 1 || this.skips < this.maxSkips) ? wordScore(this.expected[next1], t, this.lang, this.policy) : 0;
+      const s2 = !s1 && next2 >= 0 && sub >= 2 ? wordScore(this.expected[next2], t, this.lang, this.policy) : 0;
+      if (s1 > 0 || s2 > 0) {
+        const target = s1 > 0 ? next1 : next2;
+        if (sub === 0) this.skips++;
+        for (let k = this.cursor; k < target; k++) {
+          if (this.states[k] !== 'pending') continue;
+          this.states[k] = 'skipped';
+          out.push({ type: 'word.skipped', index: k, atMs: nowMs - this.startMs });
+        }
+        this.cursor = target;
+        out.push(this.accept(this.cursor, (s1 || s2) * (conf ?? 1), t, nowMs));
         h++;
         continue;
       }
       // Not a match. An unstable word may still be revised by the ASR (e.g. "lit" → "little"):
       // stop here and look at it again on the next update. A stable one is an extra word.
       if (!stable) break;
+      this.missCount++;
       h++;
     }
     this.consumed.set(u.segmentId, h);
@@ -137,6 +162,7 @@ export class ReadingTurn {
   private helpNext(reason: 'stall' | 'asked', nowMs: number): EngineEvent[] {
     const out: EngineEvent[] = [];
     this.states[this.cursor] = 'helped';
+    this.missCount = 0;
     out.push({ type: 'word.helped', index: this.cursor, reason, atMs: nowMs - this.startMs });
     this.cursor++;
     this.lastProgressMs = nowMs;
@@ -147,6 +173,7 @@ export class ReadingTurn {
 
   private accept(index: number, confidence: number, heard: string, nowMs: number): EngineEvent {
     this.states[index] = 'read';
+    this.missCount = 0;
     this.cursor = index + 1;
     this.lastProgressMs = nowMs;
     this.advancePastEmpty();

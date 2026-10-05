@@ -18,7 +18,7 @@ export interface WordTrace {
 }
 export interface TurnTrace {
   sessionId: string; turnId: string; lang: string; words: string[]; startedAtServerMs: number; firstAudioServerMs: number | null;
-  endedAtServerMs: number | null; endReason: string | null; source: string; updates: number; events: WordTrace[];
+  endedAtServerMs: number | null; endReason: string | null; source: string; simulated: boolean; mode: 'free' | 'echo'; updates: number; events: WordTrace[];
   result: { read: number; helped: number; skipped: number; durationMs: number } | null; error?: string;
 }
 
@@ -37,7 +37,7 @@ export class ReadingDriver implements TurnDriver {
 
   start(s: Session, t: ActiveTurn) {
     const lang = t.turn.lang;
-    const trace: TurnTrace = { sessionId: s.id, turnId: t.turn.turnId, lang, words: t.turn.words, startedAtServerMs: this.o.now(), firstAudioServerMs: null, endedAtServerMs: null, endReason: null, source: this.o.source.name, updates: 0, events: [], result: null };
+    const trace: TurnTrace = { sessionId: s.id, turnId: t.turn.turnId, lang, words: t.turn.words, startedAtServerMs: this.o.now(), firstAudioServerMs: null, endedAtServerMs: null, endReason: null, source: this.o.source.name, simulated: !!this.o.source.simulated, mode: t.turn.mode ?? 'free', updates: 0, events: [], result: null };
     const L: Live = { t, engine: null, ticker: null, firstCaptureServerMs: null, trace, speech: null as unknown as SpeechSession };
     this.live.set(s.id, L);
     L.speech = this.o.source.open({ lang, expected: t.turn.words }, {
@@ -49,7 +49,7 @@ export class ReadingDriver implements TurnDriver {
       },
       onClose: () => {},
     });
-    if (this.o.source.name === 'sim') { this.o.log(`[reading] DEV SIMULATED READER active for ${t.turn.turnId} — not real recognition`); this.ensureEngine(s, L); }
+    if (this.o.source.simulated) this.o.log(`[reading] LOCAL SIMULATION (${this.o.source.name}) for ${t.turn.turnId} — not real speech recognition`);
   }
 
   audio(s: Session, t: ActiveTurn, frame: AudioFrame) {
