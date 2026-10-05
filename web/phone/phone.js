@@ -25,6 +25,7 @@ const code = (location.pathname.match(/\/j\/([A-Za-z0-9]+)/) || [])[1]?.toUpperC
 let clientId = store.get('wordlight.clientId');
 if (!clientId) { clientId = 'ph-' + Math.random().toString(36).slice(2, 10); store.set('wordlight.clientId', clientId); }
 const CONSENT_KEY = 'wordlight.micConsent.v1';
+const MANUAL = new URLSearchParams(location.search).get('manual') === '1';
 const now = () => performance.now();
 
 // ---------- diagnostics event log ----------
@@ -221,7 +222,8 @@ function render() {
   $('consent-card').classList.toggle('hidden', !!S.consent);
   $('ready-card').classList.toggle('hidden', !S.consent || L.ready);
   $('mic-card').classList.toggle('hidden', !S.consent);
-  $('test-card').classList.toggle('hidden', !S.consent || !L.ready);
+  // Manual turn buttons only with ?manual=1: in run 2 a tap on them started a turn that collided with the runner's.
+  $('test-card').classList.toggle('hidden', !MANUAL || !S.consent || !L.ready);
   $('session-end-btn').classList.toggle('hidden', !L.ready || L.session !== 'active');
   const live = micLive();
   const mic = $('mic');

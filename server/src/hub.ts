@@ -304,6 +304,9 @@ export class SessionHub {
     } else {
       const rejoin = s.seen.has(clientId);
       s.seen.add(clientId);
+      // A new socket may be a new page (reload: performance.now() restarts at 0), so the old clock estimate is void.
+      // Without this, run 2 measured one chunk after an Android reload at 168 s "latency".
+      s.clocks.delete(clientId);
       s.phones.set(clientId, conn);
       this.log(s, { kind: rejoin ? 'rejoin' : 'join', clientId });
       for (const r of s.readers.values()) {

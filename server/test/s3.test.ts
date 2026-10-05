@@ -211,3 +211,11 @@ test('the turn ends when its phone reports the mic closed/denied (page hidden, s
   hub.handle(phone, { type: 'mic.state', turnId: hub.get(s.id)!.turn!.turn.turnId, state: 'denied' });
   assert.equal(phone.out.at(-1).reason, 'error');
 });
+
+test('a new socket from the same phone voids its clock estimate (a reloaded page has a new time origin)', () => {
+  const { hub, id, phone, s } = testSession();
+  hub.handle(phone, { t: 'clock.report', offsetMs: 5000, minRttMs: 10 });
+  assert.ok(s.clocks.get('p1'));
+  hub.handle(conn(), { t: 'hello', role: 'phone', sessionId: id, clientId: 'p1' });
+  assert.equal(s.clocks.get('p1'), undefined);
+});
