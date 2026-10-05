@@ -6,7 +6,7 @@ Labels: **MEASURED** (read from instrumentation) · **INFERRED** · **HYPOTHESIZ
 |---|---|---|---|---|
 | S1 Vega basics | Can a Vega app play narration, report time, render Devanagari, handle the D-pad? | median offset ≤ 100 ms; stable over 3 min; conjuncts/matras correct | **PASS on the Virtual Device (2026-09-30)** with a per-platform lead: calibrated M4A median **−1.0 ms** (stdev 11.2) · stable **PASS** · Devanagari **PASS** (system font) · D-pad **PASS**. Uncalibrated: −392 ms (MP3), −339 ms (M4A). **Fire TV hardware UNKNOWN.** | Fire OS (React Native TV) build |
 | S2 Child speech | Can Transcribe + matcher follow a child reading hi/en? | ≥ 90 % correct words lit within 1.0 s; ≤ 10 % misreads accepted | **UNKNOWN** — matcher built; no speech tested | Echo mode; browser speech recognition |
-| S3 Phone mic | Do iOS Safari and Android Chrome stream mic audio reliably over HTTPS? | both work; mic → server ≤ 300 ms; no drops in 10 min | **Run 1: streaming PASS on iPhone Safari and Android Chrome** (0 loss in ≈ 42 000 chunks; 40 ms chunks: median ≈ 50 ms, p95 70–91 ms first-sample→server; 0 privacy violations). **Open:** interruption/background tests, acoustic bound's Mac part, one unexplained Android reconnect → overall S3 verdict pending | demo on the browser that passes; document the gap |
+| S3 Phone mic | Do iOS Safari and Android Chrome stream mic audio reliably over HTTPS? | both work; mic → server ≤ 300 ms; no drops in 10 min | **PASS (tested conditions), 2026-10-05:** iPhone Safari + Android Chrome; ≈ 52 000 chunks, 0 lost/duplicated/out of order; median 50–90 ms; correct mic lifecycle under Wi-Fi loss, lock, app switch, reload (Android); 0 privacy violations. Open: iPhone reload, untouched 10-min run with wake lock, run-1 Android reconnect cause | demo on the browser that passes; document the gap |
 | S4 Polly timings | Do Kajal speech marks match the audio? | ≥ 95 % of words within 50 ms of onset | **UNKNOWN** — mapping built; no AWS access yet | Transcribe word timestamps |
 
 ## S1 — method
@@ -185,3 +185,41 @@ Interpretation:
 - **Metric fix:** the first version's "capture gaps" counted chunks reaching the page in bursts (Android: 293 per minute) even when no audio was lost (coverage 0.997, no sequence gaps). It is now documented as delivery irregularity. Coverage and timeline drift are the loss metrics.
 
 Still UNKNOWN: Wi-Fi interruption, lock screen/background, reload on real phones · Mac-side part of the acoustic bound · phone input delay · audio device sample rates (in the saved timeline from the next run).
+
+### Real-phone run 2 — interruptions (2026-10-05, `--plan network`, sessions iPhone `8PTM`, Android `TRS5`) — MEASURED from the saved timelines (phone events + server events)
+
+Devices (from `mic.state open`): **iPhone**, Safari (UA "iPhone OS 18_7 … Version/26.6.1"), AudioContext 48 000 Hz, track 48 000 Hz, echo cancellation on. **Android 10**, Chrome 154, 48 000 Hz, mono track, EC/NS/AGC on, reported track latency 10 ms, AudioContext baseLatency 4 ms. Both: Screen Wake Lock API present.
+
+| Event during a turn | iPhone Safari | Android Chrome |
+|---|---|---|
+| **Wi-Fi off** | socket closed (1006) → **mic stopped at once** (`connection-lost`); browser `offline` 2.1 s later; server ended the turn at its 5 s heartbeat (`phone-lost`); phone reconnected when Wi-Fi returned (≈13 s); **new turn needed, nothing resumed** | socket closed (1006) → **mic stopped at once**; Android **switched to mobile data** and reconnected in 3.6 s → server ended the old turn on rejoin; the runner's next turn ran on cellular until Wi-Fi came back, then that socket dropped too and the turn ended the same way. Never resumed |
+| **Screen locked** (power button) | AudioContext → `interrupted`, mic stopped (`audio-suspended`), page hidden, wake lock released by the browser; server ended the turn **at once** (phone's `mic.state closed`); socket survived 11 s; on unlock: wake lock re-acquired, audio `running`, new turn opened the mic in 0.4 s | page hidden → mic stopped (`page-hidden`), wake lock released; server ended the turn at once; socket survived; on unlock: wake lock back, new turn |
+| **App switch** | same as lock (`interrupted` → stop); iOS **closed the socket while in the background** (server saw it ≈14 s later); on return: reconnect in 1.2 s, new turn | same as lock; socket survived |
+| **Reload** | **not performed in this run** | `pagehide` → mic stopped (`page-unload`), socket closed cleanly (1001); after reload the page asked for the tap again (`needs-tap`), no mic until then; consent remembered |
+| chunk loss / order | 4 739 chunks: 0 missing, 0 duplicate, 0 out-of-order; **1 stale-tag chunk dropped** (a chunk of an ended turn arriving after the next turn started — the tag check working) | 5 062 chunks: 0 missing, 0 duplicate, 0 out-of-order, 0 stale |
+| latency (40 ms chunks), per-turn medians | 58–73 ms; p95 82–183 ms | 67–92 ms; p95 100–208 ms (incl. a turn on mobile data) |
+| privacy audit | 254 reports, **0 violations** | 274 reports, **0 violations** |
+| mic off after the server ended a turn | 2–44 ms, except the Wi-Fi case: the phone had stopped the mic 5 s **before** the server's end, but its report could only arrive after reconnecting (8.1 s) — not a live mic | 1–89 ms |
+
+Findings and fixes:
+- **The lifecycle rules held on both phones under every interruption tested:** the mic stopped at the interruption itself (not later), the server never continued a turn whose phone had gone, and no turn resumed by itself.
+- **Measurement bug found and fixed:** after the Android reload, one chunk showed 168 s "latency". The server kept the old page's clock estimate (a reloaded page restarts `performance.now()`). The server now drops a phone's clock estimate on every new socket (test added). That turn's max is invalid; its median (70.6 ms) and p95 (131.8 ms) were not affected.
+- **Test-procedure issue fixed:** on the iPhone, the page's manual "Start reading turn" button was tapped during the run; its turns collided with the runner's (turns 1–2 ended `error`). Those buttons now appear only with `?manual=1`.
+- **Android falls back to mobile data when Wi-Fi drops**, and the stream continued over it after a new turn. For the product: still TLS end to end, but data use and latency change; the TV should say so if it matters. INFERRED.
+- Timeline drift on Android varied (−124 … +414 ms per turn) while coverage stayed 0.99–1.01. The drift metric is sensitive to Android's bursty delivery at turn start, so it is not used as evidence of loss. INFERRED.
+
+### S3 verdict (2026-10-05)
+**PASS for the tested conditions on iPhone Safari (iOS, Safari 26.6) and Android Chrome 154 (Android 10):**
+- ≈ 52 000 chunks over four runs with **0 lost, 0 duplicated, 0 out of order**
+- capture→server **median 50–90 ms** (≤ 300 ms target), p95 ≤ 210 ms
+- 10-minute run clean on iPhone; on Android, 598 s with 0 loss but one reconnect
+- correct microphone lifecycle under Wi-Fi loss, lock, app switch and (Android) reload
+- 0 privacy violations
+
+Still open, and not hidden by this verdict:
+1. iPhone reload — not yet run.
+2. Whether the wake lock actually stops auto-lock during an untouched 10-minute session — UNKNOWN; the API reported `on` on both phones.
+3. The cause of the single Android reconnect in run 1 — UNKNOWN; not reproduced.
+4. The Mac-side part of the acoustic bound — UNKNOWN.
+
+Production child audio will use the AWS endpoint, not this tunnel; S3 re-checks latency there.

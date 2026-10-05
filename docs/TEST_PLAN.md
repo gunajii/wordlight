@@ -15,7 +15,7 @@
 
 ## Automated tests
 
-`npm test` — 72 tests pass (2026-09-30): protocol 4, reading engine 19, karaoke core 7, story package 5, session client 7 (reused), server 26 (incl. S3 stats/sink/hub 15), phone audio worklet 4. `npm run typecheck` clean.
+`npm test` — 95 tests pass (2026-10-05): protocol 4, reading engine 19, karaoke core 7, story package 5, session client 7 (reused), server 26 (incl. S3 stats/sink/hub 15), phone audio worklet 4. `npm run typecheck` clean.
 
 | Area | Covered |
 |---|---|
@@ -41,8 +41,9 @@ Real speech (S2), Polly (S4), AWS, end-to-end latency, physical Fire TV.
 | 6 | acoustic upper bound (afplay tone → server) | 306 ms median (includes afplay/Mac output: Mac part not yet measured) | 340 ms (same caveat) |
 | 7 | mic OFF after turn end / skip (browser API), time to off | PASS ≤ 1 s (1-s resolution) | PASS ≤ 1 s |
 | 8 | 10-minute turn: loss, duplicates, reordering, reconnects | PASS: 600 s, 14 990 chunks, 0 loss, 0 reconnects | 0 loss in 598 s, but **1 reconnect at 244 s, cause UNKNOWN** |
-| 9 | Wi-Fi off ~10 s mid-turn (`--plan network`): mic stops, turn ends, reconnect time | UNKNOWN | UNKNOWN |
-| 10 | background / lock screen mid-turn: mic stops; return: no restart without a new turn | UNKNOWN | UNKNOWN |
-| 11 | reload mid-turn: turn ends; mic stays off until a new turn + tap | UNKNOWN | UNKNOWN |
-| 12 | privacy audit: 0 violations over the whole run | PASS (897 reports) | PASS (880 reports) |
+| 9 | Wi-Fi off ~10 s mid-turn (`--plan network`): mic stops, turn ends, reconnect time | PASS: mic off at socket close; turn ended (5 s heartbeat); reconnect when Wi-Fi back; new turn needed | PASS: mic off at once; fell back to mobile data, reconnect 3.6 s; old turn ended on rejoin |
+| 10 | background / lock screen mid-turn: mic stops; return: no restart without a new turn | PASS (lock + app switch: audio `interrupted` → stop; turn ended at once) | PASS (page hidden → stop; turn ended at once) |
+| 11 | reload mid-turn: turn ends; mic stays off until a new turn + tap | **not run** | PASS (pagehide → stop; `needs-tap` after reload) |
+| 12 | privacy audit: 0 violations over the whole run | PASS (897 + 254 reports) | PASS (880 + 274 reports) |
+| 13 | screen wake lock: acquired on Get ready, released when hidden, re-acquired when visible | PASS (API events) — keeps screen on untouched: UNKNOWN | PASS (API events) — keeps screen on untouched: UNKNOWN |
 

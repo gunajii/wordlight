@@ -32,3 +32,7 @@ Children use WordLight. Privacy is a product requirement, not a feature.
 - Transcribe and Polly may retain content for service improvement unless the account opts out; WordLight requires the AI services opt-out policy (docs/AWS.md) before any child audio is sent. Verify the effective policy; do not assume.
 - Speech is streamed to Transcribe during a turn and not stored by WordLight. What Transcribe itself retains after opt-out is governed by AWS's terms; WordLight makes no stronger claim.
 - Child audio never goes through the Cloudflare dev tunnel; only through the AWS-hosted HTTPS endpoint (not built yet).
+
+## S3 run 2 observations (2026-10-05)
+- Android switched to mobile data when Wi-Fi was turned off, and a later turn streamed over it (TLS end to end). Whether a family wants that is a product choice; the page can show the connection type (`navigator.connection` is available on Chrome, not Safari).
+- In every interruption tested (Wi-Fi loss, lock, app switch, reload), the microphone stopped at the interruption itself; 0 live-mic reports outside turns.
