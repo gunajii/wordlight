@@ -59,10 +59,10 @@ export function slipOf(word: string): string | null {
   return null;
 }
 
+/** The demo stalls on the longest word after the first (earliest on ties): a content word, not "the". */
 const pickLong = (words: string[]) => {
   let best = Math.min(1, words.length - 1);
-  const last = words.length > 2 ? words.length - 2 : words.length - 1; // not the final word: the line should end on the child's voice
-  words.forEach((w, i) => { if (i > 0 && i <= last && [...strip(w)].length >= [...strip(words[best])].length) best = i; });
+  words.forEach((w, i) => { if (i > 0 && [...strip(w)].length > [...strip(words[best])].length) best = i; });
   return best;
 };
 

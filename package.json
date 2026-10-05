@@ -13,7 +13,15 @@
     "typecheck": "tsc -p tsconfig.json",
     "s1:media": "python3 tools/s1-media/make_s1_media.py",
     "s1:analyze": "python3 tools/audio-analysis/av_offset.py",
-    "s3": "node tools/s3/s3.ts"
+    "s3": "node tools/s3/s3.ts",
+    "demo:local": "bash tools/demo/local-demo.sh",
+    "demo:check": "node tools/demo/demo-loop.ts",
+    "tv:run": "bash tools/vvd/run-tv.sh",
+    "content:test": "python3 tools/content/make-test-art.py && node tools/content/build-story.ts wl-test-kite --narration fixture",
+    "content:validate": "node tools/content/validate-story.ts",
+    "s2:sim": "node tools/s2/eval.ts --engine scripted",
+    "s2": "node tools/s2/eval.ts --engine polly-transcribe",
+    "s4": "node tools/s4/polly-s4.ts && python3 tools/s4/analyze.py content/build/s4 --plots --report docs/results/s4"
   },
   "engines": {
     "node": ">=22.18"

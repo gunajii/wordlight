@@ -232,7 +232,8 @@ test('scripted Hindi misread (vowel change) is rejected', async () => {
 
 test('scriptFor is deterministic and the demo scenario stalls on the longest word', () => {
   assert.deepEqual(scriptFor('demo', LINE), scriptFor('demo', LINE));
-  const steps = scriptFor('demo', LINE);
+  const steps = scriptFor('demo', ['Look', 'at', 'the', 'bird!']);
   const said = steps.filter((s: any) => 'say' in s).map((s: any) => s.expectIndex);
-  assert.deepEqual(said, [0, 1, 3, 4], 'word 2 ("rabbit") is left for the TV to help');
+  assert.deepEqual(said, [0, 1, 2], '"bird" is left for the TV to help');
+  assert.deepEqual(scriptFor('demo', LINE).filter((s: any) => 'say' in s).map((s: any) => s.expectIndex), [0, 2, 3, 4], 'ties → the earliest long word ("little")');
 });
