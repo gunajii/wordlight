@@ -5,7 +5,7 @@ Labels: **MEASURED** (read from instrumentation) · **INFERRED** · **HYPOTHESIZ
 | Spike | Question | Pass bar | Result | Fallback |
 |---|---|---|---|---|
 | S1 Vega basics | Can a Vega app play narration, report time, render Devanagari, handle the D-pad? | median offset ≤ 100 ms; stable over 3 min; conjuncts/matras correct | **PASS on the Virtual Device (2026-09-30)** with a per-platform lead: calibrated M4A median **−1.0 ms** (stdev 11.2) · stable **PASS** · Devanagari **PASS** (system font) · D-pad **PASS**. Uncalibrated: −392 ms (MP3), −339 ms (M4A). **Fire TV hardware UNKNOWN.** | Fire OS (React Native TV) build |
-| S2 Child speech | Can Transcribe + matcher follow a child reading hi/en? | ≥ 90 % correct words lit within 1.0 s; ≤ 10 % misreads accepted | **UNKNOWN** — matcher built; no speech tested | Echo mode; browser speech recognition |
+| S2 Child speech | Can Transcribe + matcher follow a child reading hi/en? | ≥ 90 % correct words lit within 1.0 s; ≤ 10 % misreads accepted | **UNKNOWN** — pipeline built and tested with fakes (Transcribe adapter, reading driver, harness); waiting for AWS credentials to run `tools/s2/run-synth.ts` | Echo mode; browser speech recognition |
 | S3 Phone mic | Do iOS Safari and Android Chrome stream mic audio reliably over HTTPS? | both work; mic → server ≤ 300 ms; no drops in 10 min | **PASS (tested conditions), 2026-10-05:** iPhone Safari + Android Chrome; ≈ 52 000 chunks, 0 lost/duplicated/out of order; median 50–90 ms; correct mic lifecycle under Wi-Fi loss, lock, app switch, reload (Android); 0 privacy violations. Open: iPhone reload, untouched 10-min run with wake lock, run-1 Android reconnect cause | demo on the browser that passes; document the gap |
 | S4 Polly timings | Do Kajal speech marks match the audio? | ≥ 95 % of words within 50 ms of onset | **UNKNOWN** — mapping built; no AWS access yet | Transcribe word timestamps |
 
@@ -223,3 +223,11 @@ Still open, and not hidden by this verdict:
 4. The Mac-side part of the acoustic bound — UNKNOWN.
 
 Production child audio will use the AWS endpoint, not this tunnel; S3 re-checks latency there.
+
+---
+
+## S2 — speech recognition: what exists (2026-10-05), not yet measured
+- `server/src/reading/speech.ts` **TranscribeSource**: Amazon Transcribe Streaming, 16 kHz PCM, partial results with stabilisation (`high`; retried without it if a language rejects it), word start/end times, error → turn ends `error`. `SimSource`: DEV ONLY timer reader, logged as such, never used for measurement.
+- `server/src/reading/driver.ts` **ReadingDriver**: wraps the unchanged reading engine; the engine clock starts at the first audio chunk (mic start-up is not a stall); help after 3 s (5 s before the first word); per-word trace (spoken time from Transcribe's word start via the phone's capture clock, update arrival, emit time).
+- `tools/s2/run-synth.ts` **harness**: 20 original lines (10 en-IN, 10 hi-IN) × variants correct / misread / omit / repeat / hesitate 1.2 s / pause 4.5 s, spoken by Polly and streamed in real time through the real pipeline. Exact ground truth from speech marks. Reports recall@1s, false-accept rate, latency (median/p95/max) per language and variant. Synthetic adult voices: characterises the pipeline, **not child reading** (child performance stays UNKNOWN unless tested with consent).
+- Verified so far only with fakes (unit tests) and the dev simulator through a real phone page (headless Chromium): TV gets mic.state → word.read ×4 → word.helped (stall 3.06 s) → line.done; phone mic off after line.done; template summary on phone and TV.

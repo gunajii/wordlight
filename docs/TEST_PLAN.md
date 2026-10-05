@@ -15,13 +15,14 @@
 
 ## Automated tests
 
-`npm test` — 95 tests pass (2026-10-05): protocol 4, reading engine 19, karaoke core 7, story package 5, session client 7 (reused), server 26 (incl. S3 stats/sink/hub 15), phone audio worklet 4. `npm run typecheck` clean.
+`npm test` — 109 tests pass (2026-10-05): protocol 4, reading engine 19, karaoke core 7, story package 5, session client 7 (reused), server 26 (incl. S3 stats/sink/hub 15), phone audio worklet 4. `npm run typecheck` clean.
 
 | Area | Covered |
 |---|---|
 | Reading engine | exact, punctuation, Hindi normalisation, NFC/NFD, partial transcripts, fuzzy (ASR noise), misreads (cat/hat, big/bag, lived/loved, कल/काल, बिल्ली/बल्ली, किताबें/किताबों), skipped, repeated, out of order, stall, asked help, first-word grace, line completion, confidence |
 | Timing | word boundaries, lookup, lead offset, line lookup, bad data, coarse `currentTime` (250 ms) sampling, pause/reset, WebVTT (incl. Devanagari) |
 | Story package | Devanagari byte offsets, punctuation/dash tokens, NDJSON marks, turn selection rules, validator |
+| Reading pipeline / TV | Transcribe adapter (stream, partial/stable mapping, timing, retry without stabilisation, close) · reading driver (in-order lighting, misread not lit, stall help, TV help, speech error ends the turn, traces without transcript text) · template summary from real counts · TV Your Turn state machine (all transitions, impossible ones rejected, never backwards) · playback plan (stop/resume/help span/totals) |
 | S3 audio | frame tag round-trip; seq missing/duplicate/out-of-order; latency needs a clock estimate (never raw client time); capture-gap detection; 1 kHz click detector; stale-tag frames dropped; test turns need consent; turn cap; mic-live-outside-turn audit with grace; reconnect during a turn ends it; resampler 48k/44.1k/16k passband + anti-alias; worklet chunk size |
 | Protocol / server | join, wrong session, missing hello, roles, reader ownership, duplicate turn.start, stale help, cancel, phone lost mid-turn, reconnect, audio only from the active phone, heartbeat timeout, HTTP routes, TS served to browsers |
 
