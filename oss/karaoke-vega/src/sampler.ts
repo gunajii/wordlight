@@ -1,7 +1,7 @@
 // PlayheadSampler — an accurate (position, time) pair from a player whose currentTime may be
 // quantised (updated only every N ms).
 //
-// Adapted from Earshot's @earshot/vega-sync PlayheadSampler (github: earshot repo, commit fe64ce9,
+// Adapted from Earshot's @earshot/vega-sync PlayheadSampler (same author, MIT, commit fe64ce9,
 // packages/vega-sync/src/sampler.js, MIT, same author). Changes: TypeScript, plus positionAt().
 //
 // Reading a stale value at an arbitrary moment is up to N ms behind. Instead, poll often (e.g.

@@ -79,7 +79,7 @@ const STATIC: [string, string][] = [
   ['/pkg/session-client/', path.join(ROOT, 'packages/session-client/src')],
   ['/pkg/shared-protocol/', path.join(ROOT, 'packages/shared-protocol/src')],
   ['/pkg/reading-engine/', path.join(ROOT, 'packages/reading-engine/src')],
-  ['/pkg/karaoke-core/', path.join(ROOT, 'packages/karaoke-core/src')],
+  ['/pkg/karaoke-core/', path.join(ROOT, 'oss/karaoke-vega/src')],
 ];
 
 export function createServer({ hub = new SessionHub({ now: serverNow }), publicUrl = PUBLIC_URL, log = console.log, heartbeat = HEARTBEAT, mediaUrl = currentMediaUrl, tvRun = currentTvRun, s3ResultsDir = path.join(ROOT, 'bench/runs/s3') as string | null, speechSource = (process.env.SPEECH ?? 'transcribe') as string, traceSink = null as null | ((t: TurnTrace) => void), readingModeOpt = null as null | 'free' | 'echo' } = {}) {

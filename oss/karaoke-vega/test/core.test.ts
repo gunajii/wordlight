@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { PlayheadSampler, wordIndexAt, phasesAt, lineIndexAt, assertMonotonic, parseKaraokeVtt, toKaraokeVtt, parseTimestamp, formatTimestamp, type TimedWord } from '../src/index.ts';
+import { PlayheadSampler, wordIndexAt, phasesAt, lineIndexAt, assertMonotonic, parseKaraokeVtt, toKaraokeVtt, parseTimestamp, formatTimestamp, type TimedWord } from '../src/core.ts';
 
 const W: TimedWord[] = [{ w: 'The', t0: 100, t1: 400 }, { w: 'little', t0: 400, t1: 800 }, { w: 'cat', t0: 800, t1: 1200 }];
 

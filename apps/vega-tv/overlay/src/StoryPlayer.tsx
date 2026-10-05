@@ -12,7 +12,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, Image, StyleSheet } from 'react-native';
 import { AudioPlayer } from '@amazon-devices/react-native-w3cmedia';
 import { useTVEventHandler } from '@amazon-devices/react-native-kepler';
-import { PlayheadSampler, lineIndexAt, phasesAt } from './vendor/karaoke-core/index';
+import { PlayheadSampler, lineIndexAt, KaraokeLine } from './vendor/karaoke-core/index';
 import { idle, turnReduce, nextTurn, resumeAt, helpSpan, lineStart, turnProgress, type TurnState, type TurnEvent, type ReadingMode } from './vendor/tv-core/index';
 import { log, logKey } from './net';
 import type { TvSession } from './session';
@@ -193,7 +193,6 @@ export function StoryPlayer({ story, mediaBase, session, leadMs, mode, simulated
 
   const reader = session.onlineReader();
   const line = lines[view.line];
-  const phases = phasesAt(line.words, view.pos, leadMs);
   const deva = story.lang === 'hi-IN';
   const prog = turnProgress(turn.marks);
   const micOn = MIC_ON.includes(turn.phase);
@@ -208,9 +207,7 @@ export function StoryPlayer({ story, mediaBase, session, leadMs, mode, simulated
       {simulated ? <View style={st.simBadge}><Text style={st.simText}>SIMULATED SPEECH · local demo</Text></View> : null}
       {turn.phase === 'LISTEN' ? (
         <View style={st.subtitle}>
-          <Text style={[st.line, deva && st.deva]}>
-            {line.words.map((w, i) => <Text key={i} style={phases[i] === 'current' ? st.current : phases[i] === 'spoken' ? st.spoken : st.upcoming}>{w.w}{i < line.words.length - 1 ? ' ' : ''}</Text>)}
-          </Text>
+          <KaraokeLine words={line.words} positionMs={view.pos} leadMs={leadMs} style={[st.line, deva && st.deva]} spokenStyle={st.spoken} currentStyle={st.current} upcomingStyle={st.upcoming} />
         </View>
       ) : (
         <View style={[st.turnBox, turn.phase === 'DONE' && st.turnDone]}>
