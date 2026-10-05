@@ -18,6 +18,8 @@ import QRCode from 'qrcode';
 import { decodeAudioFrame } from '@wordlight/shared-protocol';
 import { SessionHub, type Conn } from './hub.ts';
 import { S3Sink } from './s3/sink.ts';
+import { ReadingDriver, RouterDriver, type TurnTrace } from './reading/driver.ts';
+import { TranscribeSource, SimSource, type SpeechSource } from './reading/speech.ts';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const PORT = Number(process.env.PORT || 8787);
@@ -77,11 +79,20 @@ const STATIC: [string, string][] = [
   ['/pkg/karaoke-core/', path.join(ROOT, 'packages/karaoke-core/src')],
 ];
 
-export function createServer({ hub = new SessionHub({ now: serverNow }), publicUrl = PUBLIC_URL, log = console.log, heartbeat = HEARTBEAT, mediaUrl = currentMediaUrl, tvRun = currentTvRun, s3ResultsDir = path.join(ROOT, 'bench/runs/s3') as string | null } = {}) {
+export function createServer({ hub = new SessionHub({ now: serverNow }), publicUrl = PUBLIC_URL, log = console.log, heartbeat = HEARTBEAT, mediaUrl = currentMediaUrl, tvRun = currentTvRun, s3ResultsDir = path.join(ROOT, 'bench/runs/s3') as string | null, speechSource = (process.env.SPEECH ?? 'transcribe') as string, traceSink = null as null | ((t: TurnTrace) => void) } = {}) {
+  let reading: ReadingDriver | null = null;
+  // Phones need https (microphone). The join link/QR uses the https base when one exists (AWS hostname or the
+  // dev tunnel), else the LAN URL (which can pair, but cannot open the microphone).
+  const joinUrlAsync = async (id: string) => `${(await mediaUrl()) ?? publicUrl}/j/${id}`;
   const joinUrl = (id: string) => `${publicUrl}/j/${id}`;
   // Until the Transcribe adapter exists (S2), the S3 measurement sink is the turn driver. It keeps no audio.
   const s3 = new S3Sink({ now: serverNow, resultsDir: s3ResultsDir ?? undefined, log });
-  hub.driver ??= s3;
+  if (!hub.driver) {
+    const speech: SpeechSource = speechSource === 'sim' ? new SimSource({ stallAt: Number(process.env.SIM_STALL_AT ?? 2) }) : new TranscribeSource({ region: process.env.AWS_REGION });
+    if (speechSource === 'sim') log('[reading] SPEECH=sim — DEVELOPMENT ONLY: turns are "read" by a timer, not recognised from audio');
+    reading = new ReadingDriver({ hub, source: speech, now: serverNow, log, devTranscripts: process.env.DEV_TRANSCRIPTS === '1', onTrace: (t) => traceSink?.(t) });
+    hub.driver = new RouterDriver({ test: s3, reading });
+  }
   const server = http.createServer(async (req, res) => {
     const url = new URL(req.url ?? '/', 'http://x');
     const p = url.pathname;
@@ -119,12 +130,17 @@ export function createServer({ hub = new SessionHub({ now: serverNow }), publicU
         if (body?.action === 'end' || body?.action === 'skip') return json(res, 200, { ended: hub.endActiveTurn(s, body.action === 'skip' ? 'skipped' : 'exit') });
         return json(res, 400, { error: 'action must be start|end|skip' });
       }
+      // reading traces (numbers; heard text only with DEV_TRANSCRIPTS=1) for the S2 harness and diagnostics
+      if (p === '/api/reading/traces') {
+        const sid = url.searchParams.get('session')?.toUpperCase();
+        return json(res, 200, (reading?.traces ?? []).filter((t) => !sid || t.sessionId === sid));
+      }
       if (p === '/api/config') return json(res, 200, { mediaUrl: await mediaUrl(), run: await tvRun() });
       if (p === '/api/time') return json(res, 200, { c0: Number(url.searchParams.get('c0')), s: serverNow() });
       if (p === '/api/sessions' && req.method === 'POST') {
         const id = hub.createSession();
         log(`[session] created ${id}`);
-        return json(res, 201, { sessionId: id, joinUrl: joinUrl(id), qrUrl: `${publicUrl}/api/sessions/${id}/qr.png`, wsUrl: publicUrl.replace(/^http/, 'ws') + '/ws' });
+        return json(res, 201, { sessionId: id, joinUrl: await joinUrlAsync(id), qrUrl: `${publicUrl}/api/sessions/${id}/qr.png`, wsUrl: publicUrl.replace(/^http/, 'ws') + '/ws' });
       }
       if (p === '/api/sessions' && req.method === 'GET') {
         const list = [...hub.sessions.values()].sort((a, b) => b.createdAt - a.createdAt)
@@ -138,7 +154,7 @@ export function createServer({ hub = new SessionHub({ now: serverNow }), publicU
         const sub = m[2] || '';
         if (sub === '' && req.method === 'GET') return json(res, 200, { sessionId: s.id, tvConnected: !!s.tv, phones: [...s.phones.keys()], readers: s.readers.size, turn: s.turn?.turn.turnId ?? null, joinUrl: joinUrl(s.id) });
         if (sub === '/qr.png') {
-          const png = await QRCode.toBuffer(joinUrl(s.id), { width: Number(url.searchParams.get('size') || 480), margin: 2, errorCorrectionLevel: 'M' });
+          const png = await QRCode.toBuffer(await joinUrlAsync(s.id), { width: Number(url.searchParams.get('size') || 480), margin: 2, errorCorrectionLevel: 'M' });
           res.writeHead(200, { 'Content-Type': 'image/png', 'Cache-Control': 'no-store' });
           return void res.end(png);
         }
