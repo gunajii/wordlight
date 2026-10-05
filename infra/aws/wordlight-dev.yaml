@@ -1,0 +1,117 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >-
+  WordLight dev server: one small EC2 instance (Graviton) running the Node server behind Caddy (automatic TLS).
+  Phones and the TV connect over HTTPS/WSS; the instance role (not keys) calls Transcribe Streaming and Polly.
+  No SSH: administer with SSM Session Manager. No audio is stored (the server keeps none).
+
+Parameters:
+  ArtifactBucket: { Type: String, Description: S3 bucket holding the code tarball (created by deploy.sh) }
+  ArtifactKey: { Type: String, Default: wordlight/app.tgz }
+  InstanceType: { Type: String, Default: t4g.small, AllowedValues: [t4g.micro, t4g.small, t4g.medium] }
+  ImageId: { Type: 'AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>', Default: /aws/service/ami-amazon-linux-latest/al2023-ami-kernel-default-arm64 }
+  NodeVersion: { Type: String, Default: 22.20.0 }
+
+Resources:
+  Role:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement: [{ Effect: Allow, Principal: { Service: ec2.amazonaws.com }, Action: sts:AssumeRole }]
+      ManagedPolicyArns: [arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore]
+      Policies:
+        - PolicyName: wordlight-speech
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - { Effect: Allow, Action: [transcribe:StartStreamTranscription, transcribe:StartStreamTranscriptionWebSocket, polly:SynthesizeSpeech, polly:DescribeVoices], Resource: '*' }
+              - { Effect: Allow, Action: [s3:GetObject], Resource: !Sub 'arn:aws:s3:::${ArtifactBucket}/*' }
+  Profile:
+    Type: AWS::IAM::InstanceProfile
+    Properties: { Roles: [!Ref Role] }
+  SecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: WordLight dev - HTTP (certificate challenge, redirect) and HTTPS only
+      SecurityGroupIngress:
+        - { IpProtocol: tcp, FromPort: 80, ToPort: 80, CidrIp: 0.0.0.0/0 }
+        - { IpProtocol: tcp, FromPort: 443, ToPort: 443, CidrIp: 0.0.0.0/0 }
+  Eip:
+    Type: AWS::EC2::EIP
+  Instance:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: !Ref ImageId
+      InstanceType: !Ref InstanceType
+      IamInstanceProfile: !Ref Profile
+      SecurityGroupIds: [!GetAtt SecurityGroup.GroupId]
+      MetadataOptions: { HttpTokens: required }
+      Tags: [{ Key: Name, Value: wordlight-dev }]
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          set -euxo pipefail
+          dnf install -y tar xz
+          # Node (official binary; the server runs TypeScript directly, Node >= 22.18)
+          curl -fsSL https://nodejs.org/dist/v${NodeVersion}/node-v${NodeVersion}-linux-arm64.tar.xz | tar -xJ -C /opt
+          ln -sf /opt/node-v${NodeVersion}-linux-arm64/bin/node /usr/local/bin/node
+          ln -sf /opt/node-v${NodeVersion}-linux-arm64/bin/npm /usr/local/bin/npm
+          # Caddy (automatic HTTPS)
+          curl -fsSL "https://caddyserver.com/api/download?os=linux&arch=arm64" -o /usr/local/bin/caddy && chmod +x /usr/local/bin/caddy
+          useradd -r -m -d /opt/wordlight wordlight || true
+          cat > /usr/local/bin/wordlight-update <<'UPD'
+          #!/bin/bash
+          # Pull the latest code tarball from S3 and restart (deploy.sh calls this through SSM).
+          set -euo pipefail
+          IP="${Eip.PublicIp}"   # the Elastic IP (stable); the certificate hostname is derived from it
+          HOST="$(echo "$IP" | tr . -).sslip.io"
+          mkdir -p /opt/wordlight/app && cd /opt/wordlight/app
+          aws s3 cp "s3://${ArtifactBucket}/${ArtifactKey}" /tmp/app.tgz
+          rm -rf /opt/wordlight/app/* && tar -xzf /tmp/app.tgz -C /opt/wordlight/app
+          npm ci --omit=dev --no-audit --no-fund || npm install --omit=dev --no-audit --no-fund
+          chown -R wordlight /opt/wordlight
+          printf 'https://%s\n' "$HOST" > /opt/wordlight/host
+          cat > /etc/caddy.json.Caddyfile <<CADDY
+          $HOST {
+            encode gzip
+            reverse_proxy 127.0.0.1:8787
+          }
+          CADDY
+          cat > /etc/systemd/system/wordlight.service <<UNIT
+          [Unit]
+          Description=WordLight server
+          After=network-online.target
+          [Service]
+          User=wordlight
+          WorkingDirectory=/opt/wordlight/app
+          Environment=PORT=8787 HOST=127.0.0.1 AWS_REGION=${AWS::Region} PUBLIC_URL=https://$HOST MEDIA_URL=https://$HOST SPEECH=transcribe
+          ExecStart=/usr/local/bin/node server/src/index.ts
+          Restart=always
+          [Install]
+          WantedBy=multi-user.target
+          UNIT
+          cat > /etc/systemd/system/caddy.service <<UNIT
+          [Unit]
+          Description=Caddy
+          After=network-online.target
+          [Service]
+          ExecStart=/usr/local/bin/caddy run --adapter caddyfile --config /etc/caddy.json.Caddyfile
+          Restart=always
+          AmbientCapabilities=CAP_NET_BIND_SERVICE
+          [Install]
+          WantedBy=multi-user.target
+          UNIT
+          systemctl daemon-reload
+          systemctl enable --now wordlight caddy
+          systemctl restart wordlight caddy
+          UPD
+          chmod +x /usr/local/bin/wordlight-update
+          for i in $(seq 30); do /usr/local/bin/wordlight-update && break; sleep 10; done   # retries while the network settles
+  EipAssoc:
+    Type: AWS::EC2::EIPAssociation
+    Properties: { AllocationId: !GetAtt Eip.AllocationId, InstanceId: !Ref Instance }
+
+Outputs:
+  Url: { Value: !Sub 'https://${Eip.PublicIp}', Description: 'Real URL is https://<ip with dashes>.sslip.io (see deploy.sh output)' }
+  PublicIp: { Value: !GetAtt Eip.PublicIp }
+  InstanceId: { Value: !Ref Instance }

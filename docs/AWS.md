@@ -18,7 +18,17 @@ Monthly budget `wordlight-dev`, USD 30, e-mail alerts at 80 % actual and 100 % f
 
 ## Architecture (dev) — staged
 1. **Now (S4, S2 with adult/test speech):** the server runs on the Mac and calls Polly/Transcribe with the developer's credentials (least-privilege policy `infra/aws/iam-dev-policy.json`). Phones reach it through the dev tunnel — adult speech and test tones only.
-2. **Before any child session:** the same Node server on **one small EC2 instance in ap-south-1**, TLS terminated on the instance (Caddy, automatic certificates), WebSocket and HTTPS on 443, an instance role instead of keys. Chosen because the server is one long-lived WebSocket process: App Runner (no WebSockets), API Gateway WebSocket + Lambda (not suited to a long Transcribe stream per turn) and Fargate + ALB (needs a domain and more parts) add cost or moving parts. Hostname for the certificate: a domain if one is available, otherwise an IP-derived DNS name (e.g. sslip.io) — DNS only; the traffic goes straight to AWS. **Not built yet — decision recorded, UNTESTED.**
+2. **Before any child session:** the same Node server on **one small EC2 instance in ap-south-1**, TLS terminated on the instance (Caddy, automatic certificates), WebSocket and HTTPS on 443, an instance role instead of keys. Chosen because the server is one long-lived WebSocket process: App Runner (no WebSockets), API Gateway WebSocket + Lambda (not suited to a long Transcribe stream per turn) and Fargate + ALB (needs a domain and more parts) add cost or moving parts. Hostname for the certificate: a domain if one is available, otherwise an IP-derived DNS name (e.g. sslip.io) — DNS only; the traffic goes straight to AWS. **Template and script written (2026-10-05): `infra/aws/wordlight-dev.yaml` + `infra/aws/deploy.sh` — not yet deployed (UNTESTED).**
 
 ## Credentials
 On the Mac only (`aws configure` or `aws configure sso`), never in the repo or in chat. The EC2 instance uses an IAM role.
+
+## Deploy (reproducible)
+```
+aws login                         # or aws configure with an access key — on your machine only
+bash infra/aws/deploy.sh          # S3 artifact bucket (private) → CloudFormation stack wordlight-dev → health check
+bash infra/aws/deploy.sh          # again after changes: uploads code + built stories, restarts via SSM
+bash infra/aws/deploy.sh --stop   # stop the instance when not testing (Elastic IP still billed)
+bash infra/aws/deploy.sh --delete # remove everything
+```
+Stack: EC2 t4g.small (Amazon Linux 2023, arm64) · Elastic IP · security group 80/443 only (no SSH; SSM Session Manager) · instance role: Transcribe streaming, Polly, read the artifact object · Caddy terminates TLS with a certificate for `<ip-with-dashes>.sslip.io` · Node runs `server/src/index.ts` with `SPEECH=transcribe`. The phone, the TV and child audio use only this HTTPS endpoint; the Cloudflare tunnel is not involved.
