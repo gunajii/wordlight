@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 # WordLight AWS account setup (run on the Mac, with YOUR credentials already configured in ~/.aws — never paste
 # keys into chat or the repo). Every change is shown first and needs a "y".
-#   bash infra/aws/account-setup.sh --email you@example.com [--region ap-south-1] [--budget 30]
+#   bash infra/aws/account-setup.sh --email you@example.com [--region ap-south-1] [--budget 5]
 # Does: 1) identity check  2) monthly cost budget with e-mail alerts at 80 % actual and 100 % forecast
 #       3) AI services opt-out (Transcribe/Polly may otherwise store and use content to improve the service)
 #          — needs AWS Organizations; if the account has none, creating one makes it the management account (free).
 #       4) prints the least-privilege IAM policy for the developer identity (infra/aws/iam-dev-policy.json).
 set -uo pipefail
-EMAIL=""; REGION="ap-south-1"; BUDGET=30
+EMAIL=""; REGION="ap-south-1"; BUDGET=5
 while [ $# -gt 0 ]; do case "$1" in --email) EMAIL="$2"; shift 2;; --region) REGION="$2"; shift 2;; --budget) BUDGET="$2"; shift 2;; *) echo "unknown $1"; exit 2;; esac; done
 command -v aws >/dev/null || { echo "AWS CLI missing: brew install awscli"; exit 1; }
 ask() { read -r -p "$1 [y/N] " a; [ "$a" = "y" ] || [ "$a" = "Y" ]; }

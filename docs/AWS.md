@@ -14,7 +14,8 @@ Runtime check, not assumed: `tools/s4/polly-s4.ts` calls `DescribeVoices` and st
 - No audio is written to S3, logs or databases by WordLight (see PRIVACY.md). CloudWatch/app logs carry event metadata only.
 
 ## Cost guard
-Monthly budget `wordlight-dev`, USD 30, e-mail alerts at 80 % actual and 100 % forecast (`account-setup.sh --email …`).
+Goal: **zero out-of-pocket spend** — all usage covered by the account's sign-up credits. Joining AWS Organizations (needed for the AI opt-out) moved the account from the Free plan to the Paid plan; remaining credits still apply first (AWS Billing docs, "Choosing a plan"). Transcribe is not available on the Free plan anyway.
+Monthly budget `wordlight-dev`: created at USD 30 (2026-10-05); `infra/aws/guard.sh --tighten` lowers it to USD 5 counted **before** credits, plus an e-mail alert at USD 1 of usage. `guard.sh` (no flag) checks Polly/Transcribe access, the opt-out, running EC2 instances and Elastic IPs. Stop the server after every session (`deploy.sh --stop`); `deploy.sh --delete` also releases the Elastic IP. Usage estimate (INFERRED, not measured): Polly < USD 1, Transcribe ~USD 1–3, EC2+IP a few dollars if stopped between sessions.
 
 ## Architecture (dev) — staged
 1. **Now (S4, S2 with adult/test speech):** the server runs on the Mac and calls Polly/Transcribe with the developer's credentials (least-privilege policy `infra/aws/iam-dev-policy.json`). Phones reach it through the dev tunnel — adult speech and test tones only.
