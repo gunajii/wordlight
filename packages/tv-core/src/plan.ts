@@ -50,5 +50,19 @@ export function helpSpan(line: PLine, i: number): { fromMs: number; toMs: number
 /** Session totals for the end card, from line.done results (real data only). */
 export function totals(results: { read: number; helped: number; skipped: number }[]) {
   const read = results.reduce((s, r) => s + r.read, 0), helped = results.reduce((s, r) => s + r.helped, 0);
-  return { words: read + helped, onOwn: read, withHelp: helped, turns: results.length };
+  const skipped = results.reduce((s, r) => s + r.skipped, 0);
+  return { words: read + helped, onOwn: read, withHelp: helped, skipped, turns: results.length };
+}
+
+/** "3:05" for the end card. */
+export function formatDuration(ms: number): string {
+  const s = Math.max(0, Math.round(ms / 1000));
+  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+}
+
+/** Progress shown during a turn: how many words are done (read + helped + skipped) of the line. */
+export function turnProgress(marks: readonly string[]) {
+  const read = marks.filter((m) => m === 'read').length, helped = marks.filter((m) => m === 'helped').length;
+  const skipped = marks.filter((m) => m === 'skipped').length;
+  return { done: read + helped + skipped, total: marks.length, read, helped, skipped };
 }

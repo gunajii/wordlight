@@ -3,11 +3,13 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "WordLight session server: pairing, live events, content, and (later) the reading pipeline.",
+  "description": "WordLight session server: pairing, live events, content, the reading pipeline (speech recognition + reading engine) and the parent summary.",
   "dependencies": {
+    "@aws-sdk/client-bedrock-runtime": "^3.1146.0",
     "@aws-sdk/client-transcribe-streaming": "^3.1143.0",
     "@wordlight/reading-engine": "*",
     "@wordlight/shared-protocol": "*",
+    "@wordlight/story-package": "*",
     "qrcode": "^1.5.4",
     "ws": "^8.21.0"
   },

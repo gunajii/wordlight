@@ -80,16 +80,18 @@ test('reading driver: the TV can ask for help (remote)', () => {
   assert.deepEqual(h.map((m) => [m.index, m.reason]), [[1, 'asked']]);
 });
 
-test('session end: deterministic summary from real counts goes to TV and phone', () => {
+test('session end: deterministic summary from real counts goes to TV and phone', async () => {
   const { hub, src, tv, phone, start } = setup();
   start(['one', 'two', 'three']);
   src.say([{ text: 'one' }, { text: 'two' }, { text: 'three' }], true);
-  hub.handle(tv, { t: 'session.end' });
+  hub.handle(tv, { t: 'session.end', storyId: 'demo', storyTitle: 'Mina’s Red Kite', completed: true, durationMs: 185_000 });
+  await sleep(5);
   const sum = phone.out.find((m) => m.type === 'session.summary');
-  assert.equal(sum.text, 'Riya read 3 words aloud in 1 reading turn: all on their own.');
+  assert.equal(sum.text, 'Riya read 3 words independently without help, and finished “Mina’s Red Kite” (1 reading turn, 3 minutes).');
   assert.equal(sum.source, 'template');
+  assert.deepEqual([sum.wordsReadAlone, sum.wordsHelped, sum.wordsSkipped, sum.turns, sum.storiesCompleted, sum.sessionMs], [3, 0, 0, 1, 1, 185_000]);
   assert.ok(tv.out.some((m) => m.type === 'session.summary'));
-  assert.equal(summaryText('Aarav', { readerId: 'x', lines: 4, read: 38, helped: 4, skipped: 1, readingMs: 1, stories: ['a'] }), 'Aarav read 42 words aloud in 4 reading turns: 38 on their own and 4 with a little help.');
+  assert.equal(summaryText('Aarav', { readerId: 'x', lines: 4, read: 38, helped: 4, skipped: 1, readingMs: 1, stories: ['a'] }), 'Aarav read 38 words independently and needed help with 4 words (4 reading turns, under a minute). 1 word was skipped.');
 });
 
 test('speech error ends the turn (error) instead of leaving the TV waiting', () => {

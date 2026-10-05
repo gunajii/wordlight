@@ -104,6 +104,8 @@ export interface SessionSummary extends Envelope {
   readerId: string;
   wordsReadAlone: number;
   wordsHelped: number;
+  wordsSkipped?: number;
+  turns?: number;
   storiesCompleted: number;
   sessionMs: number;
   text: string;

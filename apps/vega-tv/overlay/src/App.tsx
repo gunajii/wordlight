@@ -1,21 +1,23 @@
 // WordLight TV (Vega OS, React Native for Vega).
 //   Home: story shelf + "Pair a phone to read aloud" QR (the phone page needs no app install).
 //   Story: narration with word highlighting; Your Turn lines read aloud into the paired phone (StoryPlayer).
-//   End card: words read tonight — on your own / with help — from real line results; parent summary from the server.
+//   End card: words read tonight — on your own / with help / skipped, turns, time — from real line results; the
+//   parent summary from the server. Everything works with the remote alone (D-pad, OK, Back).
 // Dev tools kept: S1 timing player (driven by tools/s1-run via /api/config) and the Devanagari check (Down on Home).
+// A server whose speech recognition is a local simulation is labelled on every screen (SIMULATED SPEECH).
 import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, Image, StyleSheet, TouchableOpacity } from 'react-native';
 import { useTVEventHandler } from '@amazon-devices/react-native-kepler';
-import { totals } from './vendor/tv-core/index';
+import { totals, formatDuration, type ReadingMode } from './vendor/tv-core/index';
 import { SERVER_URL, SERVER_CANDIDATES, AUDIO_FILE, LEAD_MS } from './wordlight.config';
 import { log, logKey, findServer, fetchConfig, withTimeout, type Run } from './net';
 import { TvSession } from './session';
-import { StoryPlayer, type LineResult } from './StoryPlayer';
+import { StoryPlayer, type LineResult, type EndInfo } from './StoryPlayer';
 import { Player as S1Player, FontCheck, type Story } from './S1Player';
 import { useDevanagariFont } from './fonts';
 
-type ShelfItem = { id: string; title: string; lang: string; cover: string | null; attribution: string; turns: number };
-type Screen = { name: 'home' } | { name: 'story'; story: Story } | { name: 'end'; story: Story; results: LineResult[] } | { name: 's1'; run: Run; key: string } | { name: 'fonts' };
+type ShelfItem = { id: string; title: string; lang: string; cover: string | null; attribution: string; turns: number; test?: boolean };
+type Screen = { name: 'home' } | { name: 'story'; story: Story } | { name: 'end'; story: Story; results: LineResult[]; info: EndInfo } | { name: 's1'; run: Run; key: string } | { name: 'fonts' };
 
 export const App = () => {
   const [base, setBase] = useState<string | null>(null);
@@ -25,6 +27,9 @@ export const App = () => {
   const [screen, setScreen] = useState<Screen>({ name: 'home' });
   const [, force] = useState(0);
   const [summary, setSummary] = useState<string | null>(null);
+  const [mode, setMode] = useState<ReadingMode>('free');
+  const [simulated, setSimulated] = useState(false);
+  const [focused, setFocused] = useState<string | null>(null);
   const session = useRef<TvSession | null>(null);
   const fontReady = useDevanagariFont();
   const baselineRunId = useRef<string | undefined | null>(null);
@@ -49,6 +54,7 @@ export const App = () => {
       const cfg = await fetchConfig();
       if (!alive) return;
       setMediaBase((m) => (m === cfg.mediaBase ? m : cfg.mediaBase));
+      setMode(cfg.readingMode); setSimulated(cfg.simulated);
       const id = cfg.run.runId;
       if (baselineRunId.current === null) { baselineRunId.current = id; return; }
       if (id && id !== baselineRunId.current && cfg.run.autorun) {
@@ -75,7 +81,7 @@ export const App = () => {
     if (evt?.eventKeyAction !== 0) return;
     if (screen.name === 'home' && evt.eventType === 'down' && shelf.length === 0) setScreen({ name: 'fonts' });
     else if (screen.name === 'fonts' && (evt.eventType === 'back' || evt.eventType === 'up')) setScreen({ name: 'home' });
-    else if (screen.name === 'end' && ['select', 'kpenter', 'enter', 'back'].includes(evt.eventType)) setScreen({ name: 'home' });
+    else if (screen.name === 'end' && evt.eventType === 'back') setScreen({ name: 'home' });
   });
 
   if (error) return <View style={s.root}><Text style={s.err}>{error}</Text><Text style={s.hint}>Is `npm start` running on the Mac? Then restart this app.</Text></View>;
@@ -83,18 +89,28 @@ export const App = () => {
   if (screen.name === 'fonts') return <FontCheck fontReady={fontReady} />;
   if (screen.name === 's1') return <S1PlayerLoader base={base} mediaBase={mediaBase} run={screen.run} k={screen.key} fontReady={fontReady} onExit={() => setScreen({ name: 'home' })} />;
   if (screen.name === 'story' && mediaBase && session.current) {
-    return <StoryPlayer story={screen.story} mediaBase={mediaBase} session={session.current} leadMs={LEAD_MS}
-      onEnd={(results) => { session.current?.send({ t: 'session.end' }); setScreen({ name: 'end', story: screen.story, results }); }} />;
+    return <StoryPlayer story={screen.story} mediaBase={mediaBase} session={session.current} leadMs={LEAD_MS} mode={mode} simulated={simulated}
+      onEnd={(results, info) => { session.current?.send({ t: 'session.end', storyId: screen.story.id, storyTitle: screen.story.title, completed: info.completed, durationMs: info.durationMs }); setScreen({ name: 'end', story: screen.story, results, info }); }} />;
   }
   if (screen.name === 'end') {
     const t = totals(screen.results);
     return (
       <View style={s.root}>
-        <Text style={s.endBig}>{t.words > 0 ? `You read ${t.words} word${t.words === 1 ? '' : 's'}!` : 'The end'}</Text>
-        {t.words > 0 ? <Text style={s.endSub}>{t.onOwn} on your own{t.withHelp ? ` · ${t.withHelp} with help` : ''}</Text> : <Text style={s.endSub}>Pair a phone next time to read some lines yourself.</Text>}
-        {summary ? <Text style={s.hint}>Sent to the phone: “{summary}”</Text> : null}
+        {simulated ? <Text style={s.sim}>SIMULATED SPEECH · local demo — not real recognition</Text> : null}
+        <Text style={s.endBig}>{t.words > 0 ? `You read ${t.words} word${t.words === 1 ? '' : 's'}!` : screen.info.completed ? 'The end' : 'See you next time'}</Text>
+        {t.words > 0 ? (
+          <View style={s.statRow}>
+            <View style={s.stat}><Text style={[s.statNum, { color: '#5dd39e' }]}>{t.onOwn}</Text><Text style={s.statLbl}>on your own</Text></View>
+            <View style={s.stat}><Text style={[s.statNum, { color: '#ffb347' }]}>{t.withHelp}</Text><Text style={s.statLbl}>with a little help</Text></View>
+            <View style={s.stat}><Text style={s.statNum}>{t.turns}</Text><Text style={s.statLbl}>reading turn{t.turns === 1 ? '' : 's'}</Text></View>
+          </View>
+        ) : <Text style={s.endSub}>Pair a phone next time to read some lines yourself.</Text>}
+        <Text style={s.hint}>{screen.story.title} · {screen.info.completed ? 'story finished' : 'stopped early'} · {formatDuration(screen.info.durationMs)}{t.skipped ? ` · ${t.skipped} word${t.skipped === 1 ? '' : 's'} skipped` : ''}</Text>
+        {summary ? <Text style={s.summary}>For the parent: “{summary}”</Text> : null}
+        <TouchableOpacity hasTVPreferredFocus style={[s.btn, focused === 'end' && s.btnFocus]} onFocus={() => setFocused('end')} onBlur={() => setFocused(null)} onPress={() => setScreen({ name: 'home' })}>
+          <Text style={s.btnText}>Back to stories</Text>
+        </TouchableOpacity>
         <Text style={s.credit}>{screen.story.credits.attribution}</Text>
-        <Text style={s.hint}>OK: back to stories</Text>
       </View>
     );
   }
@@ -104,13 +120,14 @@ export const App = () => {
     <View style={s.homeRoot}>
       <View style={s.left}>
         <Text style={s.brand}>WordLight</Text>
-        <Text style={s.tag}>Listen to a story. Then read it yourself.</Text>
+        <Text style={s.tag}>{mode === 'echo' ? 'Listen to a story. Then say it yourself.' : 'Listen to a story. Then read it yourself.'}</Text>
+        {simulated ? <Text style={s.sim}>SIMULATED SPEECH · local demo — not real recognition</Text> : null}
         <View style={s.shelf}>
           {shelf.length === 0 ? <Text style={s.hint}>No stories yet on the server.</Text> : shelf.map((it, i) => (
-            <TouchableOpacity key={it.id} hasTVPreferredFocus={i === 0} style={s.card} onPress={() => openStory(it.id)}>
+            <TouchableOpacity key={it.id} hasTVPreferredFocus={i === 0} style={[s.card, focused === it.id && s.cardFocus]} onFocus={() => setFocused(it.id)} onBlur={() => setFocused((f) => (f === it.id ? null : f))} onPress={() => openStory(it.id)}>
               {mediaBase && it.cover ? <Image source={{ uri: `${mediaBase}/content/stories/${it.id}/${it.cover}` }} style={s.cardImg} /> : <View style={s.cardImg} />}
               <Text style={s.cardTitle}>{it.title}</Text>
-              <Text style={s.cardMeta}>{it.lang === 'hi-IN' ? 'हिंदी' : 'English'} · {it.turns} reading turns</Text>
+              <Text style={s.cardMeta}>{it.lang === 'hi-IN' ? 'हिंदी' : 'English'} · {it.turns} reading turn{it.turns === 1 ? '' : 's'}{it.test ? ' · test story' : ''}</Text>
             </TouchableOpacity>
           ))}
         </View>
@@ -120,6 +137,7 @@ export const App = () => {
         <Text style={s.pairTitle}>Pair a phone to read aloud</Text>
         {sess?.id && mediaBase ? <Image source={{ uri: `${mediaBase}/api/sessions/${sess.id}/qr.png?size=360` }} style={s.qr} /> : <View style={s.qr} />}
         <Text style={s.code}>{sess?.id ? `code ${sess.id}` : 'starting…'}</Text>
+        <Text style={[s.small, { color: sess?.status === 'open' ? '#5dd39e' : '#ff9f80' }]}>{sess?.status === 'open' ? '● connected' : `○ ${sess?.status ?? 'connecting'}`}</Text>
         {readers.length === 0 ? <Text style={s.small}>Scan with the phone camera. No app needed.</Text> : readers.map((r) => (
           <Text key={r.readerId} style={s.reader}>{r.online ? '●' : '○'} {r.firstName}{r.online ? ' is ready to read' : ' (phone away)'}</Text>
         ))}
@@ -145,7 +163,17 @@ const s = StyleSheet.create({
   brand: { color: '#ffd166', fontSize: 72, fontWeight: '700' },
   tag: { color: '#cfe3f5', fontSize: 30, marginTop: 6, marginBottom: 30 },
   shelf: { flexDirection: 'row', flexWrap: 'wrap' },
-  card: { width: 380, backgroundColor: '#1d2b3a', borderRadius: 16, padding: 14, marginRight: 24, marginBottom: 24, borderWidth: 4, borderColor: '#ffd166' },
+  card: { width: 380, backgroundColor: '#1d2b3a', borderRadius: 16, padding: 14, marginRight: 24, marginBottom: 24, borderWidth: 4, borderColor: '#2a3a4c' },
+  cardFocus: { borderColor: '#ffd166', transform: [{ scale: 1.04 }] },
+  sim: { color: '#fff', backgroundColor: '#8a1c1c', fontSize: 20, fontWeight: '700', paddingHorizontal: 14, paddingVertical: 6, borderRadius: 10, marginBottom: 16, alignSelf: 'flex-start' },
+  statRow: { flexDirection: 'row', marginTop: 24 },
+  stat: { alignItems: 'center', marginHorizontal: 36 },
+  statNum: { color: '#fff', fontSize: 84, fontWeight: '700' },
+  statLbl: { color: '#cfe3f5', fontSize: 28 },
+  summary: { color: '#ffffff', fontSize: 26, marginTop: 28, textAlign: 'center', maxWidth: 1400 },
+  btn: { marginTop: 30, backgroundColor: '#1d2b3a', borderRadius: 16, paddingHorizontal: 36, paddingVertical: 16, borderWidth: 4, borderColor: '#2a3a4c' },
+  btnFocus: { borderColor: '#ffd166' },
+  btnText: { color: '#fff', fontSize: 30 },
   cardImg: { width: 348, height: 196, borderRadius: 8, backgroundColor: '#0c131a' },
   cardTitle: { color: '#fff', fontSize: 30, marginTop: 10 },
   cardMeta: { color: '#9fb3c8', fontSize: 20, marginTop: 4 },

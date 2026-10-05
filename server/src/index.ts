@@ -22,6 +22,7 @@ import { ReadingDriver, RouterDriver, type TurnTrace } from './reading/driver.ts
 import { TranscribeSource, type SpeechSource } from './reading/speech.ts';
 import { scriptedFromEnv } from './reading/scripted.ts';
 import { checkAllStories } from './content.ts';
+import { summaryFromEnv } from './summary.ts';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const PORT = Number(process.env.PORT || 8787);
@@ -101,6 +102,8 @@ export function createServer({ hub = new SessionHub({ now: serverNow }), publicU
     reading = new ReadingDriver({ hub, source: speech, now: serverNow, log, devTranscripts: process.env.DEV_TRANSCRIPTS === '1', onTrace: (t) => traceSink?.(t) });
     hub.driver = new RouterDriver({ test: s3, reading });
   }
+  // Parent summary wording: template by default; Bedrock only with SUMMARY=bedrock + BEDROCK_MODEL_ID (always falls back).
+  if (process.env.SUMMARY === 'bedrock') summaryFromEnv(log).then((sv) => { hub.summary = sv; log(`[summary] ${sv.name}`); });
   const server = http.createServer(async (req, res) => {
     const url = new URL(req.url ?? '/', 'http://x');
     const p = url.pathname;

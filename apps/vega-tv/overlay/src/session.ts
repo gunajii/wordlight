@@ -8,7 +8,7 @@ export type ReaderInfo = { readerId: string; firstName: string; age: number; lan
 type Listener = (m: any) => void;
 
 export class TvSession {
-  id = ''; joinUrl = ''; status = 'connecting';
+  id = ''; joinUrl = ''; status = 'connecting'; base = '';
   readers: ReaderInfo[] = [];
   private client: any = null;
   private clock = new ClockSync();
@@ -17,6 +17,7 @@ export class TvSession {
   constructor(onChange: () => void) { this.onChange = onChange; }
 
   async start(base: string) {
+    this.base = base;
     const r = await (await withTimeout(fetch(`${base}/api/sessions`, { method: 'POST' }), 6000)).json();
     this.id = r.sessionId; this.joinUrl = r.joinUrl;
     log(`session ${this.id} join ${this.joinUrl}`);

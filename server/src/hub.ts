@@ -5,6 +5,7 @@
 //
 // Control messages use `t` (hello, ping, telemetry), app events use `type` (see shared-protocol).
 import { validateEvent, mayClientSend, type Reader, type TurnStart, type WordLightEvent, type AudioFrame } from '@wordlight/shared-protocol';
+import { LocalSummaryService, templateSummary, type SummaryService, type SummaryInput } from './summary.ts';
 
 export interface Conn { send: (msg: unknown) => void }
 interface ConnInfo { role: 'tv' | 'phone'; sessionId: string; clientId: string }
@@ -26,13 +27,9 @@ export const CHUNK_MS_ALLOWED = [20, 40, 60, 100];
 
 export interface ReaderProgress { readerId: string; lines: number; read: number; helped: number; skipped: number; readingMs: number; stories: string[] }
 
-/** Deterministic parent summary from real counts only (no generated claims). */
+/** Deterministic parent summary from real counts only (no generated claims). Kept for callers of the old API. */
 export function summaryText(name: string, p: ReaderProgress): string {
-  const total = p.read + p.helped;
-  if (p.lines === 0) return `${name} listened to the story today. No reading turns yet.`;
-  const turns = `${p.lines} reading turn${p.lines === 1 ? '' : 's'}`;
-  const helped = p.helped === 0 ? 'all on their own' : `${p.read} on their own and ${p.helped} with a little help`;
-  return `${name} read ${total} word${total === 1 ? '' : 's'} aloud in ${turns}: ${helped}.`;
+  return templateSummary({ name, lang: 'en-IN', read: p.read, helped: p.helped, skipped: p.skipped, lines: p.lines, storiesCompleted: [], storyTitles: [], sessionMs: p.readingMs });
 }
 
 export interface PhoneStatus { micLive: number; turnId: string | null; ctx: string | null; visible: string | null; atServerMs: number }
@@ -64,6 +61,8 @@ export interface Session {
   lastTurnEnd: { clientId: string; atServerMs: number; offSeen?: boolean } | null;
   /** derived reading progress per reader (counts only; feeds the end card and the parent summary) */
   progress: Map<string, ReaderProgress>;
+  /** stories the TV reported as read to the end, and titles shown (for the summary) */
+  storiesCompleted: string[]; storyTitles: string[];
   micAudit: { statusReports: number; violations: MicViolation[]; liveDuringTurnReports: number; offDuringTurnReports: number;
     /** per ended turn: ms from the server ending it to the phone's first report of 0 live mic tracks */
     offAfterEndMs: number[] };
@@ -75,6 +74,8 @@ export class SessionHub {
   readonly sessions = new Map<string, Session>();
   readonly info = new WeakMap<Conn, ConnInfo>();
   driver: TurnDriver | null = null;
+  /** turns counts into the parent's sentence; the counts never depend on it */
+  summary: SummaryService = new LocalSummaryService();
   private readonly o: { now: () => number; random?: () => number; telemetryLimit?: number };
   constructor(o: { now: () => number; random?: () => number; telemetryLimit?: number }) {
     this.o = o;
@@ -88,7 +89,7 @@ export class SessionHub {
     } while (this.sessions.has(id));
     this.sessions.set(id, {
       id, createdAt: this.o.now(), tv: null, phones: new Map(), readers: new Map(), turn: null, seen: new Set(), telemetry: [],
-      testMode: !!o.testMode, nextAudioTag: 1, progress: new Map(), clocks: new Map(), phoneStatus: new Map(), lastTurnEnd: null,
+      testMode: !!o.testMode, nextAudioTag: 1, progress: new Map(), storiesCompleted: [], storyTitles: [], clocks: new Map(), phoneStatus: new Map(), lastTurnEnd: null,
       micAudit: { statusReports: 0, violations: [], liveDuringTurnReports: 0, offDuringTurnReports: 0, offAfterEndMs: [] },
     });
     return id;
@@ -110,7 +111,7 @@ export class SessionHub {
     if (info.role === 'phone' && msg.t === 'phone.status') return this.phoneStatus(s, info.clientId, msg);
     if (info.role === 'phone' && msg.t === 's3.turn') return this.s3TurnRequest(s, conn, info.clientId, msg);
     if (info.role === 'phone' && msg.t === 'phone.events') return this.phoneEvents(s, info.clientId, msg);
-    if (info.role === 'tv' && msg.t === 'session.end') return this.sessionEnd(s);
+    if (info.role === 'tv' && msg.t === 'session.end') { void this.sessionEnd(s, msg); return; }
     const v = validateEvent({ ...msg, sessionId: s.id });
     if (!v.ok) return conn.send({ t: 'error', code: 'invalid', message: v.error });
     if (!mayClientSend(info.role, v.event.type)) return conn.send({ t: 'error', code: 'not-allowed', message: `${info.role} may not send ${v.event.type}` });
@@ -300,15 +301,24 @@ export class SessionHub {
     this.log(s, { kind: 'line-done', readerId: id, turnId: t.turn.turnId, storyId: t.turn.storyId, page: t.turn.page, line: t.turn.line, read: e.read, helped: e.helped, skipped: e.skipped, durationMs: e.durationMs });
   }
 
-  /** TV finished the story/session: send each reader's deterministic summary to the TV and that reader's phone. */
-  private sessionEnd(s: Session) {
+  /** TV finished the story/session: each reader's summary (counts are deterministic; wording via SummaryService). */
+  async sessionEnd(s: Session, msg: any = {}) {
     if (s.turn) this.endTurn(s, 'exit');
+    const storyId = typeof msg.storyId === 'string' ? msg.storyId.slice(0, 128) : null;
+    const title = typeof msg.storyTitle === 'string' ? msg.storyTitle.slice(0, 80) : null;
+    if (storyId && msg.completed === true && !s.storiesCompleted.includes(storyId)) s.storiesCompleted.push(storyId);
+    if (title && !s.storyTitles.includes(title)) s.storyTitles.push(title);
+    const sessionMs = typeof msg.durationMs === 'number' && Number.isFinite(msg.durationMs) && msg.durationMs >= 0 ? Math.round(msg.durationMs) : Math.round(this.o.now() - s.createdAt);
     for (const r of s.readers.values()) {
       const p = s.progress.get(r.readerId) ?? { readerId: r.readerId, lines: 0, read: 0, helped: 0, skipped: 0, readingMs: 0, stories: [] };
-      const ev = { type: 'session.summary', sessionId: s.id, readerId: r.readerId, wordsReadAlone: p.read, wordsHelped: p.helped, storiesCompleted: p.stories.length, sessionMs: Math.round(this.o.now() - s.createdAt), text: summaryText(r.firstName, p), source: 'template', serverMs: this.o.now() };
+      const input: SummaryInput = { name: r.firstName, lang: r.lang, read: p.read, helped: p.helped, skipped: p.skipped, lines: p.lines, storiesCompleted: s.storiesCompleted.slice(), storyTitles: s.storyTitles.slice(), sessionMs };
+      let out: { text: string; source: 'template' | 'bedrock'; fallbackReason?: string };
+      try { out = await this.summary.summarize(input); } catch { out = { text: templateSummary(input), source: 'template', fallbackReason: 'error' }; }
+      const ev = { type: 'session.summary', sessionId: s.id, readerId: r.readerId, wordsReadAlone: p.read, wordsHelped: p.helped, wordsSkipped: p.skipped, turns: p.lines,
+        storiesCompleted: s.storiesCompleted.length, sessionMs, text: out.text, source: out.source, serverMs: this.o.now() };
       this.toTv(s, ev);
       s.phones.get(r.phoneClientId)?.send(ev);
-      this.log(s, { kind: 'session-summary', readerId: r.readerId, read: p.read, helped: p.helped, lines: p.lines });
+      this.log(s, { kind: 'session-summary', readerId: r.readerId, read: p.read, helped: p.helped, skipped: p.skipped, lines: p.lines, source: out.source, fallback: out.fallbackReason });
     }
   }
 

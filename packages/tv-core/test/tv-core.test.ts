@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { idle, turnReduce, micShouldBeOn, nextTurn, resumeAt, helpSpan, totals, turnStopAt, ECHO_STOP_AFTER_MS, type TurnEvent, type PPage } from '../src/index.ts';
+import { idle, turnReduce, micShouldBeOn, nextTurn, resumeAt, helpSpan, totals, turnStopAt, ECHO_STOP_AFTER_MS, formatDuration, turnProgress, type TurnEvent, type PPage } from '../src/index.ts';
 
 const run = (...evs: TurnEvent[]) => { let s = idle(); const rej: string[] = []; for (const e of evs) { const r = turnReduce(s, e); s = r.state; if (r.rejected) rej.push(r.rejected); } return { s, rej }; };
 const begin: TurnEvent = { type: 'begin', turnId: 't', readerName: 'Riya', words: ['The', 'little', 'cat'] };
@@ -54,8 +54,8 @@ test('plan: stop before the turn line, resume at the next line, help span stays 
 });
 
 test('end-card totals come only from line.done results', () => {
-  assert.deepEqual(totals([{ read: 5, helped: 1, skipped: 0 }, { read: 3, helped: 0, skipped: 1 }]), { words: 9, onOwn: 8, withHelp: 1, turns: 2 });
-  assert.deepEqual(totals([]), { words: 0, onOwn: 0, withHelp: 0, turns: 0 });
+  assert.deepEqual(totals([{ read: 5, helped: 1, skipped: 0 }, { read: 3, helped: 0, skipped: 1 }]), { words: 9, onOwn: 8, withHelp: 1, skipped: 1, turns: 2 });
+  assert.deepEqual(totals([]), { words: 0, onOwn: 0, withHelp: 0, skipped: 0, turns: 0 });
 });
 
 test('echo mode: narration stops AFTER the turn line (TV reads it, child repeats); free mode stops before it', () => {
@@ -69,4 +69,11 @@ test('echo mode: narration stops AFTER the turn line (TV reads it, child repeats
   assert.deepEqual(nextTurn(page, 1500, new Set(), 'echo'), { index: 1, stopAtMs: 2750 }, 'in echo mode the narrator is allowed into the line');
   assert.equal(nextTurn(page, 1500, new Set(), 'free'), null, 'in free mode that position is already too late');
   assert.equal(resumeAt(page, 1), 2940, 'both modes resume just before the next line');
+});
+
+test('end card and turn progress come from real counts only', () => {
+  assert.deepEqual(totals([{ read: 4, helped: 1, skipped: 0 }, { read: 3, helped: 0, skipped: 1 }]), { words: 8, onOwn: 7, withHelp: 1, skipped: 1, turns: 2 });
+  assert.deepEqual(totals([]), { words: 0, onOwn: 0, withHelp: 0, skipped: 0, turns: 0 });
+  assert.equal(formatDuration(185_400), '3:05');
+  assert.deepEqual(turnProgress(['read', 'helped', 'pending', 'skipped', 'pending']), { done: 3, total: 5, read: 1, helped: 1, skipped: 1 });
 });
