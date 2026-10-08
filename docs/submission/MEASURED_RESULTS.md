@@ -48,12 +48,24 @@ Nothing on this page comes from a child: no child has used WordLight.
 | Method | `tools/s2/eval.ts`, 169 cases (correct, slip, missing, repeated, hesitation, long pause, wrong, multiple wrong, correction, Hindi Unicode, English edge cases), streamed in real time as 40 ms frames. Pass rule fixed in advance: ≥ 90 % within 1 s and ≤ 10 % misreads accepted, per language |
 | Sample | 169 cases, 836 words that should light |
 | Result | **FAIL.** Lit within 1 s: **50.9 %** (en-IN 49.3 %, hi-IN 52.6 %). Misreads accepted: **6.7 %** (en-IN 12 %, hi-IN 0 %). Latency median **976 ms**, p95 1 556 ms. Words after the first: 94.8 % recognised eventually. First words of a line: weaker (Transcribe often returned only the end of the line, e.g. "Kite" for "Tara had a red kite"). Names were misheard (Tara→Sarah, Anu→"A who"). Report: `docs/results/s2/polly-transcribe-2026-10-08T12-33-02/` |
-| Status | **MEASURED** for an adult synthetic voice. The main failure is **latency, not accuracy**. By the predefined rule, the server runs **Echo Mode** (deployed 2026-10-08). A follow-up (phase A2: silence before the speech as on a phone, Transcribe stability settings) will be reported here beside this result, without replacing it. Child speech: **UNKNOWN** (protocol in docs/CHILD_TESTING.md) |
+| Status | **MEASURED** for an adult synthetic voice. The main failure is **latency, not accuracy**. By the predefined rule, the server runs **Echo Mode** (deployed 2026-10-08). Follow-up below. Child speech: **UNKNOWN** (protocol in docs/CHILD_TESTING.md) |
+
+### S2 follow-up (phase A2, 2026-10-08) — reported beside phase A, not replacing it
+| | |
+|---|---|
+| Question | Is the delay caused by our harness (speech started at t = 0, while a real phone streams silence first) or by a Transcribe setting? |
+| Method | The same 40-case sample, the same cached Polly audio and the same metric, in 5 configurations. Then the configuration picked by a rule fixed in advance was run on all 169 cases. Table: `docs/results/s2/experiment-20261008T125733Z.md` |
+| Result: harness repeat | Phase A setting on the sample: 54.4 % lit within 1 s (phase A, all 169 cases: 50.9 %). The two runs are consistent |
+| Result: lead silence | 600 ms of silence first: **no improvement** (46.1 % within 1 s, first word lit 84.6 % vs 89.7 % without it). The hypothesis is **rejected**: the first-word losses are not a harness artifact |
+| Result: stability | high 46.1 % · medium 47.1 % · low 44.6 % · **none 63.7 %** (median latency 708 ms vs 1 000 ms; from the word END 451 ms vs 740 ms, INFERRED) |
+| Pick rule | It excluded every configuration. The sample holds only 9 misread words, so one word is 11 points, and even the repeat of the phase A setting showed 22 %. Result: "keep high". This weakness is in our sample design and is recorded as found |
+| Result: 169 cases, high + 600 ms | **FAIL**: 49.2 % within 1 s (en 47.7 %, hi 50.7 %), misreads accepted 8.9 % (4/45), median 989 ms. Recognised eventually: 95 %. From the word END (INFERRED): median 720 ms, 85.6 % within 1 s |
+| Status | **MEASURED.** Echo Mode stays. Stability "none" looks markedly faster on 40 cases. Whether it holds on 169 cases without accepting more misreads is **UNKNOWN** until measured (phase A3) |
 
 ## Bedrock — Personalized Reading Coach
 | | |
 |---|---|
-| Result | 2026-10-08, ap-south-1: every candidate model (Nova Micro/Lite through the APAC inference profile, Ministral 3B/8B/14B) returned **AccessDeniedException**. 0 accepted, so the deterministic template summary is used. The error text is being captured in phase A2 |
+| Result | 2026-10-08, ap-south-1: every candidate model (Nova Micro/Lite through the APAC inference profile, Ministral 3B/8B/14B) was refused, so the deterministic template summary is used. Phase A2 captured the exact message for a bare `Converse` call: `ValidationException: Operation not allowed` (Nova Micro directly and through APAC, Nova Lite, Ministral 3B). `GetFoundationModelAvailability` for Nova Micro: region, entitlement and agreement AVAILABLE, **authorizationStatus NOT_AUTHORIZED**. The block is at account level, not a missing model enablement |
 | Status | **MEASURED** (refused). AI summary quality: **UNKNOWN** |
 
 ## Spend

@@ -118,9 +118,13 @@ Only problems actually encountered. Format: Date / Environment / Component / Exp
 ## W12 — Bedrock: AccessDeniedException for every model on a new account (MEASURED, 2026-10-08)
 - **Component:** Amazon Bedrock Runtime `Converse`, ap-south-1, root credentials, account upgraded the same day.
 - **Expected:** Amazon Nova Micro (first-party, through the APAC inference profile) usable on demand.
-- **Actual:** `AccessDeniedException` for Nova Micro/Lite and Ministral 3B/8B/14B, although `ListFoundationModels`
-  and `ListInferenceProfiles` listed them. The exact message is being captured (phase A2).
-- **Workaround:** a deterministic template summary. The product works without Bedrock.
+- **Actual:** `AccessDeniedException` through the SDK. A bare CLI `converse` call returned `ValidationException: Operation
+  not allowed` for Nova Micro (direct and APAC profile), Nova Lite and Ministral 3B, although `ListFoundationModels` and
+  `ListInferenceProfiles` listed them. `GetFoundationModelAvailability` reported region, entitlement and agreement
+  AVAILABLE but `authorizationStatus: NOT_AUTHORIZED`, with no console action to change it. The message doesn't say
+  what to do; two different exception names describe the same block.
+- **Workaround:** a deterministic template summary. The product works without Bedrock. A support case was opened (see AWS.md).
+- **Potential improvement:** an actionable message ("new accounts need …; open a case at …") and one exception name.
 - **Severity:** medium for a hackathon. It blocked the Bedrock feature on day one.
 
 ## W13 — macOS system Python has no numpy (MEASURED, 2026-10-08)
