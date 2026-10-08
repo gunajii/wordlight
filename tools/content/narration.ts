@@ -40,6 +40,12 @@ export class PollyNarration implements NarrationService {
     const r = await this.client.send(new this.Cmd({ Engine: 'neural', VoiceId: this.voice.id, LanguageCode: lang, Text: input, TextType: ssml ? 'ssml' : 'text', OutputFormat: format, ...(format === 'pcm' ? { SampleRate: '16000' } : {}), ...(format === 'json' ? { SpeechMarkTypes: ['word'] } : {}) }));
     return await r.AudioStream!.transformToByteArray();
   }
+  /** One word, alone and slow — the TV's help clip (clear pronunciation, no seeking in the page audio). */
+  async wordClip(word: string, lang: 'hi-IN' | 'en-IN'): Promise<Uint8Array> {
+    const bare = word.replace(/^[^\p{L}\p{M}\p{N}]+|[^\p{L}\p{M}\p{N}]+$/gu, '');
+    if (!bare || /[<>&]/.test(bare)) throw new Error(`no help clip for ${JSON.stringify(word)}`);
+    return this.synth(`<speak><prosody rate="80%">${bare}</prosody></speak>`, bare.length, true, lang, 'mp3');
+  }
   async synthesize(text: string, lang: 'hi-IN' | 'en-IN', lines?: string[]): Promise<Narrated> {
     const s = this.style ? pageSsml(lines ?? [text], this.style) : null;
     if (s && s.text !== text) throw new Error('lines must join (single spaces) to the page text');

@@ -13,7 +13,7 @@ import { View, Text, Image, StyleSheet } from 'react-native';
 import { AudioPlayer } from '@amazon-devices/react-native-w3cmedia';
 import { useTVEventHandler } from '@amazon-devices/react-native-kepler';
 import { PlayheadSampler, lineIndexAt, KaraokeLine } from './vendor/karaoke-core/index';
-import { idle, turnReduce, nextTurn, resumeAt, helpSpan, lineStart, turnProgress, type TurnState, type TurnEvent, type ReadingMode } from './vendor/tv-core/index';
+import { idle, turnReduce, nextTurn, resumeAt, echoStopAt, lineStart, turnProgress, type TurnState, type TurnEvent, type ReadingMode } from './vendor/tv-core/index';
 import { log, logKey } from './net';
 import type { TvSession } from './session';
 import type { Story } from './S1Player';
@@ -43,8 +43,8 @@ export function StoryPlayer({ story, mediaBase, session, leadMs, mode, simulated
   const turnRef = useRef<TurnState>(idle());
   const turnLine = useRef<number | null>(null);
   const turnTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  /** While the TV replays one word for help: the playhead position (ms) at which to stop. null = no help playing. */
-  const helpStop = useRef<number | null>(null);
+  /** The help word plays from its own clip in its own player; the page narration stays paused (no seeking). */
+  const helpPlayer = useRef<AudioPlayer | null>(null);
   const helpTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const doneTurns = useRef(new Set<number>());
   const results = useRef<LineResult[]>([]);
@@ -77,8 +77,8 @@ export function StoryPlayer({ story, mediaBase, session, leadMs, mode, simulated
     on('playing', () => {
       playing.current = true; sampler.current.reset();
       // The system Play key (Player Session) must not start narration over a child's reading turn.
-      // Only the one help word may sound during a turn (helpStop set); anything else is paused again.
-      if (ACTIVE.includes(turnRef.current.phase) && helpStop.current === null) { log('play during a turn: paused again'); pause(); }
+      // The page narration never plays during a turn (help words have their own player).
+      if (ACTIVE.includes(turnRef.current.phase)) { log('play during a turn: paused again'); pause(); }
     });
     on('pause', () => { playing.current = false; sampler.current.reset(); });
     on('seeking', () => sampler.current.reset());
@@ -103,16 +103,13 @@ export function StoryPlayer({ story, mediaBase, session, leadMs, mode, simulated
       const now = performance.now();
       sampler.current.sample((p.currentTime ?? 0) * 1000, now, playing.current);
       const pos = sampler.current.positionAt(now, playing.current) ?? 0;
-      // Help word: stop on the PLAYHEAD, not a wall-clock timer — on the VVD, seek+play can take longer than the
-      // word, so a timer fired before playback began and the rest of the line played (2026-10-08, adult test).
-      if (helpStop.current !== null) { if (playing.current && pos >= helpStop.current) stopHelp(); return; }
       if (ACTIVE.includes(turnRef.current.phase)) { if (playing.current) { log('narration during a turn: paused'); pause(); } return; }
       if (turnRef.current.phase !== 'LISTEN') return;
       if (playing.current) {
-        // echo: the line must be HEARD to its end before stopping; sound leaves the speaker outLatency after the playhead
-        const p = mode === 'echo' ? pos - outLatency : pos;
-        const nt = nextTurn(page, p, doneTurns.current, mode);
-        if (nt && p >= nt.stopAtMs) { beginTurn(nt.index); return; }
+        // echo: stop once the line has been HEARD to its end (sound lags the playhead by outLatency), but never let the
+        // next line start (echoStopAt caps it); free: just before the line
+        const nt = nextTurn(page, mode === 'echo' ? pos - outLatency : pos, doneTurns.current, mode);
+        if (nt && pos >= (mode === 'echo' ? echoStopAt(page, nt.index, outLatency) : nt.stopAtMs)) { beginTurn(nt.index); return; }
       }
       const li = lineIndexAt(lines, pos + leadMs);
       setView((v) => (v.page === pageIdx && v.line === li && Math.abs(v.pos - pos) < 15 ? v : { page: pageIdx, line: li, pos }));
@@ -136,7 +133,7 @@ export function StoryPlayer({ story, mediaBase, session, leadMs, mode, simulated
   }
 
   function finishTurn(narrateLine: boolean) {
-    if (helpStop.current !== null) stopHelp();
+    stopHelp();
     const i = turnLine.current;
     if (turnTimer.current) clearTimeout(turnTimer.current);
     dispatch({ type: 'finish' });
@@ -149,22 +146,27 @@ export function StoryPlayer({ story, mediaBase, session, leadMs, mode, simulated
   }
 
   function stopHelp() {
-    helpStop.current = null;
     if (helpTimer.current) { clearTimeout(helpTimer.current); helpTimer.current = null; }
-    pause();
+    const hp = helpPlayer.current; helpPlayer.current = null;
+    if (hp) { try { hp.pause(); } catch {} hp.deinitialize().catch(() => {}); }
     if (turnRef.current.phase === 'HELP') dispatch({ type: 'help-done' });
   }
 
+  /** Say one word: its own clip (built per turn-line word: alone, slow), in a separate player. No clip → the word is
+   *  shown on screen only. The page narration is never moved for help, so it cannot run on into later words. */
   function playHelp(index: number) {
     const i = turnLine.current;
     if (i === null) return;
-    const span = helpSpan(lines[i], index);
-    helpStop.current = span.toMs + outLatency + 40; // the word is heard outLatency after the playhead passes it
-    seekMs(span.fromMs);
-    play();
-    // safety net only (e.g. playback never starts): the playhead check in the narration clock is what stops it
-    if (helpTimer.current) clearTimeout(helpTimer.current);
-    helpTimer.current = setTimeout(() => { if (helpStop.current !== null) { log('help: playback did not reach the word end in 4 s'); stopHelp(); } }, 4000);
+    stopHelp();
+    const w = lines[i].words[index];
+    helpTimer.current = setTimeout(() => { log('help: clip did not finish in 4 s'); stopHelp(); }, w?.clip ? 4000 : 1500);
+    if (!w?.clip) return;
+    const hp = new AudioPlayer();
+    helpPlayer.current = hp;
+    hp.addEventListener('canplay' as any, (() => { if (helpPlayer.current === hp) { const r: any = hp.play(); r?.catch?.((e: any) => log(`help play rejected ${e?.message ?? e}`)); } }) as any);
+    hp.addEventListener('ended' as any, (() => { if (helpPlayer.current === hp) stopHelp(); }) as any);
+    hp.addEventListener('error' as any, (() => { log('help clip error'); if (helpPlayer.current === hp) stopHelp(); }) as any);
+    hp.initialize().then(() => { hp.autoplay = false; hp.src = `${mediaBase}/content/stories/${story.id}/${w.clip}`; }).catch((e: any) => { log(`help player failed ${e?.message ?? e}`); stopHelp(); });
   }
 
   // ---- live events for this turn ----

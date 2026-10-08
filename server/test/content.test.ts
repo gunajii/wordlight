@@ -46,7 +46,12 @@ test('build-story with a narration style: SSML to Polly, marks mapped back to th
   const calls: any[] = [];
   const narration = new PollyNarration({ ...fakePollyClient(calls), voiceId: 'Kajal', style: { rate: '90%', volume: '+6dB', lineBreakMs: 650 } });
   const credits = { source: 'WordLight test content', license: 'original', title: 'T', author: 'A', attribution: 'Test.' };
-  const { story, issues } = await buildStory({ src: { id: 'en-test', lang: 'en-IN', level: 1, title: 'T', credits, pages: [{ image: 'a.png', text: 'We walk in a line, quietly. We do not talk.' }] }, srcDir: src, outDir: out, narration });
+  const helpCalls: any[] = [];
+  const helpVoice = new PollyNarration({ ...fakePollyClient(helpCalls), voiceId: 'Kajal' });
+  const { story, issues } = await buildStory({ src: { id: 'en-test', lang: 'en-IN', level: 1, title: 'T', credits, pages: [{ image: 'a.png', text: 'We walk in a line, quietly. We do not talk.' }] }, srcDir: src, outDir: out, narration, helpVoice });
+  const turnWords = story.pages.flatMap((p) => p.lines).filter((l) => l.turn).flatMap((l) => l.words);
+  assert.ok(turnWords.length > 0 && turnWords.every((w) => w.clip && existsSync(path.join(out, w.clip))), 'every turn-line word has a help clip');
+  assert.ok(helpCalls.every((c) => c.TextType === 'ssml' && /^<speak><prosody rate="80%">[^<.,]+<\/prosody><\/speak>$/.test(c.Text)), 'clips: the bare word, slow');
   assert.deepEqual(issues.filter((i) => i.level === 'error'), []);
   assert.ok(calls.every((c) => c.TextType === 'ssml'));
   assert.equal(calls[0].Text, '<speak><prosody rate="90%" volume="+6dB">We walk in a line, quietly.<break time="650ms"/> We do not talk.</prosody></speak>');

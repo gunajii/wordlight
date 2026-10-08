@@ -151,3 +151,12 @@ test('soundEndMs finds the last sound before the next word', async () => {
   for (let i = 16 * 100; i < 16 * 420; i++) pcm[i] = i % 2 ? 9000 : -9000;
   assert.equal(soundEndMs(pcm, 100, 900), 420);
 });
+
+test('pauseStartMs: end of a line = first real pause after the last word, not the next word\'s onset', async () => {
+  const { pauseStartMs } = await import('../src/index.ts');
+  const pcm = new Int16Array(16 * 4000);
+  const loud = (a: number, b: number) => { for (let i = a * 16; i < b * 16; i++) pcm[i] = i % 2 ? 9000 : -9000; };
+  loud(1900, 2050); loud(2080, 2176); /* a 30 ms gap inside the word */ loud(3385, 3600); // next line
+  assert.equal(pauseStartMs(pcm, 1960, 3385), 2180);
+  assert.equal(pauseStartMs(pcm, 3400, 3600), 3600, 'no pause → window end');
+});

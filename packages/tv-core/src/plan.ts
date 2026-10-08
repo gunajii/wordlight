@@ -23,6 +23,18 @@ export function turnStopAt(l: PLine, mode: ReadingMode = 'free'): number {
   return mode === 'echo' ? lineEnd(l) + ECHO_STOP_AFTER_MS : Math.max(0, lineStart(l) - TURN_STOP_LEAD_MS);
 }
 
+/**
+ * Echo mode, on a device whose sound leaves the speaker `outLatencyMs` after the playhead: the playhead position at
+ * which to stop so the line is heard to its end, but never reaching the next line's audio (the narrator must not
+ * start the next line and jump back — seen on the VVD, 2026-10-08).
+ */
+export function echoStopAt(page: PPage, i: number, outLatencyMs: number): number {
+  const l = page.lines[i];
+  const base = turnStopAt(l, 'echo');
+  const next = page.lines[i + 1]?.words[0]?.t0 ?? page.durationMs;
+  return base + Math.max(0, Math.min(outLatencyMs, next - 120 - base));
+}
+
 /** Next turn line at or after playback position `posMs` (only lines whose stop point is still ahead). */
 export function nextTurn(page: PPage, posMs: number, done: Set<number>, mode: ReadingMode = 'free'): { index: number; stopAtMs: number } | null {
   for (let i = 0; i < page.lines.length; i++) {

@@ -57,3 +57,22 @@ export function soundEndMs(pcm: Int16Array, fromMs: number, toMs: number): numbe
   }
   return toMs;
 }
+
+/**
+ * Where the speech after `fromMs` first stops for at least `minPauseMs` (10 ms frames below 3 % of the page peak),
+ * searched up to `toMs`. For a line's last word this is the end of the line's sound. If there is no such pause
+ * (the next line follows without one), the result is `toMs`.
+ * (soundEndMs searched backwards from the next word's mark, whose own onset can fall inside the window, 2026-10-08.)
+ */
+export function pauseStartMs(pcm: Int16Array, fromMs: number, toMs: number, minPauseMs = 120): number {
+  let peak = 0; for (let i = 0; i < pcm.length; i++) { const v = Math.abs(pcm[i]); if (v > peak) peak = v; }
+  const thr = Math.max(300, 0.03 * peak), F = 160, need = Math.ceil(minPauseMs / 10);
+  const a = Math.max(0, Math.floor((fromMs * 16) / F)), b = Math.min(Math.floor(pcm.length / F), Math.ceil((toMs * 16) / F));
+  let quiet = 0;
+  for (let f = a; f < b; f++) {
+    let e = 0; for (let i = f * F; i < (f + 1) * F; i++) e += pcm[i] * pcm[i];
+    if (Math.sqrt(e / F) > thr) quiet = 0;
+    else if (++quiet >= need) return ((f + 1 - quiet) * F) / 16;
+  }
+  return toMs;
+}

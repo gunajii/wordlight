@@ -11,7 +11,7 @@
 import { mkdirSync, readFileSync, writeFileSync, copyFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { parseSpeechMarks, timeTokens, markByteMismatches, validateStory, soundEndMs, PACKAGE_VERSION, type StoryPackage, type Line, type Issue, type NarrationStyle } from '@wordlight/story-package';
+import { parseSpeechMarks, timeTokens, markByteMismatches, validateStory, pauseStartMs, PACKAGE_VERSION, type StoryPackage, type Line, type Issue, type NarrationStyle } from '@wordlight/story-package';
 import { PollyNarration, FixtureNarration, GenerativeNarration, type NarrationService } from './narration.ts';
 import { existsSync } from 'node:fs';
 import { chooseTurnsWithModel, bedrockConverse } from './ai-turns.ts';
@@ -32,7 +32,7 @@ export function splitLines(text: string): string[] {
   return out;
 }
 
-export async function buildStory(o: { src: any; srcDir: string; outDir: string; narration: NarrationService; verified?: boolean; log?: (m: string) => void; converse?: ((p: string) => Promise<string>) | null; turnModel?: string }): Promise<{ story: StoryPackage; issues: Issue[] }> {
+export async function buildStory(o: { src: any; srcDir: string; outDir: string; narration: NarrationService; verified?: boolean; log?: (m: string) => void; converse?: ((p: string) => Promise<string>) | null; turnModel?: string; helpVoice?: { wordClip(w: string, lang: 'hi-IN' | 'en-IN'): Promise<Uint8Array> } | null }): Promise<{ story: StoryPackage; issues: Issue[] }> {
   const { src, narration } = o;
   const log = o.log ?? (() => {});
   mkdirSync(o.outDir, { recursive: true });
@@ -59,7 +59,7 @@ export async function buildStory(o: { src: any; srcDir: string; outDir: string; 
     // audio, so an echo turn stops right after the narrator finishes the line, not at the next line's first sound.
     if (n.pcm16k) for (const l of outLines) {
       const w = l.words[l.words.length - 1];
-      if (w) w.t1 = Math.max(w.t0 + 1, Math.min(w.t1, Math.round(soundEndMs(n.pcm16k, w.t0, w.t1) + 40)));
+      if (w) w.t1 = Math.max(w.t0 + 1, Math.min(w.t1, Math.round(pauseStartMs(n.pcm16k, w.t0 + 60, w.t1) + 40)));
     }
     const audio = `p${pi + 1}.mp3`;
     writeFileSync(path.join(o.outDir, audio), n.mp3);
@@ -72,6 +72,22 @@ export async function buildStory(o: { src: any; srcDir: string; outDir: string; 
   const choice = await chooseTurnsWithModel(flat, src.level ?? 1, o.converse ?? null, o.turnModel);
   if (choice.fallback) log(`turn lines: rules (model not used: ${choice.fallback})`);
   for (const i of choice.indexes) pages[flat[i].page].lines[flat[i].line].turn = true;
+  // Help clips: every word of a turn line, spoken alone and slowly by the neural voice. The TV plays the clip when
+  // it helps with a word, instead of seeking in the page audio (which on the VVD let the rest of the line play).
+  if (o.helpVoice) {
+    const done = new Map<string, string>();
+    for (const pg of pages) for (const l of pg.lines) if (l.turn) for (const w of l.words) {
+      const key = w.w.normalize('NFC').replace(/^[^\p{L}\p{M}\p{N}]+|[^\p{L}\p{M}\p{N}]+$/gu, '').toLowerCase();
+      if (!key) continue;
+      if (!done.has(key)) {
+        const file = `h${done.size + 1}.mp3`;
+        writeFileSync(path.join(o.outDir, file), await o.helpVoice.wordClip(w.w, src.lang));
+        done.set(key, file);
+      }
+      w.clip = done.get(key);
+    }
+    log(`help clips: ${done.size}`);
+  }
   const story: StoryPackage = {
     packageVersion: PACKAGE_VERSION, id: src.id, lang: src.lang, level: src.level ?? 1, title: src.title, credits: src.credits,
     voice: narration.voice as StoryPackage['voice'], timing: { source: narration.timingSource, verified: !!o.verified }, pages,
@@ -104,7 +120,8 @@ async function main() {
   if (JSON.stringify(src.credits ?? {}).includes('CHECK')) { console.error('source.json credits still contain CHECK markers: verify author/illustrator/licence/URL against the StoryWeaver page first'); process.exit(1); }
   const turnModel = opt('turn-model') ?? undefined; // e.g. the model chosen by tools/bedrock/bench.ts
   const converse = turnModel ? await bedrockConverse(process.env.AWS_REGION || 'ap-south-1', turnModel) : null;
-  const { story, issues } = await buildStory({ src, srcDir, outDir: path.join(ROOT, 'content/stories', id), narration, verified: args.includes('--verified'), log: console.log, converse, turnModel });
+  const helpVoice = engine === 'fixture' ? null : await PollyNarration.create({ region: process.env.AWS_REGION || 'ap-south-1', voiceId: opt('voice') ?? 'Kajal' });
+  const { story, issues } = await buildStory({ src, srcDir, outDir: path.join(ROOT, 'content/stories', id), narration, verified: args.includes('--verified'), log: console.log, converse, turnModel, helpVoice });
   for (const i of issues) console.log(`${i.level}: ${i.path} — ${i.message}`);
   if (issues.some((i) => i.level === 'error')) process.exit(1);
   if (narration instanceof GenerativeNarration) { const st = narration.stats; const m = st.reduce((a, x) => a + x.matched, 0), t = st.reduce((a, x) => a + x.tokens, 0); console.log(`alignment: ${m}/${t} words matched to the recogniser (${Math.round((100 * m) / t)} %), rest interpolated`); }

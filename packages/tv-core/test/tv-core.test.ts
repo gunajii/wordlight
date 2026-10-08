@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { idle, turnReduce, micShouldBeOn, nextTurn, resumeAt, helpSpan, totals, turnStopAt, ECHO_STOP_AFTER_MS, formatDuration, turnProgress, playableStoryProblem, type TurnEvent, type PPage } from '../src/index.ts';
+import { idle, turnReduce, micShouldBeOn, nextTurn, resumeAt, helpSpan, totals, turnStopAt, echoStopAt, ECHO_STOP_AFTER_MS, formatDuration, turnProgress, playableStoryProblem, type TurnEvent, type PPage } from '../src/index.ts';
 
 const run = (...evs: TurnEvent[]) => { let s = idle(); const rej: string[] = []; for (const e of evs) { const r = turnReduce(s, e); s = r.state; if (r.rejected) rej.push(r.rejected); } return { s, rej }; };
 const begin: TurnEvent = { type: 'begin', turnId: 't', readerName: 'Riya', words: ['The', 'little', 'cat'] };
@@ -85,4 +85,14 @@ test('TV refuses a corrupt story package instead of crashing', () => {
   assert.equal(playableStoryProblem({ ...ok, pages: [] }), 'no pages');
   assert.match(playableStoryProblem({ ...ok, pages: [{ ...ok.pages[0], lines: [{ words: [{ w: 'a', t0: 50, t1: 40 }] }] }] })!, /bad word timing/);
   assert.equal(playableStoryProblem({ ...ok, credits: {} }), 'no attribution');
+});
+
+test('echo stop: heard to the end of the line, never into the next line', () => {
+  const pg = (gap: number): PPage => ({ durationMs: 9000, lines: [
+    { text: 'a b', turn: true, words: [{ w: 'a', t0: 0, t1: 500 }, { w: 'b', t0: 500, t1: 1000 }] },
+    { text: 'c', turn: false, words: [{ w: 'c', t0: 1000 + gap, t1: 1500 + gap }] }] });
+  assert.equal(echoStopAt(pg(1200), 0, 392), 1000 + ECHO_STOP_AFTER_MS + 392, 'long pause: full output latency');
+  assert.equal(echoStopAt(pg(400), 0, 392), 1000 + 400 - 120, 'short pause: capped before the next line');
+  assert.equal(echoStopAt(pg(100), 0, 392), 1000 + ECHO_STOP_AFTER_MS, 'no room: plain echo stop');
+  assert.equal(echoStopAt(pg(1200), 1, 392), Math.min(1500 + 1200 + ECHO_STOP_AFTER_MS + 392, 9000 - 120), 'last line: page end');
 });

@@ -8,7 +8,7 @@ import { PlayheadSampler, lineIndexAt, phasesAt, wordIndexAt } from './vendor/ka
 import { log, logKey, resolveMediaBase } from './net';
 
 declare const performance: { now(): number };
-type Word = { w: string; t0: number; t1: number };
+type Word = { w: string; t0: number; t1: number; /** help clip file (turn-line words) */ clip?: string };
 type Line = { text: string; words: Word[]; turn: boolean };
 export type Story = { id: string; title: string; lang?: string; credits: { attribution: string }; pages: { image: string; audio: string; durationMs: number; lines: Line[] }[] };
 const POLL_MS = 20;

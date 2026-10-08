@@ -13,8 +13,12 @@ STAMP=$(date -u +%Y%m%dT%H%M%SZ); LOG=".dev/aws/phase-c-$STAMP.log"; mkdir -p .d
 exec > >(tee -a "$LOG") 2>&1
 fail() { echo; echo "PHASE C STOPPED: $*"; echo "log: $LOG — tell Claude \"phase C stopped\""; exit 1; }
 aws sts get-caller-identity --query Account --output text >/dev/null || fail "no AWS credentials in this terminal (aws login)"
-echo "== 1. generative timing check (Busy Ants, 10 pages, ~6 min: Transcribe listens in real time)"
-node tools/s4/align-check.ts --story busy-ants || fail "align-check failed"
+if [ -f .dev/aws/align-decision.json ] && [ "${1:-}" != --recheck ]; then
+  echo "== 1. generative timing check: already decided ($(cat .dev/aws/align-decision.json)) — pass --recheck to measure again"
+else
+  echo "== 1. generative timing check (Busy Ants, 10 pages, ~6 min: Transcribe listens in real time)"
+  node tools/s4/align-check.ts --story busy-ants || fail "align-check failed"
+fi
 ADOPT=$(node -e 'console.log(require("./.dev/aws/align-decision.json").adopt)')
 EN=""; [ "$ADOPT" = true ] && EN="--narration generative"
 echo "== 2. stories (English: ${EN:-neural style #3}; Hindi: neural style #3)"
