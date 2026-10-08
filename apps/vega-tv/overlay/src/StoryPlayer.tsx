@@ -35,7 +35,10 @@ export function StoryPlayer({ story, mediaBase, session, leadMs, mode, simulated
   const player = useRef<AudioPlayer | null>(null);
   const sampler = useRef(new PlayheadSampler());
   const playing = useRef(false);
-  const [view, setView] = useState({ line: 0, pos: 0 });
+  const [view, setView] = useState({ page: 0, line: 0, pos: 0 });
+  // The view belongs to one page: after a page change the old line index may not exist (page 4 of Busy Ants has one
+  // line, page 3 has two → lines[1] was undefined and rendering crashed). Never index lines with a stale view.
+  const viewLine = view.page === pageIdx ? Math.min(view.line, lines.length - 1) : 0;
   const [turn, setTurn] = useState<TurnState>(idle());
   const turnRef = useRef<TurnState>(idle());
   const turnLine = useRef<number | null>(null);
@@ -102,7 +105,7 @@ export function StoryPlayer({ story, mediaBase, session, leadMs, mode, simulated
         if (nt && pos >= nt.stopAtMs) { beginTurn(nt.index); return; }
       }
       const li = lineIndexAt(lines, pos + leadMs);
-      setView((v) => (v.line === li && Math.abs(v.pos - pos) < 15 ? v : { line: li, pos }));
+      setView((v) => (v.page === pageIdx && v.line === li && Math.abs(v.pos - pos) < 15 ? v : { page: pageIdx, line: li, pos }));
     }, POLL_MS);
     return () => clearInterval(id);
   }, [pageIdx]);
@@ -186,13 +189,13 @@ export function StoryPlayer({ story, mediaBase, session, leadMs, mode, simulated
     if (evt.eventType === 'up') setDiag((d) => !d);
     else if (active && ok) session.send({ type: 'turn.help', turnId: t.turnId, kind: 'next-word' });
     else if (active && evt.eventType === 'right') session.send({ type: 'turn.cancel', turnId: t.turnId, reason: 'skipped' });
-    else if (!active && t.phase === 'LISTEN' && evt.eventType === 'left') { seekMs(lineStart(lines[view.line]) - 200); play(); }
+    else if (!active && t.phase === 'LISTEN' && evt.eventType === 'left') { seekMs(lineStart(lines[viewLine]) - 200); play(); }
     else if (evt.eventType === 'back') { if (active) session.send({ type: 'turn.cancel', turnId: t.turnId, reason: 'exit' }); end(false); }
     else if (!active && t.phase === 'LISTEN' && ok) { if (playing.current) pause(); else play(); }
   });
 
   const reader = session.onlineReader();
-  const line = lines[view.line];
+  const line = lines[viewLine];
   const deva = story.lang === 'hi-IN';
   const prog = turnProgress(turn.marks);
   const micOn = MIC_ON.includes(turn.phase);
@@ -207,7 +210,7 @@ export function StoryPlayer({ story, mediaBase, session, leadMs, mode, simulated
       {simulated ? <View style={st.simBadge}><Text style={st.simText}>SIMULATED SPEECH · local demo</Text></View> : null}
       {turn.phase === 'LISTEN' ? (
         <View style={st.subtitle}>
-          <KaraokeLine words={line.words} positionMs={view.pos} leadMs={leadMs} style={[st.line, deva && st.deva]} spokenStyle={st.spoken} currentStyle={st.current} upcomingStyle={st.upcoming} />
+          <KaraokeLine words={line.words} positionMs={view.page === pageIdx ? view.pos : 0} leadMs={leadMs} style={[st.line, deva && st.deva]} spokenStyle={st.spoken} currentStyle={st.current} upcomingStyle={st.upcoming} />
         </View>
       ) : (
         <View style={[st.turnBox, turn.phase === 'DONE' && st.turnDone]}>
