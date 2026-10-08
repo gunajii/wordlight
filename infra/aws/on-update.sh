@@ -17,8 +17,10 @@ $HOST {
 }
 CADDY
 leaf_key() { echo | timeout 5 openssl s_client -connect 127.0.0.1:443 -servername "$HOST" 2>/dev/null | openssl x509 -noout -text 2>/dev/null | grep -m1 'Public Key Algorithm' | sed 's/.*: //'; }
-KEY="$(leaf_key || true)"
-if [ "$KEY" != rsaEncryption ]; then
+# wordlight-update has just restarted Caddy: wait until it serves (an empty answer is "not up yet", not "wrong key";
+# treating it as wrong re-issued a certificate on every deploy — Let's Encrypt allows 5 per week per name)
+KEY=""; for i in $(seq 20); do KEY="$(leaf_key || true)"; [ -n "$KEY" ] && break; sleep 2; done
+if [ -n "$KEY" ] && [ "$KEY" != rsaEncryption ]; then
   echo "served key: ${KEY:-none} → requesting an RSA certificate"
   systemctl stop caddy
   # remove the stored certificate for this host (Caddy keeps it in its data dir; location depends on HOME/XDG)
