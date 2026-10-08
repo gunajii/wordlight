@@ -94,3 +94,38 @@ Only problems actually encountered. Format: Date / Environment / Component / Exp
   Node.
 - **Potential improvement:** document which Web APIs Vega's JS runtime provides, and ship types for them.
 - **Severity:** low.
+
+## W10 — Services came online one at a time after the Paid-plan upgrade (MEASURED, 2026-10-08)
+- **Component:** AWS account activation after "Your AWS account upgraded to a paid plan" (email received 17:26 IST).
+- **Expected:** every service usable once the upgrade email arrives.
+- **Actual:** our guard script ran every few minutes. Transcribe answered first. Polly and EC2 kept returning
+  `SubscriptionRequiredException` / `OptInRequired` until about 17:54, roughly 30 minutes later.
+- **Workaround:** a guard script (`infra/aws/guard.sh`) that checks each service before spending anything.
+- **Potential improvement:** say in the upgrade email or console that activation takes up to ~30 minutes per
+  service, and show the status per service.
+- **Severity:** medium. It looks like a permissions bug until it resolves itself.
+
+## W11 — Polly: Kajal not listed for hi-IN without `IncludeAdditionalLanguageCodes` (MEASURED, 2026-10-08)
+- **Component:** Amazon Polly `DescribeVoices` (neural, ap-south-1).
+- **Expected:** `--language-code hi-IN` lists the Hindi neural voice.
+- **Actual:** an empty list. Kajal's primary language is en-IN, and hi-IN is an "additional language". It appears
+  only with `--include-additional-language-codes`, yet `SynthesizeSpeech` with `LanguageCode=hi-IN` works.
+- **Workaround:** always pass the flag.
+- **Potential improvement:** include bilingual voices for their additional languages by default, or note it on
+  the voice list page.
+- **Severity:** low, but it cost a debugging round.
+
+## W12 — Bedrock: AccessDeniedException for every model on a new account (MEASURED, 2026-10-08)
+- **Component:** Amazon Bedrock Runtime `Converse`, ap-south-1, root credentials, account upgraded the same day.
+- **Expected:** Amazon Nova Micro (first-party, through the APAC inference profile) usable on demand.
+- **Actual:** `AccessDeniedException` for Nova Micro/Lite and Ministral 3B/8B/14B, although `ListFoundationModels`
+  and `ListInferenceProfiles` listed them. The exact message is being captured (phase A2).
+- **Workaround:** a deterministic template summary. The product works without Bedrock.
+- **Severity:** medium for a hackathon. It blocked the Bedrock feature on day one.
+
+## W13 — macOS system Python has no numpy (MEASURED, 2026-10-08)
+- **Component:** our own tooling (S4 analysis) on macOS 26's `python3`.
+- **Actual:** `import numpy` failed. Installing into the system Python is discouraged.
+- **Workaround:** the Mac only synthesizes audio; analysis runs elsewhere. Our friction, not AWS's; recorded so
+  the setup notes stay honest.
+- **Severity:** low.
