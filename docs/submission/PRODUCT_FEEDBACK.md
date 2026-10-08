@@ -1,7 +1,7 @@
 # Product feedback
 
 Every tool, API and SDK we used. This is first-hand only. "Not used yet" means exactly that. Dated entries with
-reproduction details are in [docs/FRICTION_LOG.md](../FRICTION_LOG.md) (W1–W9).
+reproduction details are in [docs/FRICTION_LOG.md](../FRICTION_LOG.md) (W1–W14).
 
 ## Vega OS / Vega SDK (0.24.12112, CLI 1.4.2) and the Vega Virtual Device
 
@@ -37,7 +37,12 @@ reproduction details are in [docs/FRICTION_LOG.md](../FRICTION_LOG.md) (W1–W9)
   We pipe it to a file so test runs can be checked without screenshots.
 
 **Simulator (VVD)**
-- Stable over a 3-minute timing run. Devanagari conjuncts and matras rendered correctly with the system font.
+- Stable over a 3-minute timing run. Devanagari conjuncts and matras rendered correctly.
+- **Its clock drifted 7 h 22 min behind** (we suspect after the Mac slept; not verified). Every HTTPS request then failed as "Network request
+  failed" (native log: curl error 60) because the certificate looked "not yet valid" (W14). Restarting the VVD fixed
+  it; a distinct "certificate not yet valid" error would have saved an hour.
+- Starting a page's `AudioPlayer` after a seek can take longer than a short word, so timer-based "play one word"
+  overran into the next words; we moved help words to separate clips in a second player.
 - The audio output path has a large constant latency (−339 ms M4A / −392 ms MP3 relative to `currentTime`). That
   is fine for development once measured, but it is not representative of hardware: you need a per-device
   calibration.
@@ -54,37 +59,44 @@ reproduction details are in [docs/FRICTION_LOG.md](../FRICTION_LOG.md) (W1–W9)
 - A list of available Web APIs.
 
 ## Amazon Polly
-- **Onboarding (new account):** blocked so far. `SubscriptionRequiredException: The AWS Access Key Id needs a
-  subscription for the service`, while Budgets and Organizations calls worked (W6). The message doesn't say whether
-  activation, payment or the plan is missing.
-- **Speech marks (from the docs, built against, not yet run):** word marks give UTF-8 **byte** offsets. That is
-  correct and documented, but easy to misuse in JavaScript, where string indexes are UTF-16 code units. In
-  Devanagari (3 bytes per character) a naive mapping lands on the wrong word. A JavaScript example in the docs would
-  help. We added a byte-check (`markByteMismatches`) to catch it.
-- **API ergonomics:** audio and speech marks need separate `SynthesizeSpeech` calls (mp3 for playback, PCM for an
-  exact duration, JSON for marks). A combined response, or the duration in the response metadata, would halve the
-  calls.
-- **Voice quality / timing accuracy:** UNKNOWN until S4 runs.
+- **Onboarding (new account):** `SubscriptionRequiredException` until the Paid plan upgrade, then services came
+  online one at a time over ~30 minutes (W6, W10). The message never says what is missing.
+- **Bilingual voice discovery:** `DescribeVoices --language-code hi-IN` returns nothing for Kajal, the voice that
+  speaks Hindi; she appears only with `--include-additional-language-codes` (W11).
+- **Speech marks:** word marks carry UTF-8 **byte** offsets — correct, but easy to misuse in JavaScript (UTF-16). In
+  Devanagari a naive mapping lands on the wrong word; our `markByteMismatches` check catches it. With SSML input, the
+  offsets point into the SSML, and for hi-IN Polly also returned a "word" mark for a `<break/>` tag. A JavaScript
+  example and a note on SSML offsets would help.
+- **Timing accuracy (MEASURED, S4):** 53 % of word marks within 50 ms of the acoustic onset, median 40 ms — good
+  enough to read along, not frame-exact. Byte-identical audio for identical input, which made caching safe.
+- **Generative voices:** clearly more expressive for a children's story, but **no speech marks** — so no word
+  highlighting without a second service. Speech marks for generative voices would make them usable for read-along.
+- **Volume:** neural narration measured −24 LUFS (broadcast level); `<prosody volume="+6dB">` fixed it in SSML.
+- **API ergonomics:** audio, PCM (for the exact duration) and marks are three `SynthesizeSpeech` calls.
 
 ## Amazon Transcribe Streaming
-- **Onboarding:** not on the Free plan (W8). We learned that from the docs after the error, not during sign-up.
-- **SDK ergonomics (built, run only against a fake client):** the async-generator `AudioStream` maps cleanly onto
-  WebSocket audio frames. Partial-result stabilisation is exactly what a word-by-word UI needs. We retry without
-  stabilisation if a language rejects it (unverified whether any of our languages does).
-- **Child speech performance, latency, errors:** UNKNOWN. Not measured yet.
+- **Onboarding:** not on the Free plan (W8).
+- **SDK ergonomics:** the async-generator `AudioStream` maps cleanly onto WebSocket frames; partial-result
+  stabilisation is exactly what a word-by-word UI needs.
+- **Latency (MEASURED, S2 + real loop):** the decisive limit for read-along. Words are recognised reliably (≈ 95 %
+  eventually) but typically ~1 s after they start; stability "none" is faster but less conservative. A documented
+  low-latency mode (or per-word "early" results) would open up real-time reading tutors.
+- **Accuracy notes (adult synthetic speech):** names are misheard (Tara → "Sarah", Anu → "A who"); in hi-IN
+  "माँ ने" came back as "माने". Custom vocabularies per story would likely help (not tried).
+- **Child speech:** UNKNOWN — not tested without a guardian's permission.
 
 ## Amazon Bedrock
-- Not used yet. An optional, guarded summary adapter is built but disabled by default. No feedback until it runs.
+- **Blocked on a new account:** `ValidationException: Operation not allowed` (CLI) / `AccessDeniedException` (SDK)
+  for every model, while listing works; `GetFoundationModelAvailability` says `NOT_AUTHORIZED` with no console action
+  to fix it (W12). Two different exception names and no remedy in the message.
 
 ## AWS infrastructure and account tools
 - **AWS Organizations + AI services opt-out:** the right mechanism for a children's app, but on a Free plan account
-  it forces the Paid plan. The CLI gave no warning, and right after attaching the policy the effective policy read
-  `{}` (W7).
-- **AWS Budgets:** easy from the CLI.
-- **Billing console on a day-old account:** cost widgets show "Unable to load", and Credits shows USD 0.00, with no
-  explanation of whether data is still arriving.
-- **Cost Anomaly Detection:** set up automatically with a clear email. That was helpful.
-- **CloudFormation / EC2 / SSM:** the template and deploy script are written but not deployed yet. Feedback pending.
+  it forces the Paid plan, with no warning in the CLI (W7).
+- **AWS Budgets / Cost Explorer:** easy from the CLI; Cost Explorer returned nothing for the first day.
+- **CloudFormation / EC2 / SSM:** a one-stack deploy worked first time; SSM `send-command` made updates without SSH
+  simple. Our own bug: re-checking the TLS certificate before Caddy had restarted requested a new Let's Encrypt
+  certificate on every deploy (fixed; verified in docs/results/deploy/).
 
 ## Development tools
 - **Node.js type stripping (≥ 22.18):** running TypeScript directly, with no build step, kept server, tools and
