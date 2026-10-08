@@ -22,7 +22,7 @@ function setup(stallMs = 300) {
   const now = () => performance.timeOrigin + performance.now();
   const hub = new SessionHub({ now });
   const src = new FakeSource();
-  const driver = new ReadingDriver({ hub, source: src, now, stallMs, firstStallMs: stallMs });
+  const driver = new ReadingDriver({ hub, source: src, now, stallMs, firstStallMs: stallMs, helpPendingMaxMs: stallMs }); // no TV reports help.done here
   hub.driver = driver;
   const id = hub.createSession();
   const tv = conn(), phone = conn();
@@ -154,7 +154,7 @@ async function scripted(scenario: Scenario, words: string[], lang: 'en-IN' | 'hi
   const now = () => performance.timeOrigin + performance.now();
   const hub = new SessionHub({ now });
   const src = new ScriptedSource({ scenario, timing: { ...FAST, ...timing } });
-  const driver = new ReadingDriver({ hub, source: src, now, stallMs, firstStallMs: stallMs });
+  const driver = new ReadingDriver({ hub, source: src, now, stallMs, firstStallMs: stallMs, helpPendingMaxMs: stallMs }); // no TV reports help.done here
   hub.driver = driver;
   const id = hub.createSession();
   const tv = conn(), phone = conn();

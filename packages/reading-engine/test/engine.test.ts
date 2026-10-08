@@ -141,3 +141,42 @@ test('lookahead is never more than two words, and two only after two different w
   const t2 = en('one two three four five');
   assert.deepEqual(kinds(say(t2, 'one x y z five', 100)), ['word.read:0'], 'three misses never jump three ahead');
 });
+
+test('stall waits while the child is making sound (stuttering), but not forever', () => {
+  const t = en('Can you see me?', 0, { stallMs: 3000, maxStallMs: 8000 });
+  say(t, 'can', 1000); // progress at 1000
+  for (let ms = 1200; ms <= 5000; ms += 200) { t.activity(ms); assert.deepEqual(t.tick(ms), [], `no help while sound continues (${ms})`); }
+  assert.deepEqual(kinds(t.tick(7900)), [], 'quiet since 5000 for 2.9 s');
+  assert.deepEqual(kinds(t.tick(8000)), ['word.helped:1'], 'quiet for 3 s → help');
+  const u = en('Can you see me?', 0, { stallMs: 3000, maxStallMs: 8000 });
+  say(u, 'can', 1000);
+  let ev: EngineEvent[] = [];
+  for (let ms = 1100; ms <= 9100 && !ev.length; ms += 100) { u.activity(ms); ev = u.tick(ms); }
+  assert.deepEqual(kinds(ev), ['word.helped:1']);
+  assert.equal(u.lastProgressMs, 9000, 'continuous sound without progress: helped after maxStallMs (8 s)');
+});
+
+test('after a help the clock waits for the TV to finish the help word, then gives the child full time', () => {
+  const t = en('Can you see me?', 0, { stallMs: 3000, awaitHelpDone: true, helpPendingMaxMs: 4000 });
+  say(t, 'can', 1000);
+  assert.deepEqual(kinds(t.tick(4000)), ['word.helped:1']); // help "you" at 4000, the clip starts playing
+  t.activity(4300); // the TV's own help word picked up by the phone: ignored
+  assert.deepEqual(t.tick(6900), [], 'help word still playing');
+  t.helpDone(5000); // ignored? no: pending → accepted
+  assert.equal(t.helpPendingSince, null);
+  // child repeats "you" (extra word), then stutters on "see" — sound keeps the clock waiting
+  t.activity(5600); t.activity(6200); t.activity(7000);
+  assert.deepEqual(t.tick(9900), [], 'quiet only since 7000');
+  const ev = say(t, 'you see me', 9500);
+  assert.deepEqual(kinds(ev), ['word.read:2', 'word.read:3', 'line.done'], 'repeating the helped word does not block the next words');
+});
+
+test('help pending without a report from the TV restarts the clock after helpPendingMaxMs', () => {
+  const t = en('Can you see me?', 0, { stallMs: 3000, awaitHelpDone: true, helpPendingMaxMs: 4000 });
+  say(t, 'can', 1000);
+  t.tick(4000); // helped "you"
+  assert.deepEqual(t.tick(7999), []);
+  assert.deepEqual(t.tick(8000), [], 'pending expired: the clock restarts now');
+  assert.deepEqual(kinds(t.tick(10999)), []);
+  assert.deepEqual(kinds(t.tick(11000)), ['word.helped:2']);
+});

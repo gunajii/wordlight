@@ -3,7 +3,14 @@
 //
 // cursor           index of the next expected word
 // lastProgressMs   when the cursor last moved (read, helped or skipped)
-// Stall rule       no progress for `stallMs` → help the next word (TV says it, marks it amber)
+// Stall rule       no progress AND no speech activity for `stallMs` → help the next word (TV says it, marks it
+//                  amber). Speech activity (the server's voice-activity detector on the phone audio, or any
+//                  recogniser update) means the child is trying — stuttering, sounding out — so the clock waits;
+//                  but after `maxStallMs` without progress the child is helped anyway.
+// Help pending     (awaitHelpDone) after a help the clock stops until the TV reports the help word has finished
+//                  playing (helpDone); only then does the child's time start again. If the TV never reports,
+//                  the clock restarts after `helpPendingMaxMs`. (Real loop 2026-10-08: the next word was helped
+//                  while the child was still repeating the helped one.)
 // Skip rule        a heard word that matches the word AFTER the cursor skips at most one word,
 //                  and at most `maxSkipsPerLine` per line (omissions). A SUBSTITUTION — a different word was
 //                  already heard in the cursor word's place, then the next word — skips without using that
@@ -49,6 +56,12 @@ export interface TurnOptions {
   firstStallMs?: number;
   maxSkipsPerLine?: number;
   policy?: MatchPolicy;
+  /** Help even during continuous speech after this long without progress. Default 8000. */
+  maxStallMs?: number;
+  /** After a help, wait for helpDone() before the stall clock runs again. Default false. */
+  awaitHelpDone?: boolean;
+  /** Longest wait for helpDone(). Default 4000. */
+  helpPendingMaxMs?: number;
 }
 
 export class ReadingTurn {
@@ -65,6 +78,13 @@ export class ReadingTurn {
   private readonly maxSkips: number;
   private readonly policy: MatchPolicy;
   private skips = 0;
+  private readonly maxStallMs: number;
+  private readonly awaitHelpDone: boolean;
+  private readonly helpPendingMaxMs: number;
+  /** last speech activity (voice detector or recogniser update) */
+  lastActivityMs: number;
+  /** a help word is playing on the TV since this time (awaitHelpDone), else null */
+  helpPendingSince: number | null = null;
   /** stable non-matching words heard at the current cursor since the last progress (substitutions) */
   private missCount = 0;
   /** Heard words consumed per segment (accepted or confirmed extra); never decreases. */
@@ -77,7 +97,11 @@ export class ReadingTurn {
     this.states = this.expected.map(() => 'pending');
     this.startMs = o.startMs;
     this.lastProgressMs = o.startMs;
+    this.lastActivityMs = o.startMs;
     this.stallMs = o.stallMs ?? 3000;
+    this.maxStallMs = o.maxStallMs ?? 8000;
+    this.awaitHelpDone = o.awaitHelpDone ?? false;
+    this.helpPendingMaxMs = o.helpPendingMaxMs ?? 4000;
     this.firstStallMs = o.firstStallMs ?? this.stallMs;
     this.maxSkips = o.maxSkipsPerLine ?? Math.max(1, Math.floor(o.words.length / 4));
     this.policy = o.policy ?? DEFAULT_MATCH_POLICY;
@@ -91,6 +115,7 @@ export class ReadingTurn {
     if (this.done) return [];
     const out: EngineEvent[] = [];
     const heard = u.words.flatMap((w) => tokenize(w.text, this.lang).map((t) => ({ t, stable: w.stable === true || u.final, conf: w.confidence })));
+    if (heard.length) this.activity(nowMs); // the recogniser heard something: the child is speaking
     let h = this.consumed.get(u.segmentId) ?? 0;
     while (h < heard.length && !this.done) {
       const { t, stable, conf } = heard[h];
@@ -137,11 +162,30 @@ export class ReadingTurn {
     return out;
   }
 
+  /** Speech activity now (voice detector on the phone audio). Ignored while a help word plays (the TV's own voice). */
+  activity(nowMs: number) {
+    if (this.helpPendingSince === null && nowMs > this.lastActivityMs) this.lastActivityMs = nowMs;
+  }
+
+  /** The TV finished playing the help word: the child's time starts now. */
+  helpDone(nowMs: number) {
+    if (this.helpPendingSince === null) return;
+    this.helpPendingSince = null;
+    this.lastProgressMs = nowMs;
+    this.lastActivityMs = nowMs;
+  }
+
   /** Advance time. Fires the stall rule at most once per call. */
   tick(nowMs: number): EngineEvent[] {
     if (this.done) return [];
+    if (this.helpPendingSince !== null) {
+      if (nowMs - this.helpPendingSince < this.helpPendingMaxMs) return [];
+      this.helpDone(nowMs); // the TV never reported: give the child their time from now
+      return [];
+    }
     const limit = this.cursor === 0 && this.states.every((s) => s === 'pending' || s === 'skipped') ? this.firstStallMs : this.stallMs;
-    if (nowMs - this.lastProgressMs < limit) return [];
+    const quietMs = nowMs - Math.max(this.lastProgressMs, this.lastActivityMs);
+    if (quietMs < limit && nowMs - this.lastProgressMs < Math.max(limit, this.maxStallMs)) return [];
     return this.helpNext('stall', nowMs);
   }
 
@@ -166,6 +210,7 @@ export class ReadingTurn {
     out.push({ type: 'word.helped', index: this.cursor, reason, atMs: nowMs - this.startMs });
     this.cursor++;
     this.lastProgressMs = nowMs;
+    if (this.awaitHelpDone) this.helpPendingSince = nowMs;
     this.advancePastEmpty();
     this.finishIfDone(out, nowMs);
     return out;

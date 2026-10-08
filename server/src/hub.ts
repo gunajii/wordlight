@@ -41,6 +41,8 @@ export interface TurnDriver {
   start(session: Session, t: ActiveTurn): void;
   audio(session: Session, t: ActiveTurn, frame: AudioFrame): void;
   help(session: Session, t: ActiveTurn, kind: 'next-word' | 'line'): void;
+  /** the TV finished playing the help word (optional for drivers that don't wait for it) */
+  helpDone?(session: Session, t: ActiveTurn, index: number): void;
   stop(session: Session, t: ActiveTurn, reason: string): void;
 }
 
@@ -141,6 +143,11 @@ export class SessionHub {
       case 'turn.help': {
         if (!s.turn || s.turn.turn.turnId !== e.turnId) return conn.send({ t: 'error', code: 'stale-turn', message: 'no such active turn', turnId: e.turnId });
         this.driver?.help(s, s.turn, e.kind);
+        return;
+      }
+      case 'turn.help.done': {
+        if (!s.turn || s.turn.turn.turnId !== e.turnId) return; // turn already over
+        this.driver?.helpDone?.(s, s.turn, e.index);
         return;
       }
       case 'turn.cancel': {

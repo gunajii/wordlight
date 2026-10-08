@@ -48,6 +48,12 @@ export interface TurnHelp extends Envelope {
   /** 'next-word' = help with the next word; 'line' = read the whole line. */
   kind: 'next-word' | 'line';
 }
+/** TV → server: the help word for `index` has finished playing; the child's time starts again. */
+export interface TurnHelpDone extends Envelope {
+  type: 'turn.help.done';
+  turnId: string;
+  index: number;
+}
 export interface TurnCancel extends Envelope {
   type: 'turn.cancel';
   turnId: string;
@@ -113,7 +119,7 @@ export interface SessionSummary extends Envelope {
 }
 
 export type WordLightEvent =
-  | TurnStart | TurnHelp | TurnCancel
+  | TurnStart | TurnHelp | TurnHelpDone | TurnCancel
   | ReaderSave | MicState
   | WordRead | WordHelped | WordSkipped | LineDone | ReaderStatus | SessionSummary;
 
@@ -123,6 +129,7 @@ export type EventType = WordLightEvent['type'];
 export const SENDERS: Record<EventType, Role | 'server'> = {
   'turn.start': 'tv',
   'turn.help': 'tv',
+  'turn.help.done': 'tv',
   'turn.cancel': 'tv',
   'reader.save': 'phone',
   'mic.state': 'phone',

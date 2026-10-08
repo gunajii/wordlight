@@ -46,6 +46,8 @@ export function StoryPlayer({ story, mediaBase, session, leadMs, mode, simulated
   /** The help word plays from its own clip in its own player; the page narration stays paused (no seeking). */
   const helpPlayer = useRef<AudioPlayer | null>(null);
   const helpTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  /** the help word being played (reported to the server when it finishes: the child's time starts then) */
+  const helpActive = useRef<{ turnId: string; index: number } | null>(null);
   const doneTurns = useRef(new Set<number>());
   const results = useRef<LineResult[]>([]);
   const startedAt = useRef(performance.now());
@@ -149,6 +151,8 @@ export function StoryPlayer({ story, mediaBase, session, leadMs, mode, simulated
     if (helpTimer.current) { clearTimeout(helpTimer.current); helpTimer.current = null; }
     const hp = helpPlayer.current; helpPlayer.current = null;
     if (hp) { try { hp.pause(); } catch {} hp.deinitialize().catch(() => {}); }
+    const a = helpActive.current; helpActive.current = null;
+    if (a) { session.send({ type: 'turn.help.done', turnId: a.turnId, index: a.index }); log(`help done ${a.index}`); }
     if (turnRef.current.phase === 'HELP') dispatch({ type: 'help-done' });
   }
 
@@ -159,6 +163,8 @@ export function StoryPlayer({ story, mediaBase, session, leadMs, mode, simulated
     if (i === null) return;
     stopHelp();
     const w = lines[i].words[index];
+    if (turnRef.current.turnId) helpActive.current = { turnId: turnRef.current.turnId, index };
+    log(`help ${index} ${w?.clip ?? 'no clip'}`);
     helpTimer.current = setTimeout(() => { log('help: clip did not finish in 4 s'); stopHelp(); }, w?.clip ? 4000 : 1500);
     if (!w?.clip) return;
     const hp = new AudioPlayer();

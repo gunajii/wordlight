@@ -10,35 +10,42 @@ import { ReadingTurn, tokenize, normalizeWord, type EngineEvent } from '@wordlig
 import type { AudioFrame } from '@wordlight/shared-protocol';
 import type { ActiveTurn, Session, SessionHub, TurnDriver } from '../hub.ts';
 import type { SpeechSource, SpeechSession, SpeechUpdate } from './speech.ts';
+import { VoiceActivity } from './vad.ts';
 
 export interface WordTrace {
   index: number; kind: 'read' | 'helped' | 'skipped'; emitServerMs: number;
   /** server-clock time the word was spoken (Transcribe word start → phone capture clock → server); null if unknown */
   spokenServerMs: number | null; updateReceivedMs: number | null; confidence: number | null; heard?: string; reason?: string;
+  /** helped words: when the TV reported the help word finished playing (server clock) */
+  helpDoneServerMs?: number;
 }
 export interface TurnTrace {
   sessionId: string; turnId: string; lang: string; words: string[]; startedAtServerMs: number; firstAudioServerMs: number | null;
   endedAtServerMs: number | null; endReason: string | null; source: string; simulated: boolean; mode: 'free' | 'echo'; updates: number; events: WordTrace[];
   result: { read: number; helped: number; skipped: number; durationMs: number } | null; error?: string;
+  /** voice-activity numbers (no audio): 40 ms chunks seen / judged speech, noise floor and peak RMS */
+  activity?: { chunks: number; speechChunks: number; floorRms: number | null; maxRms: number };
 }
 
 interface Live {
   t: ActiveTurn; speech: SpeechSession; engine: ReadingTurn | null; ticker: ReturnType<typeof setInterval> | null;
-  firstCaptureServerMs: number | null; trace: TurnTrace;
+  firstCaptureServerMs: number | null; trace: TurnTrace; vad: VoiceActivity;
 }
 
 export class ReadingDriver implements TurnDriver {
   private live = new Map<string, Live>();
   readonly traces: TurnTrace[] = [];
-  private readonly o: { hub: SessionHub; source: SpeechSource; now: () => number; stallMs: number; firstStallMs: number; devTranscripts: boolean; log: (m: string) => void; onTrace?: (t: TurnTrace) => void };
-  constructor(o: { hub: SessionHub; source: SpeechSource; now: () => number; stallMs?: number; firstStallMs?: number; devTranscripts?: boolean; log?: (m: string) => void; onTrace?: (t: TurnTrace) => void }) {
-    this.o = { stallMs: 3000, firstStallMs: 5000, devTranscripts: false, log: () => {}, ...o };
+  private readonly o: { hub: SessionHub; source: SpeechSource; now: () => number; stallMs: number; firstStallMs: number; maxStallMs: number; awaitHelpDone: boolean; helpPendingMaxMs: number; devTranscripts: boolean; log: (m: string) => void; onTrace?: (t: TurnTrace) => void };
+  constructor(o: { hub: SessionHub; source: SpeechSource; now: () => number; stallMs?: number; firstStallMs?: number; maxStallMs?: number; awaitHelpDone?: boolean; helpPendingMaxMs?: number; devTranscripts?: boolean; log?: (m: string) => void; onTrace?: (t: TurnTrace) => void }) {
+    // awaitHelpDone: the TV reports when the help word has finished (turn.help.done); older TV builds don't, and the
+    // engine then restarts the clock after helpPendingMaxMs
+    this.o = { stallMs: 3000, firstStallMs: 5000, maxStallMs: 8000, awaitHelpDone: true, helpPendingMaxMs: 4000, devTranscripts: false, log: () => {}, ...o };
   }
 
   start(s: Session, t: ActiveTurn) {
     const lang = t.turn.lang;
     const trace: TurnTrace = { sessionId: s.id, turnId: t.turn.turnId, lang, words: t.turn.words, startedAtServerMs: this.o.now(), firstAudioServerMs: null, endedAtServerMs: null, endReason: null, source: this.o.source.name, simulated: !!this.o.source.simulated, mode: t.turn.mode ?? 'free', updates: 0, events: [], result: null };
-    const L: Live = { t, engine: null, ticker: null, firstCaptureServerMs: null, trace, speech: null as unknown as SpeechSession };
+    const L: Live = { t, engine: null, ticker: null, firstCaptureServerMs: null, trace, speech: null as unknown as SpeechSession, vad: new VoiceActivity() };
     this.live.set(s.id, L);
     L.speech = this.o.source.open({ lang, expected: t.turn.words }, {
       onUpdate: (u) => this.onUpdate(s, L, u),
@@ -61,7 +68,17 @@ export class ReadingDriver implements TurnDriver {
       L.trace.firstAudioServerMs = this.o.now();
     }
     this.ensureEngine(s, L);
+    if (L.vad.push(frame.pcm)) L.engine!.activity(this.o.now());
     L.speech.push(frame.pcm);
+  }
+
+  helpDone(s: Session, t: ActiveTurn, index: number) {
+    const L = this.live.get(s.id);
+    if (!L?.engine || L.t.turn.turnId !== t.turn.turnId) return;
+    const now = this.o.now();
+    L.engine.helpDone(now);
+    const ev = [...L.trace.events].reverse().find((e) => e.kind === 'helped' && e.index === index && e.helpDoneServerMs === undefined);
+    if (ev) ev.helpDoneServerMs = now;
   }
 
   help(s: Session, t: ActiveTurn) {
@@ -79,6 +96,7 @@ export class ReadingDriver implements TurnDriver {
     L.trace.endedAtServerMs = this.o.now();
     L.trace.endReason = reason;
     L.trace.updates = L.speech.stats.updates;
+    L.trace.activity = L.vad.stats();
     this.traces.push(L.trace);
     if (this.traces.length > 200) this.traces.shift();
     this.o.onTrace?.(L.trace);
@@ -86,7 +104,7 @@ export class ReadingDriver implements TurnDriver {
 
   private ensureEngine(s: Session, L: Live) {
     if (L.engine) return;
-    L.engine = new ReadingTurn({ words: L.t.turn.words, lang: L.t.turn.lang, startMs: this.o.now(), stallMs: this.o.stallMs, firstStallMs: this.o.firstStallMs });
+    L.engine = new ReadingTurn({ words: L.t.turn.words, lang: L.t.turn.lang, startMs: this.o.now(), stallMs: this.o.stallMs, firstStallMs: this.o.firstStallMs, maxStallMs: this.o.maxStallMs, awaitHelpDone: this.o.awaitHelpDone, helpPendingMaxMs: this.o.helpPendingMaxMs });
     L.ticker = setInterval(() => { if (L.engine) this.emitAll(s, L, L.engine.tick(this.o.now()), null); }, 100);
     (L.ticker as any).unref?.();
   }
@@ -136,5 +154,6 @@ export class RouterDriver implements TurnDriver {
   start(s: Session, t: ActiveTurn) { this.pick(t).start(s, t); }
   audio(s: Session, t: ActiveTurn, f: AudioFrame) { this.pick(t).audio(s, t, f); }
   help(s: Session, t: ActiveTurn, k: 'next-word' | 'line') { this.pick(t).help(s, t, k); }
+  helpDone(s: Session, t: ActiveTurn, i: number) { this.pick(t).helpDone?.(s, t, i); }
   stop(s: Session, t: ActiveTurn, r: string) { this.pick(t).stop(s, t, r); }
 }

@@ -32,6 +32,10 @@ export function validateEvent(msg: unknown): Result {
       if (!isStr(m.turnId, 64)) return fail('turnId');
       if (m.kind !== 'next-word' && m.kind !== 'line') return fail('kind');
       break;
+    case 'turn.help.done':
+      if (!isStr(m.turnId, 64)) return fail('turnId');
+      if (!isInt(m.index, 0, 40)) return fail('index');
+      break;
     case 'turn.cancel':
       if (!isStr(m.turnId, 64)) return fail('turnId');
       if (!['skipped', 'exit', 'phone-lost', 'error', 'timeout'].includes(m.reason as string)) return fail('reason');
