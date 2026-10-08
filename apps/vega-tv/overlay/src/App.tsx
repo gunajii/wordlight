@@ -53,6 +53,7 @@ export const App = () => {
     const poll = async () => {
       const cfg = await fetchConfig();
       if (!alive) return;
+      if (!cfg.ok) return; // keep the last good config; never take a baseline from a failed fetch (a stale S1 run auto-started)
       setMediaBase((m) => (m === cfg.mediaBase ? m : cfg.mediaBase));
       setMode(cfg.readingMode); setSimulated(cfg.simulated);
       const id = cfg.run.runId;

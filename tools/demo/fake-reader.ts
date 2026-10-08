@@ -2,7 +2,8 @@
 // each reading turn reports the mic open and streams SILENT 40 ms PCM frames (no microphone, no voice), so the
 // server's scripted speech source runs its script. Lets the whole loop run on the Vega Virtual Device with no phone.
 //   node tools/demo/fake-reader.ts [--session CODE] [--url http://localhost:8787] [--name Riya] [--lang en-IN]
-// Without --session it waits for the newest session that has a TV connected.
+// Without --session it FOLLOWS the TV: it joins the newest session with a TV connected, and moves to a newer one
+// whenever the TV app restarts (each launch opens a new session).
 import WebSocket from 'ws';
 import { encodeAudioFrame } from '@wordlight/shared-protocol';
 
@@ -51,8 +52,24 @@ export async function startFakeReader(o: FakeReaderOptions): Promise<FakeReader>
   return { sessionId: sid, events, micLog, close() { stop(); clearInterval(keep); ws.close(); } };
 }
 
+/** Follow the TV across app restarts: (re)join the newest session that has a TV connected. */
+export async function followTv(o: Omit<FakeReaderOptions, 'session'>) {
+  const log = o.log ?? ((m: string) => console.log(`[fake-reader] ${m}`));
+  let current: FakeReader | null = null, waitedLogged = 0;
+  for (;;) {
+    let newest: string | undefined;
+    try { newest = (await (await fetch(`${o.url}/api/sessions`)).json()).find((s: any) => s.tvConnected)?.sessionId; }
+    catch (e: any) { if (Date.now() - waitedLogged > 10000) { log(`server not reachable at ${o.url}: ${e?.message ?? e}`); waitedLogged = Date.now(); } }
+    if (newest && newest !== current?.sessionId) {
+      current?.close();
+      try { current = await startFakeReader({ ...o, session: newest, log }); } catch (e: any) { log(`join ${newest} failed: ${e?.message ?? e}`); current = null; }
+    } else if (!newest && Date.now() - waitedLogged > 10000) { log('waiting for the TV app to open a session…'); waitedLogged = Date.now(); }
+    await new Promise((r) => setTimeout(r, 1000));
+  }
+}
+
 if (import.meta.url === `file://${process.argv[1]}`) {
   const a = process.argv.slice(2); const opt = (k: string) => (a.includes(`--${k}`) ? a[a.indexOf(`--${k}`) + 1] : undefined);
-  startFakeReader({ url: opt('url') ?? 'http://localhost:8787', session: opt('session'), name: opt('name'), lang: opt('lang') as any })
-    .catch((e) => { console.error(e?.message ?? e); process.exit(1); });
+  const o = { url: opt('url') ?? 'http://127.0.0.1:8787', name: opt('name'), lang: opt('lang') as any };
+  (opt('session') ? startFakeReader({ ...o, session: opt('session') }) : followTv(o)).catch((e) => { console.error(e?.message ?? e); process.exit(1); });
 }

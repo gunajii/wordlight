@@ -1,0 +1,15 @@
+import WebSocket from 'ws';
+import { createServer } from '../../server/src/index.ts';
+import { followTv } from './fake-reader.ts';
+const { server } = createServer({ publicUrl: 'http://127.0.0.1:0', log: () => {}, s3ResultsDir: null, mediaUrl: async () => null, tvRun: async () => ({}), speechSource: 'scripted' });
+await new Promise<void>((r) => server.listen(0, '127.0.0.1', () => r()));
+const base = `http://127.0.0.1:${(server.address() as any).port}`;
+followTv({ url: base, log: (m) => console.log('reader:', m) });
+const tv = async () => { const { sessionId } = await (await fetch(`${base}/api/sessions`, { method: 'POST' })).json(); const ws = new WebSocket(base.replace('http', 'ws') + '/ws'); const msgs: any[] = []; ws.on('message', (d) => msgs.push(JSON.parse(d.toString()))); await new Promise((r) => ws.once('open', r)); ws.send(JSON.stringify({ t: 'hello', role: 'tv', sessionId, clientId: 'tv-' + sessionId })); return { sessionId, ws, msgs }; };
+await new Promise((r) => setTimeout(r, 1500));
+const a = await tv(); await new Promise((r) => setTimeout(r, 2000));
+console.log('TV1 readers:', JSON.stringify(a.msgs.filter((m) => m.t === 'readers').at(-1)?.readers?.map((r: any) => r.firstName + ':' + r.online)));
+a.ws.close();
+const b = await tv(); await new Promise((r) => setTimeout(r, 2500));
+console.log('TV2 readers:', JSON.stringify(b.msgs.filter((m) => m.t === 'readers').at(-1)?.readers?.map((r: any) => r.firstName + ':' + r.online)));
+process.exit(0);

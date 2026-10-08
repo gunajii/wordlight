@@ -25,18 +25,19 @@ export async function findServer(): Promise<string | null> {
 // tools/dev-tunnel/dev-tunnel.sh), so a new tunnel URL needs no rebuild. The baked MEDIA_URL is the fallback
 // (for a fixed https host such as CloudFront).
 export type Run = { runId?: string; audioFile: string; leadMs: number; autorun?: boolean };
-export type DevConfig = { mediaBase: string | null; run: Partial<Run>; readingMode: 'free' | 'echo'; simulated: boolean };
+export type DevConfig = { ok: boolean; mediaBase: string | null; run: Partial<Run>; readingMode: 'free' | 'echo'; simulated: boolean };
 export async function fetchConfig(): Promise<DevConfig> {
   let mediaBase: string | null = MEDIA_URL.startsWith('https://') && !MEDIA_URL.includes('SET-ME') ? MEDIA_URL : null;
   let run: Partial<Run> = {};
-  let readingMode: 'free' | 'echo' = 'free', simulated = false;
+  let readingMode: 'free' | 'echo' = 'free', simulated = false, ok = false;
   try {
     const cfg = await (await withTimeout(fetch(`${serverUrl}/api/config`), 4000)).json();
     if (typeof cfg?.mediaUrl === 'string' && cfg.mediaUrl.startsWith('https://')) mediaBase = cfg.mediaUrl;
     if (cfg?.run && typeof cfg.run === 'object') run = cfg.run;
     if (cfg?.readingMode === 'echo') readingMode = 'echo';
     simulated = !!cfg?.speech?.simulated; // the server's speech source is a local simulation: say so on screen
+    ok = true;
   } catch (e: any) { log(`config fetch failed: ${e?.message ?? e}`); }
-  return { mediaBase, run, readingMode, simulated };
+  return { ok, mediaBase, run, readingMode, simulated };
 }
 export async function resolveMediaBase(): Promise<string | null> { return (await fetchConfig()).mediaBase; }
