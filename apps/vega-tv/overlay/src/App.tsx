@@ -8,7 +8,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, Image, StyleSheet, TouchableOpacity } from 'react-native';
 import { useTVEventHandler } from '@amazon-devices/react-native-kepler';
-import { totals, formatDuration, playableStoryProblem, type ReadingMode } from './vendor/tv-core/index';
+import { totals, formatDuration, playableStoryProblem, childText, type ReadingMode } from './vendor/tv-core/index';
 import { SERVER_URL, SERVER_CANDIDATES, AUDIO_FILE, LEAD_MS } from './wordlight.config';
 import { log, logKey, findServer, fetchConfig, withTimeout, type Run } from './net';
 import { TvSession } from './session';
@@ -94,23 +94,25 @@ export const App = () => {
   if (screen.name === 'fonts') return <FontCheck fontReady={fontReady} />;
   if (screen.name === 's1') return <S1PlayerLoader base={base} mediaBase={mediaBase} run={screen.run} k={screen.key} fontReady={fontReady} onExit={() => setScreen({ name: 'home' })} />;
   if (screen.name === 'story' && mediaBase && session.current) {
-    return <StoryPlayer story={screen.story} mediaBase={mediaBase} session={session.current} leadMs={LEAD_MS} mode={mode} simulated={simulated}
+    return <StoryPlayer story={screen.story} mediaBase={mediaBase} session={session.current} leadMs={LEAD_MS} mode={mode} simulated={simulated} fontReady={fontReady}
       onEnd={(results, info) => { session.current?.send({ t: 'session.end', storyId: screen.story.id, storyTitle: screen.story.title, completed: info.completed, durationMs: info.durationMs }); setScreen({ name: 'end', story: screen.story, results, info }); }} />;
   }
   if (screen.name === 'end') {
     const t = totals(screen.results);
+    const E = childText(screen.story.lang).end;
+    const hf = screen.story.lang === 'hi-IN' && fontReady ? { fontFamily: 'NotoSansDevanagari-Regular' } : null;
     return (
       <View style={s.root}>
         {simulated ? <Text style={s.sim}>SIMULATED SPEECH · local demo — not real recognition</Text> : null}
-        <Text style={s.endBig}>{t.words > 0 ? 'Well read!' : screen.info.completed ? 'The end' : 'See you next time'}</Text>
-        {t.words > 0 ? <Text style={s.endSub}>{t.words} word{t.words === 1 ? '' : 's'} read aloud</Text> : null}
+        <Text style={[s.endBig, hf]}>{t.words > 0 ? E.title : screen.info.completed ? E.theEnd : E.seeYou}</Text>
+        {t.words > 0 ? <Text style={[s.endSub, hf]}>{E.wordsAloud(t.words)}</Text> : null}
         {t.words > 0 ? (
           <View style={s.statRow}>
-            <View style={s.stat}><Text style={[s.statNum, { color: '#5dd39e' }]}>{t.onOwn}</Text><Text style={s.statLbl}>word{t.onOwn === 1 ? '' : 's'} on your own</Text></View>
-            <View style={s.stat}><Text style={[s.statNum, { color: '#ffb347' }]}>{t.withHelp}</Text><Text style={s.statLbl}>with a little help</Text></View>
-            <View style={s.stat}><Text style={s.statNum}>{t.turns}</Text><Text style={s.statLbl}>reading turn{t.turns === 1 ? '' : 's'}</Text></View>
+            <View style={s.stat}><Text style={[s.statNum, { color: '#5dd39e' }]}>{t.onOwn}</Text><Text style={[s.statLbl, hf]}>{E.onOwn(t.onOwn)}</Text></View>
+            <View style={s.stat}><Text style={[s.statNum, { color: '#ffb347' }]}>{t.withHelp}</Text><Text style={[s.statLbl, hf]}>{E.withHelp}</Text></View>
+            <View style={s.stat}><Text style={s.statNum}>{t.turns}</Text><Text style={[s.statLbl, hf]}>{E.turns(t.turns)}</Text></View>
           </View>
-        ) : <Text style={s.endSub}>Pair a phone next time to read some lines yourself.</Text>}
+        ) : <Text style={[s.endSub, hf]}>{E.pairNext}</Text>}
         <Text style={s.hint}>{screen.story.title} · {screen.info.completed ? 'story finished' : 'stopped early'} · {formatDuration(screen.info.durationMs)}{t.skipped ? ` · ${t.skipped} word${t.skipped === 1 ? '' : 's'} skipped` : ''}</Text>
         {summary ? <Text style={s.summary}>For the parent: “{summary}”</Text> : null}
         <TouchableOpacity hasTVPreferredFocus style={[s.btn, focused === 'end' && s.btnFocus]} onFocus={() => setFocused('end')} onBlur={() => setFocused(null)} onPress={() => setScreen({ name: 'home' })}>

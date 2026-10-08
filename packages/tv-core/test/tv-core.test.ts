@@ -96,3 +96,15 @@ test('echo stop: heard to the end of the line, never into the next line', () => 
   assert.equal(echoStopAt(pg(100), 0, 392), 1000 + ECHO_STOP_AFTER_MS, 'no room: plain echo stop');
   assert.equal(echoStopAt(pg(1200), 1, 392), Math.min(1500 + 1200 + ECHO_STOP_AFTER_MS + 392, 9000 - 120), 'last line: page end');
 });
+
+test('child-facing text: Hindi for Hindi stories, English otherwise, same keys, never "wrong"', async () => {
+  const { childText } = await import('../src/index.ts');
+  const en = childText('en-IN'), hi = childText('hi-IN');
+  assert.equal(en.yourTurn('Riya', 'echo'), 'Riya, now you say it');
+  assert.equal(hi.yourTurn('रिया', 'echo'), 'रिया, अब तुम बोलो');
+  assert.equal(hi.lineDone(3, 1), '3 ख़ुद पढ़े · 1 थोड़ी मदद से');
+  assert.equal(childText(undefined), en);
+  const all = (t: any): string[] => Object.values(t).flatMap((v: any) => (typeof v === 'string' ? [v] : typeof v === 'function' ? [String(v('x', 'echo'))] : all(v)));
+  for (const s of [...all(en), ...all(hi)]) assert.ok(!/wrong|incorrect|ग़लत|गलत/i.test(s), s);
+  for (const s of all(hi)) assert.equal(s, s.normalize('NFC'));
+});

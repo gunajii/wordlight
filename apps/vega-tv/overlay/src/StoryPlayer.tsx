@@ -13,7 +13,7 @@ import { View, Text, Image, StyleSheet } from 'react-native';
 import { AudioPlayer } from '@amazon-devices/react-native-w3cmedia';
 import { useTVEventHandler } from '@amazon-devices/react-native-kepler';
 import { PlayheadSampler, lineIndexAt, KaraokeLine } from './vendor/karaoke-core/index';
-import { idle, turnReduce, nextTurn, resumeAt, echoStopAt, lineStart, turnProgress, type TurnState, type TurnEvent, type ReadingMode } from './vendor/tv-core/index';
+import { idle, turnReduce, nextTurn, resumeAt, echoStopAt, lineStart, turnProgress, childText, type TurnState, type TurnEvent, type ReadingMode } from './vendor/tv-core/index';
 import { log, logKey } from './net';
 import type { TvSession } from './session';
 import type { Story } from './S1Player';
@@ -25,13 +25,14 @@ const POLL_MS = 20;
 const ACTIVE = ['TURN_START', 'LISTENING', 'READING', 'HELP'];
 const MIC_ON = ['LISTENING', 'READING', 'HELP'];
 
-export function StoryPlayer({ story, mediaBase, session, leadMs, mode, simulated, onEnd }: {
-  story: Story; mediaBase: string; session: TvSession; leadMs: number; mode: ReadingMode; simulated: boolean;
+export function StoryPlayer({ story, mediaBase, session, leadMs, mode, simulated, onEnd, fontReady = false }: {
+  story: Story; mediaBase: string; session: TvSession; leadMs: number; mode: ReadingMode; simulated: boolean; fontReady?: boolean;
   onEnd: (results: LineResult[], info: EndInfo) => void;
 }) {
   const [pageIdx, setPageIdx] = useState(0);
   const page = story.pages[pageIdx];
   const lines = page.lines;
+  const T = childText(story.lang); // child-facing words in the story's language
   const player = useRef<AudioPlayer | null>(null);
   const sampler = useRef(new PlayheadSampler());
   const playing = useRef(false);
@@ -121,7 +122,7 @@ export function StoryPlayer({ story, mediaBase, session, leadMs, mode, simulated
 
   function beginTurn(i: number) {
     const reader = session.onlineReader();
-    if (!reader) { doneTurns.current.add(i); say('Pair a phone to read this line yourself next time'); return; } // narrate it
+    if (!reader) { doneTurns.current.add(i); say(T.pairPhoneLine); return; } // narrate it
     pause();
     const line = lines[i];
     const turnId = `${story.id}-${pageIdx}-${i}-${Date.now().toString(36)}`;
@@ -199,7 +200,7 @@ export function StoryPlayer({ story, mediaBase, session, leadMs, mode, simulated
       }
       case 'turn.cancel':
         dispatch({ type: 'cancel', reason: m.reason });
-        say(m.reason === 'skipped' ? 'Let’s listen to this one' : 'Let’s listen together');
+        say(m.reason === 'skipped' ? T.listenThisOne : T.listenTogether);
         setTimeout(() => finishTurn(true), 1200);
         break;
     }
@@ -226,44 +227,43 @@ export function StoryPlayer({ story, mediaBase, session, leadMs, mode, simulated
   const reader = session.onlineReader();
   const line = lines[viewLine];
   const deva = story.lang === 'hi-IN';
+  const hf = deva && fontReady ? st.hiFont : null; // bundled Noto Sans Devanagari for every Hindi text (S1: renders correctly)
   const prog = turnProgress(turn.marks);
   const micOn = MIC_ON.includes(turn.phase);
   const helpWord = turn.helpIndex !== null ? turn.words[turn.helpIndex] : null;
-  const title = turn.phase === 'DONE' ? 'Well read!' : turn.phase === 'CANCEL' ? 'Let’s listen together'
-    : mode === 'echo' ? `${turn.readerName}, now you say it` : `${turn.readerName}, your turn`;
+  const title = turn.phase === 'DONE' ? T.wellRead : turn.phase === 'CANCEL' ? T.listenTogether : T.yourTurn(turn.readerName ?? '', mode);
   const latSorted = lat.current.slice().sort((a, b) => a - b);
   return (
     <View style={st.root}>
       <Image source={{ uri: `${mediaBase}/content/stories/${story.id}/${page.image}` }} style={st.pageImg} resizeMode="contain" />
-      <View style={st.readerChip}><Text style={st.readerText}>{reader ? `● ${reader.firstName} is reading along` : '○ Pair a phone on the home screen to read along'}</Text></View>
+      <View style={st.readerChip}><Text style={[st.readerText, hf]}>{reader ? T.readingAlong(reader.firstName) : T.pairToRead}</Text></View>
       {simulated ? <View style={st.simBadge}><Text style={st.simText}>SIMULATED SPEECH · local demo</Text></View> : null}
       {turn.phase === 'LISTEN' ? (
         <View style={st.subtitle}>
-          <KaraokeLine words={line.words} positionMs={view.page === pageIdx ? view.pos : 0} leadMs={leadMs} style={[st.line, deva && st.deva]} spokenStyle={st.spoken} currentStyle={st.current} upcomingStyle={st.upcoming} />
+          <KaraokeLine words={line.words} positionMs={view.page === pageIdx ? view.pos : 0} leadMs={leadMs} style={[st.line, deva && st.deva, hf]} spokenStyle={st.spoken} currentStyle={st.current} upcomingStyle={st.upcoming} />
         </View>
       ) : (
         <View style={[st.turnBox, turn.phase === 'DONE' && st.turnDone]}>
           <View style={st.turnHead}>
-            <Text style={st.turnTitle}>{title}</Text>
-            <Text style={[st.mic, micOn ? st.micOn : st.micOff]}>{turn.phase === 'TURN_START' ? '○ microphone starting…' : micOn ? '● listening' : '○ microphone off'}</Text>
+            <Text style={[st.turnTitle, hf]}>{title}</Text>
+            <Text style={[st.mic, micOn ? st.micOn : st.micOff, hf]}>{turn.phase === 'TURN_START' ? T.micStarting : micOn ? T.micOn : T.micOff}</Text>
           </View>
           <View style={st.chips}>
             {turn.words.map((w, i) => {
               const m = turn.marks[i]; const isNext = m === 'pending' && i === turn.marks.indexOf('pending') && micOn;
               const box = m === 'read' ? st.chipRead : m === 'helped' ? st.chipHelped : m === 'skipped' ? st.chipSkipped : isNext ? st.chipNext : st.chipPending;
               const txt = m === 'read' ? st.chipTextRead : m === 'helped' ? st.chipTextHelped : m === 'skipped' ? st.chipTextSkipped : isNext ? st.chipTextNext : st.chipTextPending;
-              return <View key={i} style={[st.chip, box]}><Text style={[st.chipText, txt, deva && st.deva]}>{w}</Text></View>;
+              return <View key={i} style={[st.chip, box]}><Text style={[st.chipText, txt, hf]}>{w}</Text></View>;
             })}
           </View>
-          {turn.phase === 'HELP' && helpWord ? <Text style={st.helpText}>Here’s a little help: “{helpWord}”</Text> : null}
-          <Text style={st.turnSub}>
-            {turn.phase === 'DONE' && turn.result ? `${turn.result.read} on your own${turn.result.helped ? ` · ${turn.result.helped} with a little help` : ''}`
-              : `${prog.done} of ${prog.total} words${prog.read ? ` · ${prog.read} read` : ''}${prog.helped ? ` · ${prog.helped} helped` : ''}`}
+          {turn.phase === 'HELP' && helpWord ? <Text style={[st.helpText, hf]}>{T.help(helpWord)}</Text> : null}
+          <Text style={[st.turnSub, hf]}>
+            {turn.phase === 'DONE' && turn.result ? T.lineDone(turn.result.read, turn.result.helped) : T.progress(prog.done, prog.total)}
           </Text>
-          {micOn ? <Text style={st.turnHint}>Stuck? Press OK for the next word · → to listen instead</Text> : null}
+          {micOn ? <Text style={[st.turnHint, hf]}>{T.hint}</Text> : null}
         </View>
       )}
-      {toast ? <View style={st.toast}><Text style={st.toastText}>{toast}</Text></View> : null}
+      {toast ? <View style={st.toast}><Text style={[st.toastText, hf]}>{toast}</Text></View> : null}
       {diag ? (
         <View style={st.diag}>
           {[
@@ -293,6 +293,7 @@ const st = StyleSheet.create({
   subtitle: { position: 'absolute', bottom: 60, left: 80, right: 80, backgroundColor: 'rgba(0,0,0,0.72)', borderRadius: 20, paddingVertical: 22, paddingHorizontal: 36 },
   line: { fontSize: 58, textAlign: 'center', color: '#8899aa' },
   deva: { lineHeight: 88 },
+  hiFont: { fontFamily: 'NotoSansDevanagari-Regular' },
   spoken: { color: '#ffffff' },
   current: { color: '#101820', backgroundColor: '#ffd166' },
   upcoming: { color: '#8899aa' },
