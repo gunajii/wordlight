@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { idle, turnReduce, micShouldBeOn, nextTurn, resumeAt, helpSpan, totals, turnStopAt, ECHO_STOP_AFTER_MS, formatDuration, turnProgress, type TurnEvent, type PPage } from '../src/index.ts';
+import { idle, turnReduce, micShouldBeOn, nextTurn, resumeAt, helpSpan, totals, turnStopAt, ECHO_STOP_AFTER_MS, formatDuration, turnProgress, playableStoryProblem, type TurnEvent, type PPage } from '../src/index.ts';
 
 const run = (...evs: TurnEvent[]) => { let s = idle(); const rej: string[] = []; for (const e of evs) { const r = turnReduce(s, e); s = r.state; if (r.rejected) rej.push(r.rejected); } return { s, rej }; };
 const begin: TurnEvent = { type: 'begin', turnId: 't', readerName: 'Riya', words: ['The', 'little', 'cat'] };
@@ -76,4 +76,13 @@ test('end card and turn progress come from real counts only', () => {
   assert.deepEqual(totals([]), { words: 0, onOwn: 0, withHelp: 0, skipped: 0, turns: 0 });
   assert.equal(formatDuration(185_400), '3:05');
   assert.deepEqual(turnProgress(['read', 'helped', 'pending', 'skipped', 'pending']), { done: 3, total: 5, read: 1, helped: 1, skipped: 1 });
+});
+
+test('TV refuses a corrupt story package instead of crashing', () => {
+  const ok = { id: 'x', credits: { attribution: 'A' }, pages: [{ audio: 'p1.mp3', image: 'p1.png', durationMs: 1000, lines: [{ words: [{ w: 'a', t0: 0, t1: 100 }, { w: 'b', t0: 100, t1: 300 }] }] }] };
+  assert.equal(playableStoryProblem(ok), null);
+  assert.equal(playableStoryProblem(null), 'not a story');
+  assert.equal(playableStoryProblem({ ...ok, pages: [] }), 'no pages');
+  assert.match(playableStoryProblem({ ...ok, pages: [{ ...ok.pages[0], lines: [{ words: [{ w: 'a', t0: 50, t1: 40 }] }] }] })!, /bad word timing/);
+  assert.equal(playableStoryProblem({ ...ok, credits: {} }), 'no attribution');
 });

@@ -66,3 +66,24 @@ export function turnProgress(marks: readonly string[]) {
   const skipped = marks.filter((m) => m === 'skipped').length;
   return { done: read + helped + skipped, total: marks.length, read, helped, skipped };
 }
+
+/** The TV's own last check before playing a story it downloaded: refuse (don't crash) on a corrupt package. */
+export function playableStoryProblem(st: any): string | null {
+  if (!st || typeof st !== 'object' || typeof st.id !== 'string') return 'not a story';
+  if (!Array.isArray(st.pages) || st.pages.length === 0) return 'no pages';
+  for (let p = 0; p < st.pages.length; p++) {
+    const pg = st.pages[p];
+    if (typeof pg?.audio !== 'string' || typeof pg?.image !== 'string' || !(pg.durationMs > 0)) return `page ${p + 1}: audio/image/duration`;
+    if (!Array.isArray(pg.lines) || pg.lines.length === 0) return `page ${p + 1}: no lines`;
+    let prev = -1;
+    for (const l of pg.lines) {
+      if (!Array.isArray(l?.words) || l.words.length === 0) return `page ${p + 1}: a line without words`;
+      for (const w of l.words) {
+        if (typeof w?.w !== 'string' || !(w.t1 > w.t0) || w.t0 < prev) return `page ${p + 1}: bad word timing`;
+        prev = w.t0;
+      }
+    }
+  }
+  if (typeof st.credits?.attribution !== 'string') return 'no attribution';
+  return null;
+}

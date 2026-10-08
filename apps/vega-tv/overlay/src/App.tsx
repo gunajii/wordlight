@@ -8,7 +8,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, Image, StyleSheet, TouchableOpacity } from 'react-native';
 import { useTVEventHandler } from '@amazon-devices/react-native-kepler';
-import { totals, formatDuration, type ReadingMode } from './vendor/tv-core/index';
+import { totals, formatDuration, playableStoryProblem, type ReadingMode } from './vendor/tv-core/index';
 import { SERVER_URL, SERVER_CANDIDATES, AUDIO_FILE, LEAD_MS } from './wordlight.config';
 import { log, logKey, findServer, fetchConfig, withTimeout, type Run } from './net';
 import { TvSession } from './session';
@@ -30,6 +30,7 @@ export const App = () => {
   const [mode, setMode] = useState<ReadingMode>('free');
   const [simulated, setSimulated] = useState(false);
   const [focused, setFocused] = useState<string | null>(null);
+  const [error2, setError2] = useState<string | null>(null); // a story that could not be opened (home stays usable)
   const session = useRef<TvSession | null>(null);
   const fontReady = useDevanagariFont();
   const baselineRunId = useRef<string | undefined | null>(null);
@@ -72,9 +73,12 @@ export const App = () => {
     if (!base) return;
     try {
       const st: Story = await (await withTimeout(fetch(`${base}/content/stories/${id}/story.json`), 8000)).json();
+      const bad = playableStoryProblem(st);
+      if (bad) { log(`refusing story ${id}: ${bad}`); setError2(`This story can’t be opened (${bad}). Choose another one.`); return; }
+      setError2(null);
       setSummary(null);
       setScreen({ name: 'story', story: st });
-    } catch (e: any) { log(`open ${id}: ${e?.message ?? e}`); }
+    } catch (e: any) { log(`open ${id}: ${e?.message ?? e}`); setError2('This story didn’t load. Check the connection and try again.'); }
   }
 
   useTVEventHandler((evt: any) => {
@@ -98,10 +102,11 @@ export const App = () => {
     return (
       <View style={s.root}>
         {simulated ? <Text style={s.sim}>SIMULATED SPEECH · local demo — not real recognition</Text> : null}
-        <Text style={s.endBig}>{t.words > 0 ? `You read ${t.words} word${t.words === 1 ? '' : 's'}!` : screen.info.completed ? 'The end' : 'See you next time'}</Text>
+        <Text style={s.endBig}>{t.words > 0 ? 'Well read!' : screen.info.completed ? 'The end' : 'See you next time'}</Text>
+        {t.words > 0 ? <Text style={s.endSub}>{t.words} word{t.words === 1 ? '' : 's'} read aloud</Text> : null}
         {t.words > 0 ? (
           <View style={s.statRow}>
-            <View style={s.stat}><Text style={[s.statNum, { color: '#5dd39e' }]}>{t.onOwn}</Text><Text style={s.statLbl}>on your own</Text></View>
+            <View style={s.stat}><Text style={[s.statNum, { color: '#5dd39e' }]}>{t.onOwn}</Text><Text style={s.statLbl}>word{t.onOwn === 1 ? '' : 's'} on your own</Text></View>
             <View style={s.stat}><Text style={[s.statNum, { color: '#ffb347' }]}>{t.withHelp}</Text><Text style={s.statLbl}>with a little help</Text></View>
             <View style={s.stat}><Text style={s.statNum}>{t.turns}</Text><Text style={s.statLbl}>reading turn{t.turns === 1 ? '' : 's'}</Text></View>
           </View>
@@ -132,6 +137,7 @@ export const App = () => {
             </TouchableOpacity>
           ))}
         </View>
+        {error2 ? <Text style={s.err}>{error2}</Text> : null}
         {!mediaBase ? <Text style={s.err}>No https media address — start tools/dev-tunnel/dev-tunnel.sh on the Mac.</Text> : null}
       </View>
       <View style={s.right}>

@@ -18,8 +18,8 @@
   .row { display:flex; justify-content:space-between; gap:12px; padding: 4px 0; font-size: 15px; }
   .row b { font-variant-numeric: tabular-nums; font-weight: 600; }
   .dim { color: var(--dim); font-size: 14px; }
-  .mic { font-size: 28px; font-weight: 700; letter-spacing: .06em; }
-  .mic.off { color: var(--dim); } .mic.on { color: var(--ok); } .mic.err { color: var(--warn); }
+  .mic { font-size: 24px; font-weight: 700; letter-spacing: .02em; padding: 10px 14px; border-radius: 12px; display: inline-block; margin-top: 6px; }
+  .mic.off { color: var(--dim); background: var(--line); } .mic.on { color: #0b1a12; background: var(--ok); } .mic.err { color: var(--warn); }
   .meter { height: 12px; background: var(--line); border-radius: 6px; overflow: hidden; margin-top: 10px; }
   .meter i { display:block; height:100%; width:0%; background: var(--ok); transition: width 60ms linear; }
   button { font: inherit; font-weight: 600; width: 100%; padding: 14px; border-radius: 12px; border: 0; background: var(--accent); color: #111; margin-top: 10px; }
@@ -77,7 +77,7 @@
   <section class="card hidden" id="mic-card">
     <div class="state" id="state">Waiting for your turn…</div>
     <div class="dim">Microphone</div>
-    <div class="mic off" id="mic">OFF</div>
+    <div class="mic off" id="mic">Microphone off</div>
     <div class="meter"><i id="level"></i></div>
     <div class="words" id="words"></div>
     <button id="tap-btn" class="hidden">Tap to start listening</button>

@@ -213,12 +213,17 @@ export function StoryPlayer({ story, mediaBase, session, leadMs, mode, simulated
         <View style={[st.turnBox, turn.phase === 'DONE' && st.turnDone]}>
           <View style={st.turnHead}>
             <Text style={st.turnTitle}>{title}</Text>
-            <Text style={[st.mic, micOn ? st.micOn : st.micOff]}>{turn.phase === 'TURN_START' ? '○ MIC starting…' : micOn ? '● MIC ON' : '○ MIC OFF'}</Text>
+            <Text style={[st.mic, micOn ? st.micOn : st.micOff]}>{turn.phase === 'TURN_START' ? '○ microphone starting…' : micOn ? '● listening' : '○ microphone off'}</Text>
           </View>
-          <Text style={[st.turnLine, deva && st.deva]}>
-            {turn.words.map((w, i) => <Text key={i} style={turn.marks[i] === 'read' ? st.read : turn.marks[i] === 'helped' ? st.helped : turn.marks[i] === 'skipped' ? st.skipped : i === turn.marks.indexOf('pending') ? st.next : st.pending}>{w}{i < turn.words.length - 1 ? ' ' : ''}</Text>)}
-          </Text>
-          {turn.phase === 'HELP' && helpWord ? <Text style={st.helpText}>Listen: “{helpWord}”</Text> : null}
+          <View style={st.chips}>
+            {turn.words.map((w, i) => {
+              const m = turn.marks[i]; const isNext = m === 'pending' && i === turn.marks.indexOf('pending') && micOn;
+              const box = m === 'read' ? st.chipRead : m === 'helped' ? st.chipHelped : m === 'skipped' ? st.chipSkipped : isNext ? st.chipNext : st.chipPending;
+              const txt = m === 'read' ? st.chipTextRead : m === 'helped' ? st.chipTextHelped : m === 'skipped' ? st.chipTextSkipped : isNext ? st.chipTextNext : st.chipTextPending;
+              return <View key={i} style={[st.chip, box]}><Text style={[st.chipText, txt, deva && st.deva]}>{w}</Text></View>;
+            })}
+          </View>
+          {turn.phase === 'HELP' && helpWord ? <Text style={st.helpText}>Here’s a little help: “{helpWord}”</Text> : null}
           <Text style={st.turnSub}>
             {turn.phase === 'DONE' && turn.result ? `${turn.result.read} on your own${turn.result.helped ? ` · ${turn.result.helped} with a little help` : ''}`
               : `${prog.done} of ${prog.total} words${prog.read ? ` · ${prog.read} read` : ''}${prog.helped ? ` · ${prog.helped} helped` : ''}`}
@@ -266,7 +271,14 @@ const st = StyleSheet.create({
   mic: { fontSize: 26, marginLeft: 28, paddingHorizontal: 14, paddingVertical: 4, borderRadius: 14 },
   micOn: { color: '#101820', backgroundColor: '#5dd39e' },
   micOff: { color: '#cfd8e3', backgroundColor: '#3a4756' },
-  turnLine: { fontSize: 66, textAlign: 'center', marginTop: 14, color: '#c9d6e3' },
+  chips: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', marginTop: 16 },
+  chip: { borderRadius: 16, borderWidth: 4, paddingHorizontal: 18, paddingVertical: 4, marginHorizontal: 8, marginVertical: 6 },
+  chipText: { fontSize: 64, fontWeight: '600' },
+  chipPending: { borderColor: '#3a4a5c' }, chipTextPending: { color: '#c9d6e3' },
+  chipNext: { borderColor: '#ffffff', backgroundColor: 'rgba(255,255,255,0.08)' }, chipTextNext: { color: '#ffffff' },
+  chipRead: { borderColor: '#5dd39e', backgroundColor: '#1f7a52' }, chipTextRead: { color: '#ffffff' },
+  chipHelped: { borderColor: '#ffb347', backgroundColor: '#ffb347' }, chipTextHelped: { color: '#101820' },
+  chipSkipped: { borderColor: '#2a3542' }, chipTextSkipped: { color: '#6b7a89' },
   pending: { color: '#c9d6e3' },
   next: { color: '#ffffff', textDecorationLine: 'underline' },
   read: { color: '#5dd39e' },

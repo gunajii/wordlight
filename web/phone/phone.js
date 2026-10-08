@@ -249,13 +249,13 @@ function render() {
   $('session-end-btn').classList.toggle('hidden', !L.ready || L.session !== 'active');
   const live = micLive();
   const mic = $('mic');
-  mic.textContent = live > 0 ? 'LISTENING' : L.turn ? (needsTap(L) ? 'TAP TO LISTEN' : 'OPENING…') : 'OFF';
+  mic.textContent = live > 0 ? '● Listening…' : L.turn ? (needsTap(L) ? 'Tap to start listening' : 'Getting the microphone ready…') : 'Microphone off';
   mic.className = 'mic ' + (live > 0 ? 'on' : 'off');
   $('live').textContent = live;
   const showDone = !L.turn && lastDone && now() - lastDone.at < 4000;
   $('sim-banner').classList.toggle('hidden', !simulated);
   $('state').textContent = L.turn ? (live > 0 ? (lineMode === 'echo' ? 'Your turn! Say the line you just heard.' : 'Your turn! Read the line on the TV.') : needsTap(L) ? 'Tap below to start listening' : 'Getting the microphone ready…')
-    : showDone ? `Well read! ${lastDone.read} on your own${lastDone.helped ? `, ${lastDone.helped} with help` : ''}.` : 'Waiting for your turn…';
+    : showDone ? `Well read! ${lastDone.read} on your own${lastDone.helped ? `, ${lastDone.helped} with a little help` : ''}.` : 'The TV will say when it is your turn. Watch the TV!';
   $('words').innerHTML = L.turn || showDone ? lineWords.map((w, i) => `<span class="${lineMarks[i] === 'pending' ? (i === lineMarks.indexOf('pending') ? 'w-next' : '') : 'w-' + lineMarks[i]}">${w.replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[c])}</span>`).join(' ') : '';
   $('chunk').textContent = L.turn ? `${L.turn.chunkMs} ms` : '—';
   $('sent').textContent = S.sent; $('acked').textContent = S.acked; $('lost').textContent = S.lost; $('unsent').textContent = S.unsent;
