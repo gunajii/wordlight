@@ -1,0 +1,348 @@
+{
+ "simulated": false,
+ "voice": "Kajal",
+ "region": "ap-south-1",
+ "synthesizedAt": "2026-10-08T12:25:33.252Z",
+ "target": ">= 95 % of words within 50 ms",
+ "perPassage": [
+  {
+   "id": "hi-1",
+   "lang": "hi-IN",
+   "words": 42,
+   "transcribeWords": 42,
+   "matchedA": 40,
+   "A": {
+    "n": 40,
+    "within50": 27,
+    "pct": 67.5,
+    "medianAbs": 34.0,
+    "p95Abs": 156.4,
+    "worst": 221.0,
+    "bias": 32.5
+   },
+   "onsetsB": 14,
+   "B": {
+    "n": 14,
+    "within50": 6,
+    "pct": 42.9,
+    "medianAbs": 58.0,
+    "p95Abs": 122.2,
+    "worst": 158.0,
+    "bias": 17.0
+   },
+   "worstA": [
+    [
+     "और",
+     8547,
+     "और",
+     8326
+    ],
+    [
+     "आज",
+     13640,
+     "आज",
+     13476
+    ],
+    [
+     "ऊपर",
+     11602,
+     "ऊपर",
+     11446
+    ]
+   ]
+  },
+  {
+   "id": "hi-2",
+   "lang": "hi-IN",
+   "words": 44,
+   "transcribeWords": 43,
+   "matchedA": 41,
+   "A": {
+    "n": 41,
+    "within50": 6,
+    "pct": 14.6,
+    "medianAbs": 99.0,
+    "p95Abs": 229.0,
+    "worst": 261.0,
+    "bias": 99.0
+   },
+   "onsetsB": 17,
+   "B": {
+    "n": 17,
+    "within50": 10,
+    "pct": 58.8,
+    "medianAbs": 37.0,
+    "p95Abs": 157.4,
+    "worst": 175.0,
+    "bias": -30.0
+   },
+   "worstA": [
+    [
+     "एक",
+     8997,
+     "एक",
+     8736
+    ],
+    [
+     "और",
+     9647,
+     "और",
+     9406
+    ],
+    [
+     "क्या",
+     13365,
+     "क्या",
+     13136
+    ]
+   ]
+  },
+  {
+   "id": "hi-3",
+   "lang": "hi-IN",
+   "words": 50,
+   "transcribeWords": 50,
+   "matchedA": 50,
+   "A": {
+    "n": 50,
+    "within50": 7,
+    "pct": 14.0,
+    "medianAbs": 104.0,
+    "p95Abs": 190.1,
+    "worst": 269.0,
+    "bias": 104.0
+   },
+   "onsetsB": 22,
+   "B": {
+    "n": 22,
+    "within50": 11,
+    "pct": 50.0,
+    "medianAbs": 55.0,
+    "p95Abs": 169.4,
+    "worst": 190.0,
+    "bias": -0.5
+   },
+   "worstA": [
+    [
+     "शायद",
+     10715,
+     "शायद",
+     10446
+    ],
+    [
+     "एक",
+     7460,
+     "एक",
+     7246
+    ],
+    [
+     "चमकता",
+     7647,
+     "चमकता",
+     7456
+    ]
+   ]
+  },
+  {
+   "id": "en-1",
+   "lang": "en-IN",
+   "words": 34,
+   "transcribeWords": 34,
+   "matchedA": 33,
+   "A": {
+    "n": 33,
+    "within50": 16,
+    "pct": 48.5,
+    "medianAbs": 54.0,
+    "p95Abs": 127.2,
+    "worst": 169.0,
+    "bias": 44.0
+   },
+   "onsetsB": 10,
+   "B": {
+    "n": 10,
+    "within50": 6,
+    "pct": 60.0,
+    "medianAbs": 33.5,
+    "p95Abs": 146.5,
+    "worst": 160.0,
+    "bias": 4.5
+   },
+   "worstA": [
+    [
+     "behind",
+     4167,
+     "behind",
+     4336
+    ],
+    [
+     "red",
+     1200,
+     "red",
+     1056
+    ],
+    [
+     "a",
+     812,
+     "a",
+     696
+    ]
+   ]
+  },
+  {
+   "id": "en-2",
+   "lang": "en-IN",
+   "words": 36,
+   "transcribeWords": 36,
+   "matchedA": 36,
+   "A": {
+    "n": 36,
+    "within50": 22,
+    "pct": 61.1,
+    "medianAbs": 38.5,
+    "p95Abs": 132.2,
+    "worst": 186.0,
+    "bias": 13.5
+   },
+   "onsetsB": 13,
+   "B": {
+    "n": 13,
+    "within50": 8,
+    "pct": 61.5,
+    "medianAbs": 35.0,
+    "p95Abs": 138.4,
+    "worst": 148.0,
+    "bias": -3.0
+   },
+   "worstA": [
+    [
+     "inside",
+     4830,
+     "inside",
+     5016
+    ],
+    [
+     "shoe",
+     10047,
+     "shoe",
+     9896
+    ],
+    [
+     "shoe.",
+     1762,
+     "shoe",
+     1636
+    ]
+   ]
+  },
+  {
+   "id": "en-3",
+   "lang": "en-IN",
+   "words": 32,
+   "transcribeWords": 30,
+   "matchedA": 29,
+   "A": {
+    "n": 29,
+    "within50": 13,
+    "pct": 44.8,
+    "medianAbs": 54.0,
+    "p95Abs": 110.8,
+    "worst": 204.0,
+    "bias": 26.0
+   },
+   "onsetsB": 14,
+   "B": {
+    "n": 14,
+    "within50": 7,
+    "pct": 50.0,
+    "medianAbs": 51.5,
+    "p95Abs": 142.0,
+    "worst": 170.0,
+    "bias": 33.5
+   },
+   "worstA": [
+    [
+     "her",
+     2842,
+     "her",
+     3046
+    ],
+    [
+     "roof",
+     4330,
+     "roof",
+     4216
+    ],
+    [
+     "eyes",
+     9122,
+     "eyes",
+     9016
+    ]
+   ]
+  }
+ ],
+ "hi-IN": {
+  "A": {
+   "n": 131,
+   "within50": 40,
+   "pct": 30.5,
+   "medianAbs": 76.0,
+   "p95Abs": 196.0,
+   "worst": 269.0,
+   "bias": 76.0
+  },
+  "B": {
+   "n": 53,
+   "within50": 27,
+   "pct": 50.9,
+   "medianAbs": 45.0,
+   "p95Abs": 162.8,
+   "worst": 190.0,
+   "bias": -3.0
+  },
+  "verdictA": "FAIL"
+ },
+ "en-IN": {
+  "A": {
+   "n": 98,
+   "within50": 51,
+   "pct": 52.0,
+   "medianAbs": 47.5,
+   "p95Abs": 128.7,
+   "worst": 204.0,
+   "bias": 29.0
+  },
+  "B": {
+   "n": 37,
+   "within50": 21,
+   "pct": 56.8,
+   "medianAbs": 40.0,
+   "p95Abs": 150.4,
+   "worst": 170.0,
+   "bias": 15.0
+  },
+  "verdictA": "FAIL"
+ },
+ "all": {
+  "A": {
+   "n": 229,
+   "within50": 91,
+   "pct": 39.7,
+   "medianAbs": 64.0,
+   "p95Abs": 185.2,
+   "worst": 269.0,
+   "bias": 59.0
+  },
+  "B": {
+   "n": 90,
+   "within50": 48,
+   "pct": 53.3,
+   "medianAbs": 40.0,
+   "p95Abs": 159.1,
+   "worst": 190.0,
+   "bias": 5.0
+  }
+ },
+ "verdict": "FAIL"
+}

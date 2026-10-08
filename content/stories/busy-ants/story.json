@@ -1,0 +1,848 @@
+{
+ "packageVersion": 1,
+ "id": "busy-ants",
+ "lang": "en-IN",
+ "level": 1,
+ "title": "Busy Ants",
+ "credits": {
+  "source": "StoryWeaver",
+  "license": "CC BY 4.0",
+  "title": "Busy Ants",
+  "author": "Kanchan Bannerjee",
+  "illustrator": "Deepa Balsavar",
+  "publisher": "Pratham Books",
+  "url": "https://storyweaver.org.in/en/stories/1052-busy-ants",
+  "attribution": "Busy Ants (English), written by Kanchan Bannerjee, illustrated by Deepa Balsavar, published by Pratham Books (© Pratham Books, 2015) under a CC BY 4.0 license on StoryWeaver. Read, create and translate stories for free on www.storyweaver.org.in"
+ },
+ "voice": {
+  "engine": "polly-neural",
+  "id": "Kajal"
+ },
+ "timing": {
+  "source": "polly-speech-marks",
+  "verified": false
+ },
+ "pages": [
+  {
+   "image": "p1.jpg",
+   "audio": "p1.mp3",
+   "durationMs": 3730,
+   "lines": [
+    {
+     "text": "Hello, I am the fourth one in the line.",
+     "words": [
+      {
+       "w": "Hello,",
+       "t0": 187,
+       "t1": 687
+      },
+      {
+       "w": "I",
+       "t0": 687,
+       "t1": 750
+      },
+      {
+       "w": "am",
+       "t0": 750,
+       "t1": 937
+      },
+      {
+       "w": "the",
+       "t0": 937,
+       "t1": 1062
+      },
+      {
+       "w": "fourth",
+       "t0": 1062,
+       "t1": 1375
+      },
+      {
+       "w": "one",
+       "t0": 1375,
+       "t1": 1625
+      },
+      {
+       "w": "in",
+       "t0": 1625,
+       "t1": 1712
+      },
+      {
+       "w": "the",
+       "t0": 1712,
+       "t1": 1837
+      },
+      {
+       "w": "line.",
+       "t0": 1837,
+       "t1": 2842
+      }
+     ],
+     "turn": false
+    },
+    {
+     "text": "Can you see me?",
+     "words": [
+      {
+       "w": "Can",
+       "t0": 2842,
+       "t1": 3030
+      },
+      {
+       "w": "you",
+       "t0": 3030,
+       "t1": 3155
+      },
+      {
+       "w": "see",
+       "t0": 3155,
+       "t1": 3405
+      },
+      {
+       "w": "me?",
+       "t0": 3405,
+       "t1": 3730
+      }
+     ],
+     "turn": true
+    }
+   ]
+  },
+  {
+   "image": "p2.jpg",
+   "audio": "p2.mp3",
+   "durationMs": 4568,
+   "lines": [
+    {
+     "text": "Left, right, left, right.",
+     "words": [
+      {
+       "w": "Left,",
+       "t0": 187,
+       "t1": 712
+      },
+      {
+       "w": "right,",
+       "t0": 712,
+       "t1": 1250
+      },
+      {
+       "w": "left,",
+       "t0": 1250,
+       "t1": 1837
+      },
+      {
+       "w": "right.",
+       "t0": 1837,
+       "t1": 2805
+      }
+     ],
+     "turn": false
+    },
+    {
+     "text": "We walk silently in a line.",
+     "words": [
+      {
+       "w": "We",
+       "t0": 2805,
+       "t1": 2980
+      },
+      {
+       "w": "walk",
+       "t0": 2980,
+       "t1": 3230
+      },
+      {
+       "w": "silently",
+       "t0": 3230,
+       "t1": 3917
+      },
+      {
+       "w": "in",
+       "t0": 3917,
+       "t1": 4042
+      },
+      {
+       "w": "a",
+       "t0": 4042,
+       "t1": 4155
+      },
+      {
+       "w": "line.",
+       "t0": 4155,
+       "t1": 4568
+      }
+     ],
+     "turn": false
+    }
+   ]
+  },
+  {
+   "image": "p3.jpg",
+   "audio": "p3.mp3",
+   "durationMs": 4830,
+   "lines": [
+    {
+     "text": "I just got an idea.",
+     "words": [
+      {
+       "w": "I",
+       "t0": 200,
+       "t1": 312
+      },
+      {
+       "w": "just",
+       "t0": 312,
+       "t1": 625
+      },
+      {
+       "w": "got",
+       "t0": 625,
+       "t1": 912
+      },
+      {
+       "w": "an",
+       "t0": 912,
+       "t1": 1062
+      },
+      {
+       "w": "idea.",
+       "t0": 1062,
+       "t1": 2180
+      }
+     ],
+     "turn": true
+    },
+    {
+     "text": "I am going to get a set of WHEELS to move faster!",
+     "words": [
+      {
+       "w": "I",
+       "t0": 2180,
+       "t1": 2230
+      },
+      {
+       "w": "am",
+       "t0": 2230,
+       "t1": 2305
+      },
+      {
+       "w": "going",
+       "t0": 2305,
+       "t1": 2630
+      },
+      {
+       "w": "to",
+       "t0": 2630,
+       "t1": 2742
+      },
+      {
+       "w": "get",
+       "t0": 2742,
+       "t1": 2930
+      },
+      {
+       "w": "a",
+       "t0": 2930,
+       "t1": 3055
+      },
+      {
+       "w": "set",
+       "t0": 3055,
+       "t1": 3305
+      },
+      {
+       "w": "of",
+       "t0": 3305,
+       "t1": 3480
+      },
+      {
+       "w": "WHEELS",
+       "t0": 3480,
+       "t1": 3830
+      },
+      {
+       "w": "to",
+       "t0": 3830,
+       "t1": 3930
+      },
+      {
+       "w": "move",
+       "t0": 3930,
+       "t1": 4180
+      },
+      {
+       "w": "faster!",
+       "t0": 4180,
+       "t1": 4830
+      }
+     ],
+     "turn": false
+    }
+   ]
+  },
+  {
+   "image": "p4.jpg",
+   "audio": "p4.mp3",
+   "durationMs": 4905,
+   "lines": [
+    {
+     "text": "We are not noisy like other animals.",
+     "words": [
+      {
+       "w": "We",
+       "t0": 137,
+       "t1": 250
+      },
+      {
+       "w": "are",
+       "t0": 250,
+       "t1": 375
+      },
+      {
+       "w": "not",
+       "t0": 375,
+       "t1": 687
+      },
+      {
+       "w": "noisy",
+       "t0": 687,
+       "t1": 1062
+      },
+      {
+       "w": "like",
+       "t0": 1062,
+       "t1": 1462
+      },
+      {
+       "w": "other",
+       "t0": 1462,
+       "t1": 1837
+      },
+      {
+       "w": "animals.",
+       "t0": 1837,
+       "t1": 3042
+      }
+     ],
+     "turn": false
+    },
+    {
+     "text": "Ours is a language of smells.",
+     "words": [
+      {
+       "w": "Ours",
+       "t0": 3042,
+       "t1": 3417
+      },
+      {
+       "w": "is",
+       "t0": 3417,
+       "t1": 3592
+      },
+      {
+       "w": "a",
+       "t0": 3592,
+       "t1": 3655
+      },
+      {
+       "w": "language",
+       "t0": 3655,
+       "t1": 4092
+      },
+      {
+       "w": "of",
+       "t0": 4092,
+       "t1": 4305
+      },
+      {
+       "w": "smells.",
+       "t0": 4305,
+       "t1": 4905
+      }
+     ],
+     "turn": false
+    }
+   ]
+  },
+  {
+   "image": "p5.jpg",
+   "audio": "p5.mp3",
+   "durationMs": 3300,
+   "lines": [
+    {
+     "text": "One kind of smell says, “Follow me this way for a feast.”",
+     "words": [
+      {
+       "w": "One",
+       "t0": 187,
+       "t1": 375
+      },
+      {
+       "w": "kind",
+       "t0": 375,
+       "t1": 625
+      },
+      {
+       "w": "of",
+       "t0": 625,
+       "t1": 750
+      },
+      {
+       "w": "smell",
+       "t0": 750,
+       "t1": 1137
+      },
+      {
+       "w": "says,",
+       "t0": 1137,
+       "t1": 1625
+      },
+      {
+       "w": "“Follow",
+       "t0": 1625,
+       "t1": 1937
+      },
+      {
+       "w": "me",
+       "t0": 1937,
+       "t1": 2125
+      },
+      {
+       "w": "this",
+       "t0": 2125,
+       "t1": 2325
+      },
+      {
+       "w": "way",
+       "t0": 2325,
+       "t1": 2512
+      },
+      {
+       "w": "for",
+       "t0": 2512,
+       "t1": 2712
+      },
+      {
+       "w": "a",
+       "t0": 2712,
+       "t1": 2812
+      },
+      {
+       "w": "feast.”",
+       "t0": 2812,
+       "t1": 3300
+      }
+     ],
+     "turn": false
+    }
+   ]
+  },
+  {
+   "image": "p6.jpg",
+   "audio": "p6.mp3",
+   "durationMs": 3668,
+   "lines": [
+    {
+     "text": "Another smell says, “Danger!",
+     "words": [
+      {
+       "w": "Another",
+       "t0": 187,
+       "t1": 562
+      },
+      {
+       "w": "smell",
+       "t0": 562,
+       "t1": 937
+      },
+      {
+       "w": "says,",
+       "t0": 937,
+       "t1": 1437
+      },
+      {
+       "w": "“Danger!",
+       "t0": 1437,
+       "t1": 2605
+      }
+     ],
+     "turn": false
+    },
+    {
+     "text": "Do not go there.”",
+     "words": [
+      {
+       "w": "Do",
+       "t0": 2605,
+       "t1": 2730
+      },
+      {
+       "w": "not",
+       "t0": 2730,
+       "t1": 2980
+      },
+      {
+       "w": "go",
+       "t0": 2980,
+       "t1": 3255
+      },
+      {
+       "w": "there.”",
+       "t0": 3255,
+       "t1": 3668
+      }
+     ],
+     "turn": true
+    }
+   ]
+  },
+  {
+   "image": "p7.jpg",
+   "audio": "p7.mp3",
+   "durationMs": 3238,
+   "lines": [
+    {
+     "text": "I love cakes and all kinds of sweets, just like you.",
+     "words": [
+      {
+       "w": "I",
+       "t0": 187,
+       "t1": 250
+      },
+      {
+       "w": "love",
+       "t0": 250,
+       "t1": 500
+      },
+      {
+       "w": "cakes",
+       "t0": 500,
+       "t1": 937
+      },
+      {
+       "w": "and",
+       "t0": 937,
+       "t1": 1150
+      },
+      {
+       "w": "all",
+       "t0": 1150,
+       "t1": 1312
+      },
+      {
+       "w": "kinds",
+       "t0": 1312,
+       "t1": 1637
+      },
+      {
+       "w": "of",
+       "t0": 1637,
+       "t1": 1837
+      },
+      {
+       "w": "sweets,",
+       "t0": 1837,
+       "t1": 2387
+      },
+      {
+       "w": "just",
+       "t0": 2387,
+       "t1": 2637
+      },
+      {
+       "w": "like",
+       "t0": 2637,
+       "t1": 2950
+      },
+      {
+       "w": "you.",
+       "t0": 2950,
+       "t1": 3238
+      }
+     ],
+     "turn": false
+    }
+   ]
+  },
+  {
+   "image": "p8.jpg",
+   "audio": "p8.mp3",
+   "durationMs": 5468,
+   "lines": [
+    {
+     "text": "Want to see my muscles at work?",
+     "words": [
+      {
+       "w": "Want",
+       "t0": 137,
+       "t1": 375
+      },
+      {
+       "w": "to",
+       "t0": 375,
+       "t1": 500
+      },
+      {
+       "w": "see",
+       "t0": 500,
+       "t1": 750
+      },
+      {
+       "w": "my",
+       "t0": 750,
+       "t1": 937
+      },
+      {
+       "w": "muscles",
+       "t0": 937,
+       "t1": 1437
+      },
+      {
+       "w": "at",
+       "t0": 1437,
+       "t1": 1625
+      },
+      {
+       "w": "work?",
+       "t0": 1625,
+       "t1": 2617
+      }
+     ],
+     "turn": true
+    },
+    {
+     "text": "I may look very tiny to you, but I am very strong.",
+     "words": [
+      {
+       "w": "I",
+       "t0": 2617,
+       "t1": 2680
+      },
+      {
+       "w": "may",
+       "t0": 2680,
+       "t1": 2880
+      },
+      {
+       "w": "look",
+       "t0": 2880,
+       "t1": 3055
+      },
+      {
+       "w": "very",
+       "t0": 3055,
+       "t1": 3430
+      },
+      {
+       "w": "tiny",
+       "t0": 3430,
+       "t1": 3742
+      },
+      {
+       "w": "to",
+       "t0": 3742,
+       "t1": 3917
+      },
+      {
+       "w": "you,",
+       "t0": 3917,
+       "t1": 4205
+      },
+      {
+       "w": "but",
+       "t0": 4205,
+       "t1": 4392
+      },
+      {
+       "w": "I",
+       "t0": 4392,
+       "t1": 4517
+      },
+      {
+       "w": "am",
+       "t0": 4517,
+       "t1": 4617
+      },
+      {
+       "w": "very",
+       "t0": 4617,
+       "t1": 4892
+      },
+      {
+       "w": "strong.",
+       "t0": 4892,
+       "t1": 5468
+      }
+     ],
+     "turn": false
+    }
+   ]
+  },
+  {
+   "image": "p9.jpg",
+   "audio": "p9.mp3",
+   "durationMs": 4543,
+   "lines": [
+    {
+     "text": "Never mind if the door is shut.",
+     "words": [
+      {
+       "w": "Never",
+       "t0": 187,
+       "t1": 450
+      },
+      {
+       "w": "mind",
+       "t0": 450,
+       "t1": 837
+      },
+      {
+       "w": "if",
+       "t0": 837,
+       "t1": 937
+      },
+      {
+       "w": "the",
+       "t0": 937,
+       "t1": 1125
+      },
+      {
+       "w": "door",
+       "t0": 1125,
+       "t1": 1375
+      },
+      {
+       "w": "is",
+       "t0": 1375,
+       "t1": 1562
+      },
+      {
+       "w": "shut.",
+       "t0": 1562,
+       "t1": 2580
+      }
+     ],
+     "turn": false
+    },
+    {
+     "text": "I can slip through the smallest crack.",
+     "words": [
+      {
+       "w": "I",
+       "t0": 2580,
+       "t1": 2680
+      },
+      {
+       "w": "can",
+       "t0": 2680,
+       "t1": 2880
+      },
+      {
+       "w": "slip",
+       "t0": 2880,
+       "t1": 3217
+      },
+      {
+       "w": "through",
+       "t0": 3217,
+       "t1": 3417
+      },
+      {
+       "w": "the",
+       "t0": 3417,
+       "t1": 3530
+      },
+      {
+       "w": "smallest",
+       "t0": 3530,
+       "t1": 4105
+      },
+      {
+       "w": "crack.",
+       "t0": 4105,
+       "t1": 4543
+      }
+     ],
+     "turn": false
+    }
+   ]
+  },
+  {
+   "image": "p10.jpg",
+   "audio": "p10.mp3",
+   "durationMs": 3638,
+   "lines": [
+    {
+     "text": "Believe it or not, hundreds of us live happily in a colony.",
+     "words": [
+      {
+       "w": "Believe",
+       "t0": 137,
+       "t1": 500
+      },
+      {
+       "w": "it",
+       "t0": 500,
+       "t1": 712
+      },
+      {
+       "w": "or",
+       "t0": 712,
+       "t1": 837
+      },
+      {
+       "w": "not,",
+       "t0": 837,
+       "t1": 1312
+      },
+      {
+       "w": "hundreds",
+       "t0": 1312,
+       "t1": 1812
+      },
+      {
+       "w": "of",
+       "t0": 1812,
+       "t1": 1962
+      },
+      {
+       "w": "us",
+       "t0": 1962,
+       "t1": 2137
+      },
+      {
+       "w": "live",
+       "t0": 2137,
+       "t1": 2325
+      },
+      {
+       "w": "happily",
+       "t0": 2325,
+       "t1": 2875
+      },
+      {
+       "w": "in",
+       "t0": 2875,
+       "t1": 2950
+      },
+      {
+       "w": "a",
+       "t0": 2950,
+       "t1": 3062
+      },
+      {
+       "w": "colony.",
+       "t0": 3062,
+       "t1": 3638
+      }
+     ],
+     "turn": false
+    }
+   ]
+  }
+ ],
+ "turnSelection": {
+  "source": "rules",
+  "level": 1
+ }
+}

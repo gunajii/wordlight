@@ -1,0 +1,107 @@
+{
+ "region": "ap-south-1",
+ "date": "2026-10-08T12:33:03.355Z",
+ "recommended": null,
+ "rows": [
+  {
+   "model": "apac.amazon.nova-micro-v1:0",
+   "priceRank": 1,
+   "accepted": 0,
+   "of": 8,
+   "medianMs": null,
+   "maxMs": null,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "turnSelection": null,
+   "outputs": [
+    {
+     "scenario": "Riya",
+     "source": "template",
+     "fallback": "error:AccessDeniedException",
+     "ms": 164,
+     "text": "Riya read 38 words independently and needed help with 4 words, and finished “Busy Ants” (6 reading turns, 7 minutes)."
+    }
+   ]
+  },
+  {
+   "model": "apac.amazon.nova-lite-v1:0",
+   "priceRank": 3,
+   "accepted": 0,
+   "of": 8,
+   "medianMs": null,
+   "maxMs": null,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "turnSelection": null,
+   "outputs": [
+    {
+     "scenario": "Riya",
+     "source": "template",
+     "fallback": "error:AccessDeniedException",
+     "ms": 101,
+     "text": "Riya read 38 words independently and needed help with 4 words, and finished “Busy Ants” (6 reading turns, 7 minutes)."
+    }
+   ]
+  },
+  {
+   "model": "mistral.ministral-3-14b-instruct",
+   "priceRank": 4,
+   "accepted": 0,
+   "of": 8,
+   "medianMs": null,
+   "maxMs": null,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "turnSelection": null,
+   "outputs": [
+    {
+     "scenario": "Riya",
+     "source": "template",
+     "fallback": "error:AccessDeniedException",
+     "ms": 102,
+     "text": "Riya read 38 words independently and needed help with 4 words, and finished “Busy Ants” (6 reading turns, 7 minutes)."
+    }
+   ]
+  },
+  {
+   "model": "mistral.ministral-3-8b-instruct",
+   "priceRank": 4,
+   "accepted": 0,
+   "of": 8,
+   "medianMs": null,
+   "maxMs": null,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "turnSelection": null,
+   "outputs": [
+    {
+     "scenario": "Riya",
+     "source": "template",
+     "fallback": "error:AccessDeniedException",
+     "ms": 97,
+     "text": "Riya read 38 words independently and needed help with 4 words, and finished “Busy Ants” (6 reading turns, 7 minutes)."
+    }
+   ]
+  },
+  {
+   "model": "mistral.ministral-3-3b-instruct",
+   "priceRank": 4,
+   "accepted": 0,
+   "of": 8,
+   "medianMs": null,
+   "maxMs": null,
+   "tokensIn": 0,
+   "tokensOut": 0,
+   "turnSelection": null,
+   "outputs": [
+    {
+     "scenario": "Riya",
+     "source": "template",
+     "fallback": "error:AccessDeniedException",
+     "ms": 115,
+     "text": "Riya read 38 words independently and needed help with 4 words, and finished “Busy Ants” (6 reading turns, 7 minutes)."
+    }
+   ]
+  }
+ ]
+}
