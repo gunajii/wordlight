@@ -11,11 +11,13 @@
 import { mkdirSync, readFileSync, writeFileSync, copyFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { parseSpeechMarks, timeTokens, markByteMismatches, validateStory, PACKAGE_VERSION, type StoryPackage, type Line, type Issue } from '@wordlight/story-package';
+import { parseSpeechMarks, timeTokens, markByteMismatches, validateStory, soundEndMs, PACKAGE_VERSION, type StoryPackage, type Line, type Issue, type NarrationStyle } from '@wordlight/story-package';
 import { PollyNarration, FixtureNarration, type NarrationService } from './narration.ts';
 import { chooseTurnsWithModel, bedrockConverse } from './ai-turns.ts';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
+/** Storyteller defaults (chosen by listening, tools/content/audition.ts); a story may override in source.json "narration". */
+export const DEFAULT_STYLE: NarrationStyle = { rate: '90%', volume: '+6dB', lineBreakMs: 650 };
 
 /** Split page text into display lines at sentence ends (., !, ?, ।), keeping punctuation and closing quotes. */
 export function splitLines(text: string): string[] {
@@ -38,7 +40,7 @@ export async function buildStory(o: { src: any; srcDir: string; outDir: string; 
     const sp = src.pages[pi];
     const lines = splitLines(sp.text.normalize('NFC'));
     const pageText = lines.join(' '); // EXACTLY what the narrator gets
-    const n = await narration.synthesize(pageText, src.lang);
+    const n = await narration.synthesize(pageText, src.lang, lines);
     const marks = parseSpeechMarks(n.marksNdjson);
     const bad = markByteMismatches(pageText, marks);
     if (bad.length) throw new Error(`page ${pi + 1}: ${bad.length} speech marks do not match the text bytes (first: ${JSON.stringify(bad[0])})`);
@@ -52,6 +54,12 @@ export async function buildStory(o: { src: any; srcDir: string; outDir: string; 
       k += c;
       return { text: l, words, turn: false };
     });
+    // A line's last word otherwise "lasts" until the next line starts (pause included). Its real end comes from the
+    // audio, so an echo turn stops right after the narrator finishes the line, not at the next line's first sound.
+    if (n.pcm16k) for (const l of outLines) {
+      const w = l.words[l.words.length - 1];
+      if (w) w.t1 = Math.max(w.t0 + 1, Math.min(w.t1, Math.round(soundEndMs(n.pcm16k, w.t0, w.t1) + 40)));
+    }
     const audio = `p${pi + 1}.mp3`;
     writeFileSync(path.join(o.outDir, audio), n.mp3);
     const image = `p${pi + 1}${path.extname(sp.image).toLowerCase()}`;
@@ -79,9 +87,11 @@ async function main() {
   const opt = (k: string) => (args.includes(`--${k}`) ? args[args.indexOf(`--${k}`) + 1] : null);
   if (!id || id.startsWith('--')) { console.error('usage: node tools/content/build-story.ts <id> [--narration polly|fixture] [--voice Kajal] [--verified]'); process.exit(2); }
   const kind = opt('narration') ?? 'polly';
-  const narration = kind === 'fixture' ? new FixtureNarration() : await PollyNarration.create({ region: process.env.AWS_REGION || 'ap-south-1', voiceId: opt('voice') ?? 'Kajal' });
   const srcDir = path.join(ROOT, 'content/sources', id);
   const src = JSON.parse(readFileSync(path.join(srcDir, 'source.json'), 'utf8'));
+  // narration style: --rate/--volume/--line-break-ms, else source.json "narration", else DEFAULT_STYLE
+  const style: NarrationStyle = { ...DEFAULT_STYLE, ...(src.narration ?? {}), ...(opt('rate') ? { rate: opt('rate')! } : {}), ...(opt('volume') ? { volume: opt('volume')! } : {}), ...(opt('line-break-ms') ? { lineBreakMs: Number(opt('line-break-ms')) } : {}) };
+  const narration = kind === 'fixture' ? new FixtureNarration() : await PollyNarration.create({ region: process.env.AWS_REGION || 'ap-south-1', voiceId: opt('voice') ?? 'Kajal', style: args.includes('--plain') ? null : style });
   if (JSON.stringify(src.credits ?? {}).includes('CHECK')) { console.error('source.json credits still contain CHECK markers: verify author/illustrator/licence/URL against the StoryWeaver page first'); process.exit(1); }
   const turnModel = opt('turn-model') ?? undefined; // e.g. the model chosen by tools/bedrock/bench.ts
   const converse = turnModel ? await bedrockConverse(process.env.AWS_REGION || 'ap-south-1', turnModel) : null;

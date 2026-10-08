@@ -51,7 +51,7 @@ export interface StoryPackage {
   level: number;
   title: string;
   credits: Credits;
-  voice: { engine: 'polly-neural' | 'polly-standard' | 'synthetic-clicks' | 'recorded'; id: string };
+  voice: { engine: 'polly-neural' | 'polly-standard' | 'synthetic-clicks' | 'recorded'; id: string; style?: import('./ssml.ts').NarrationStyle };
   /** how word timings were produced, and whether they were measured against the audio (S4) */
   timing: { source: 'polly-speech-marks' | 'transcribe' | 'synthetic' | 'manual'; verified: boolean };
   /** how the Your Turn lines were chosen (rules = deterministic; bedrock = a model's choice, validated against the rules) */

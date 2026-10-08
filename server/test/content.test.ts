@@ -40,6 +40,24 @@ test('build-story runs the Polly pipeline end to end against a fake Polly client
   rmSync(dir, { recursive: true });
 });
 
+test('build-story with a narration style: SSML to Polly, marks mapped back to the text, line ends from the audio', async () => {
+  const dir = tmp(); const src = path.join(dir, 'src'); const out = path.join(dir, 'out');
+  mkdirSync(src); writeFileSync(path.join(src, 'a.png'), PNG);
+  const calls: any[] = [];
+  const narration = new PollyNarration({ ...fakePollyClient(calls), voiceId: 'Kajal', style: { rate: '90%', volume: '+6dB', lineBreakMs: 650 } });
+  const credits = { source: 'WordLight test content', license: 'original', title: 'T', author: 'A', attribution: 'Test.' };
+  const { story, issues } = await buildStory({ src: { id: 'en-test', lang: 'en-IN', level: 1, title: 'T', credits, pages: [{ image: 'a.png', text: 'We walk in a line, quietly. We do not talk.' }] }, srcDir: src, outDir: out, narration });
+  assert.deepEqual(issues.filter((i) => i.level === 'error'), []);
+  assert.ok(calls.every((c) => c.TextType === 'ssml'));
+  assert.equal(calls[0].Text, '<speak><prosody rate="90%" volume="+6dB">We walk in a line, quietly.<break time="650ms"/> We do not talk.</prosody></speak>');
+  const [l1, l2] = story.pages[0].lines;
+  assert.deepEqual(l1.words.map((w) => w.w), ['We', 'walk', 'in', 'a', 'line,', 'quietly.']);
+  assert.deepEqual(l2.words.map((w) => w.w), ['We', 'do', 'not', 'talk.']);
+  assert.ok(l1.words.at(-1)!.t1 <= l2.words[0].t0, 'the last word ends before the next line');
+  assert.deepEqual(story.voice.style, { rate: '90%', volume: '+6dB', lineBreakMs: 650 });
+  rmSync(dir, { recursive: true });
+});
+
 const good = (): StoryPackage => JSON.parse(JSON.stringify({
   packageVersion: 1, id: 'good-story', lang: 'en-IN', level: 1, title: 'Good',
   credits: { source: 'StoryWeaver', license: 'CC BY 4.0', title: 'Good', author: 'A', url: 'https://storyweaver.org.in/x', attribution: 'Good by A, CC BY 4.0' },

@@ -123,3 +123,27 @@ test('hyphenated Hindi word with two Polly marks stays one display token, timed 
   const toks = tt(text, marks, 1500);
   assert.deepEqual(toks.map((t) => [t.w, t.t0]), [['बिल्ली', 0], ['धीरे-धीरे', 400], ['आई', 1000]]);
 });
+
+test('SSML narration: marks with SSML byte offsets map back onto the plain page text (Latin and Devanagari)', async () => {
+  const { pageSsml, marksToText, markByteMismatches, timeTokens } = await import('../src/index.ts');
+  for (const lines of [['Hello, I am the fourth one in the line.', 'Can you see me?'], ['चींटियाँ कतार में चलती हैं।', 'हम बात नहीं करतीं।']]) {
+    const { ssml, text, toTextByte } = pageSsml(lines, { rate: '90%', volume: '+6dB', lineBreakMs: 600 });
+    assert.equal(text, lines.join(' '));
+    assert.match(ssml, /^<speak><prosody rate="90%" volume="\+6dB">.*<break time="600ms"\/> .*<\/prosody><\/speak>$/);
+    // marks as Polly would return them for the SSML input: byte offsets into `ssml`
+    const words = text.split(' ');
+    const ssmlMarks = marksFor(ssml, words.map((w, i) => [w, i * 300] as [string, number]));
+    const mapped = marksToText(ssmlMarks, toTextByte);
+    assert.deepEqual(markByteMismatches(text, mapped), []);
+    assert.deepEqual(timeTokens(text, mapped, 5000).map((t) => t.w), words);
+  }
+  assert.throws(() => pageSsml(['Tom & Jerry'], { rate: '90%' }), /not supported/);
+  assert.throws(() => pageSsml(['x'], { rate: 'fast!' }), /bad rate/);
+});
+
+test('soundEndMs finds the last sound before the next word', async () => {
+  const { soundEndMs } = await import('../src/index.ts');
+  const pcm = new Int16Array(16 * 1000);
+  for (let i = 16 * 100; i < 16 * 420; i++) pcm[i] = i % 2 ? 9000 : -9000;
+  assert.equal(soundEndMs(pcm, 100, 900), 420);
+});
