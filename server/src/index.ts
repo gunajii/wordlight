@@ -26,6 +26,14 @@ import { summaryFromEnv } from './summary.ts';
 import { usage } from './usage.ts';
 import { progressFromEnv } from './progress.ts';
 
+/** TRANSCRIBE_STABILITY=high|medium|low|none (default high, as measured in S2 phase A). */
+export function transcribeStability(v?: string): 'high' | 'medium' | 'low' | null {
+  if (!v) return 'high';
+  if (v === 'none') return null;
+  if (v === 'high' || v === 'medium' || v === 'low') return v;
+  throw new Error(`TRANSCRIBE_STABILITY must be high|medium|low|none, got ${v}`);
+}
+
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const PORT = Number(process.env.PORT || 8787);
 const HOST = process.env.HOST || '0.0.0.0';
@@ -99,7 +107,7 @@ export function createServer({ hub = new SessionHub({ now: serverNow }), publicU
   if (!hub.driver) {
     const simulated = speechSource === 'scripted' || speechSource === 'sim';
     if (simulated && process.env.NODE_ENV === 'production') throw new Error('SPEECH=scripted is a local simulation and is refused when NODE_ENV=production');
-    const speech: SpeechSource = simulated ? scriptedFromEnv(process.env.SPEECH_SCRIPT) : new TranscribeSource({ region: process.env.AWS_REGION });
+    const speech: SpeechSource = simulated ? scriptedFromEnv(process.env.SPEECH_SCRIPT) : new TranscribeSource({ region: process.env.AWS_REGION, stability: transcribeStability(process.env.TRANSCRIBE_STABILITY) });
     if (simulated) log(`[reading] SPEECH=scripted (${process.env.SPEECH_SCRIPT ?? 'demo'}) — LOCAL SIMULATION: transcripts come from a script, not from the audio. Not real speech recognition.`);
     speechName = speech.name; speechSimulated = !!speech.simulated;
     reading = new ReadingDriver({ hub, source: speech, now: serverNow, log, devTranscripts: process.env.DEV_TRANSCRIPTS === '1', onTrace: (t) => traceSink?.(t) });

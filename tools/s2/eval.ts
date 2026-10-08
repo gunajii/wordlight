@@ -9,6 +9,10 @@
 //                                                      Adult control recordings <caseId>.wav (any format ffmpeg reads),
 //                                                      or consented child recordings (docs/CHILD_TESTING.md).
 // Options: --only <id-prefix> --lang en-IN|hi-IN --category <c,...> --sample N (deterministic) --concurrency N --out <dir>
+//          --stability high|medium|low|none   Transcribe partial-result stabilisation (production default: high)
+//          --lead-silence-ms N                silence streamed before the speech (a real reader starts after the mic
+//                                             opens; the first runs started speech at t = 0)
+//          --tag <name>                       appended to the output directory name
 //
 // Every case runs through SessionHub → ReadingDriver → SpeechSource → ReadingTurn (the production code). Per expected
 // word it records: label (what should happen), outcome (read/helped/skipped/none), what the recogniser returned,
@@ -17,6 +21,7 @@
 // Real-engine results go to docs/results/s2/<engine>-<stamp>/ (results.json + report.md); simulated runs go to
 // bench/runs/s2/ (not committed) unless --out is given.
 import { mkdirSync, readFileSync, writeFileSync, existsSync } from 'node:fs';
+import { createHash } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -52,7 +57,33 @@ export function labelsFor(c: Case): Label[] {
   });
 }
 
-interface Prepared { pcm: Int16Array | null; spokenAtMs: (number | null)[]; spokenSource: 'script' | 'polly-marks' | 'asr' }
+interface Prepared { pcm: Int16Array | null; spokenAtMs: (number | null)[]; spokenSource: 'script' | 'polly-marks' | 'asr'; /** INFERRED acoustic end of each spoken item */ spokenEndMs?: (number | null)[] }
+export type Stability = 'high' | 'medium' | 'low' | 'none';
+
+/** Last 10 ms frame in [fromMs, toMs) whose RMS is above a threshold → its end time (INFERRED word end). */
+export function soundEndMs(pcm: Int16Array, fromMs: number, toMs: number): number {
+  let peak = 0; for (let i = 0; i < pcm.length; i++) { const v = Math.abs(pcm[i]); if (v > peak) peak = v; }
+  const thr = Math.max(300, 0.03 * peak);
+  const F = 160; // 10 ms at 16 kHz
+  const a = Math.max(0, Math.floor((fromMs * 16) / F)), b = Math.min(Math.floor(pcm.length / F), Math.ceil((toMs * 16) / F));
+  for (let f = b - 1; f >= a; f--) {
+    let e = 0; for (let i = f * F; i < (f + 1) * F; i++) e += pcm[i] * pcm[i];
+    if (Math.sqrt(e / F) > thr) return ((f + 1) * F) / 16;
+  }
+  return toMs;
+}
+
+/** Stream silence before the speech; spoken times move with it. */
+export function withLeadSilence(eng: Engine, ms: number): Engine {
+  if (!ms) return eng;
+  return { ...eng, async prepare(c) {
+    const p = await eng.prepare(c);
+    if (!p.pcm) return p;
+    const pcm = new Int16Array(Math.round(ms * 16) + p.pcm.length); pcm.set(p.pcm, Math.round(ms * 16));
+    const sh = (xs?: (number | null)[]) => xs?.map((t) => (t === null ? null : t + ms));
+    return { ...p, pcm, spokenAtMs: p.spokenSource === 'asr' ? p.spokenAtMs : sh(p.spokenAtMs)!, spokenEndMs: sh(p.spokenEndMs) };
+  } };
+}
 interface Engine { name: string; simulated: boolean; source(c: Case): SpeechSource; prepare(c: Case): Promise<Prepared>; concurrency: number; note: string }
 
 // ---------- engines ----------
@@ -71,13 +102,22 @@ function scriptedEngine(): Engine {
   };
 }
 
-async function pollyEngine(region: string, voices: string[]): Promise<Engine> {
+async function pollyEngine(region: string, voices: string[], stability: Stability = 'high'): Promise<Engine> {
   const { PollyClient, SynthesizeSpeechCommand } = await import('@aws-sdk/client-polly');
   const { TranscribeSource } = await import('../../server/src/reading/speech.ts');
   const polly = new PollyClient({ region });
   const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   const voice = (lang: string) => voices.find((v) => v.includes(':') ? v.startsWith(lang) : true)?.replace(/^.*:/, '') ?? 'Kajal';
+  const cacheDir = path.join(ROOT, '.dev/cache/polly'); // same input → same audio (S4 measured byte-identical); repeat runs cost nothing
   const synth = async (ssml: string, lang: string, format: 'pcm' | 'json') => {
+    const key = createHash('sha256').update([voice(lang), lang, format, ssml].join('|')).digest('hex').slice(0, 32);
+    const cached = path.join(cacheDir, `${key}.${format}`);
+    if (existsSync(cached)) return readFileSync(cached);
+    const b = await synthAws(ssml, lang, format);
+    mkdirSync(cacheDir, { recursive: true }); writeFileSync(cached, b);
+    return b;
+  };
+  const synthAws = async (ssml: string, lang: string, format: 'pcm' | 'json') => {
     const chars = ssml.replace(/<[^>]+>/g, '').length; // Polly bills SSML text without tags
     usage.check('pollyChars', chars); usage.add('pollyChars', chars); // cost guard
     const r = await polly.send(new SynthesizeSpeechCommand({ Engine: 'neural', VoiceId: voice(lang) as any, LanguageCode: lang as any, Text: ssml, TextType: 'ssml', OutputFormat: format, ...(format === 'pcm' ? { SampleRate: '16000' } : { SpeechMarkTypes: ['word'] }) }));
@@ -86,14 +126,22 @@ async function pollyEngine(region: string, voices: string[]): Promise<Engine> {
   return {
     name: 'polly-transcribe', simulated: false, concurrency: 2,
     note: 'Amazon Polly (neural, adult synthetic voice) speaks each case; audio streamed in real time to Amazon Transcribe Streaming. Synthetic adult speech characterises the pipeline, not child reading.',
-    source: () => new TranscribeSource({ region }),
+    source: () => new TranscribeSource({ region, stability: stability === 'none' ? null : stability }),
     async prepare(c) {
       const ssml = `<speak>${c.spoken.map((s) => (s.pauseBeforeMs ? `<break time="${Math.min(s.pauseBeforeMs, 10000)}ms"/>` : '') + esc(s.w)).join(' ')}</speak>`;
       const buf = await synth(ssml, c.lang, 'pcm');
       const marks = (await synth(ssml, c.lang, 'json')).toString('utf8').split('\n').filter(Boolean).map((l) => JSON.parse(l)).filter((m: any) => m.type === 'word');
       // item k starts at the mark of its first token (items may hold two tokens, e.g. "ice cream")
-      let m = 0; const spokenAtMs = c.spoken.map((s) => { const t = marks[m]?.time ?? null; m += s.w.split(/\s+/).length; return t; });
-      return { pcm: new Int16Array(buf.buffer, buf.byteOffset, buf.byteLength >> 1).slice(), spokenAtMs, spokenSource: 'polly-marks' };
+      let m = 0; const firstMark: number[] = []; const spokenAtMs = c.spoken.map((s) => { firstMark.push(m); const t = marks[m]?.time ?? null; m += s.w.split(/\s+/).length; return t; });
+      const pcm = new Int16Array(buf.buffer, buf.byteOffset, buf.byteLength >> 1).slice();
+      // INFERRED word end: last sound before the next item starts (minus any break inserted before it), or before the audio ends
+      const spokenEndMs = c.spoken.map((s, k) => {
+        if (spokenAtMs[k] === null) return null;
+        const nx = k + 1 < c.spoken.length ? marks[firstMark[k + 1]]?.time : undefined;
+        const to = nx !== undefined ? nx - Math.min(c.spoken[k + 1].pauseBeforeMs ?? 0, 10000) : pcm.length / 16;
+        return Math.round(soundEndMs(pcm, spokenAtMs[k] as number, Math.max(to, (spokenAtMs[k] as number) + 10)));
+      });
+      return { pcm, spokenAtMs, spokenSource: 'polly-marks', spokenEndMs };
     },
   };
 }
@@ -121,6 +169,8 @@ export interface WordResult {
   recognized: string | null; spokenMs: number | null; recognizedMs: number | null; litMs: number | null;
   /** word.read emitted − word spoken (server pipeline) */ latencyMs: number | null;
   /** recogniser update arrival − word spoken */ recognitionMs: number | null;
+  /** INFERRED acoustic end of the word (Polly engine only) */ spokenEndMs?: number | null;
+  /** word.read emitted − INFERRED word end (supplementary; the verdict uses latencyMs from the word start) */ latencyFromEndMs?: number | null;
 }
 export interface CaseResult { id: string; lang: string; category: string; expected: string; spokenText: string; transcript: string; endReason: string | null; error?: string; pass: boolean; words: WordResult[]; result: TurnTrace['result']; skipped?: string }
 
@@ -166,6 +216,7 @@ export async function runCase(eng: Engine, c: Case): Promise<CaseResult> {
     const ev = tr?.events.find((e) => e.index === i) ?? null;
     const outcome = (ev?.kind ?? 'none') as WordResult['outcome'];
     let spoken = k >= 0 && prep.spokenAtMs[k] != null ? T0 + (prep.spokenAtMs[k] as number) : null;
+    const spokenEnd = k >= 0 && prep.spokenEndMs?.[k] != null ? T0 + (prep.spokenEndMs[k] as number) : null;
     if (prep.spokenSource === 'asr') spoken = ev?.spokenServerMs ?? null;
     const label = labels[i];
     const ok = SHOULD_LIGHT.includes(label) ? outcome === 'read' : label === 'after-pause' ? outcome === 'read' || outcome === 'helped' : outcome !== 'read';
@@ -173,7 +224,8 @@ export async function runCase(eng: Engine, c: Case): Promise<CaseResult> {
     const rec = ev && ev.kind === 'read' ? ev.updateReceivedMs : null;
     return { i, word: w, label, said: k >= 0 ? c.spoken[k].w : null, outcome, ok, recognized: ev?.heard ?? null, spokenMs: spoken !== null ? Math.round(spoken - T0) : null,
       recognizedMs: rec !== null ? Math.round(rec - T0) : null, litMs: lit !== null ? Math.round(lit - T0) : null,
-      latencyMs: lit !== null && spoken !== null ? Math.round(lit - spoken) : null, recognitionMs: rec !== null && spoken !== null ? Math.round(rec - spoken) : null };
+      latencyMs: lit !== null && spoken !== null ? Math.round(lit - spoken) : null, recognitionMs: rec !== null && spoken !== null ? Math.round(rec - spoken) : null,
+      spokenEndMs: spokenEnd !== null ? Math.round(spokenEnd - T0) : null, latencyFromEndMs: lit !== null && spokenEnd !== null ? Math.round(lit - spokenEnd) : null };
   });
   return { ...base, transcript, endReason: tr?.endReason ?? null, ...(tr?.error ? { error: tr.error } : {}), pass: res.every((r) => r.ok) && !tr?.error, words: res, result: tr?.result ?? null };
 }
@@ -190,6 +242,8 @@ export function metrics(rows: CaseResult[]) {
     const om = ws.filter((w) => w.label === 'omitted');
     const lat = should.map((w) => w.latencyMs).filter((x): x is number => x !== null);
     const rec = should.map((w) => w.recognitionMs).filter((x): x is number => x !== null);
+    const fromEnd = should.map((w) => w.latencyFromEndMs).filter((x): x is number => x !== null && x !== undefined);
+    const firsts = should.filter((w) => w.i === 0);
     return {
       cases: rs.length, casesPassed: rs.filter((r) => r.pass).length, errors: rs.filter((r) => r.error).length,
       wordsShouldLight: should.length, litWithin1s: lit1s, recallWithin1sPct: pct(lit1s, should.length), litEventuallyPct: pct(should.filter((w) => w.outcome === 'read').length, should.length),
@@ -197,6 +251,9 @@ export function metrics(rows: CaseResult[]) {
       omittedWords: om.length, omittedAccepted: om.filter((w) => w.outcome === 'read').length,
       latencyMs: { n: lat.length, median: quant(lat, 0.5), p95: quant(lat, 0.95), max: lat.length ? Math.max(...lat) : null },
       recognitionMs: { n: rec.length, median: quant(rec, 0.5), p95: quant(rec, 0.95) },
+      firstWordLitPct: pct(firsts.filter((w) => w.outcome === 'read').length, firsts.length),
+      // supplementary, INFERRED (word end from the audio envelope); not part of the verdict
+      fromWordEnd: fromEnd.length ? { n: fromEnd.length, median: quant(fromEnd, 0.5), p95: quant(fromEnd, 0.95), litWithin1sPct: pct(fromEnd.filter((x) => x <= 1000).length, should.length) } : null,
     };
   };
   const out: Record<string, any> = { all: one(rows) };
@@ -217,12 +274,15 @@ export function report(meta: any, m: any, rows: CaseResult[]): string {
   const sim = meta.simulated;
   L.push(`# S2 evaluation — ${meta.engine}${sim ? ' (SIMULATED)' : ''}`, '');
   if (sim) L.push('> **LOCAL SIMULATION — not real speech recognition.** Transcripts came from the case scripts with fixed simulated timing. This run checks the harness and the reading engine (strictness, normalisation). Its numbers are NOT S2 results and must not be quoted as such.', '');
-  L.push(`- Date: ${meta.date}`, `- Git: ${meta.git}`, `- Engine: ${meta.note}`, `- Cases: ${rows.length}${meta.filter ? ` (filter: ${meta.filter})` : ''}`, `- Speaker: ${meta.speaker}`, '');
+  L.push(`- Date: ${meta.date}`, `- Git: ${meta.git}`, `- Engine: ${meta.note}`, `- Transcribe stability: ${meta.stability ?? 'n/a'} · lead silence: ${meta.leadSilenceMs ?? 0} ms`, `- Cases: ${rows.length}${meta.filter ? ` (filter: ${meta.filter})` : ''}`, `- Speaker: ${meta.speaker}`, '');
   L.push(`## Verdict: ${sim ? 'n/a (simulation) — ' + m.verdict + ' on the scripted set' : m.verdict}`, '', `Basis: ${m.verdictBasis}. Latency = word.read emitted by the server − word spoken (audio injected at the server; the phone→server hop, measured in S3, and server→TV are not included).`, '');
   const row = (name: string, x: any) => `| ${name} | ${x.cases} | ${x.casesPassed} | ${x.recallWithin1sPct ?? '–'} % (${x.litWithin1s}/${x.wordsShouldLight}) | ${x.falseAcceptPct ?? '–'} % (${x.misreadAccepted}/${x.misreadWords}) | ${x.omittedAccepted}/${x.omittedWords} | ${x.latencyMs.median ?? '–'} / ${x.latencyMs.p95 ?? '–'} / ${x.latencyMs.max ?? '–'} | ${x.errors} |`;
   const head = ['| set | cases | passed | lit ≤ 1 s | misreads accepted | omitted accepted | latency ms median / p95 / max | errors |', '|---|---|---|---|---|---|---|---|'];
   L.push('## By language', '', ...head, row('all', m.all), ...['en-IN', 'hi-IN'].filter((l) => m[l]).map((l) => row(l, m[l])), '');
   L.push('## By category', '', ...head, ...Object.entries(m.byCategory).map(([k, v]) => row(k, v)), '');
+  L.push('## Supplementary (not part of the verdict)', '', '| set | first word of the line lit | lit eventually | latency from word END median / p95 (INFERRED) | lit ≤ 1 s after word END (INFERRED) |', '|---|---|---|---|---|',
+    ...['all', 'en-IN', 'hi-IN'].filter((l) => m[l]).map((l) => { const x = m[l]; return `| ${l} | ${x.firstWordLitPct ?? '–'} % | ${x.litEventuallyPct ?? '–'} % | ${x.fromWordEnd ? `${x.fromWordEnd.median} / ${x.fromWordEnd.p95}` : '–'} | ${x.fromWordEnd ? x.fromWordEnd.litWithin1sPct + ' %' : '–'} |`; }),
+    '', 'Word END is INFERRED from the synthetic audio (last 10 ms frame above 3 % of peak before the next word). A word cannot be recognised before it has been said, so this separates recogniser delay from word length. The verdict keeps the predefined start-based rule.', '');
   const bad = rows.filter((r) => !r.pass && !r.skipped);
   L.push(`## Cases not as expected (${bad.length})`, '');
   if (!bad.length) L.push('None.');
@@ -248,12 +308,16 @@ async function main() {
   if (opt('lang')) { cases = cases.filter((c) => c.lang === opt('lang')); filters.push(`lang=${opt('lang')}`); }
   if (opt('category')) { const cs = opt('category')!.split(','); cases = cases.filter((c) => cs.includes(c.category)); filters.push(`category=${opt('category')}`); }
   if (opt('sample')) { const n = Number(opt('sample')); const step = Math.max(1, cases.length / n); cases = cases.filter((_, i) => Math.floor(i % step) === 0).slice(0, n); filters.push(`sample=${n}`); }
-  const eng = engineName === 'scripted' ? scriptedEngine()
-    : engineName === 'polly-transcribe' ? await pollyEngine(region, (opt('voices') ?? 'Kajal').split(','))
+  const stability = (opt('stability') ?? 'high') as Stability;
+  if (!['high', 'medium', 'low', 'none'].includes(stability)) throw new Error('--stability high|medium|low|none');
+  const leadSilenceMs = Number(opt('lead-silence-ms') ?? 0);
+  const eng0 = engineName === 'scripted' ? scriptedEngine()
+    : engineName === 'polly-transcribe' ? await pollyEngine(region, (opt('voices') ?? 'Kajal').split(','), stability)
     : engineName === 'wav' ? await wavEngine(region, opt('audio-dir') ?? (() => { throw new Error('--audio-dir required'); })())
     : (() => { throw new Error(`unknown --engine ${engineName}`); })();
+  const eng = withLeadSilence(eng0, leadSilenceMs);
   const conc = Number(opt('concurrency') ?? eng.concurrency);
-  console.log(`${eng.name}${eng.simulated ? ' (SIMULATED)' : ''}: ${cases.length} cases, concurrency ${conc}`);
+  console.log(`${eng.name}${eng.simulated ? ' (SIMULATED)' : ''}: ${cases.length} cases, concurrency ${conc}, stability ${stability}, lead silence ${leadSilenceMs} ms`);
   const rows: CaseResult[] = new Array(cases.length);
   let next = 0;
   await Promise.all(Array.from({ length: conc }, async () => {
@@ -269,8 +333,8 @@ async function main() {
   const m = metrics(rows.filter((r) => !r.skipped));
   let git = 'unknown'; try { git = execFileSync('git', ['-C', ROOT, 'rev-parse', '--short', 'HEAD']).toString().trim(); } catch {}
   const stamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
-  const meta = { engine: eng.name, simulated: eng.simulated, note: eng.note, date: new Date().toISOString(), git, region: eng.simulated ? null : region, node: process.version, filter: filters.join(' '), speaker: engineName === 'scripted' ? 'none (script)' : engineName === 'polly-transcribe' ? `Amazon Polly ${opt('voices') ?? 'Kajal'} (adult synthetic)` : (opt('speaker') ?? 'UNKNOWN — pass --speaker "adult control" or "child (consented)"') };
-  const out = opt('out') ?? path.join(ROOT, eng.simulated ? 'bench/runs/s2' : 'docs/results/s2', `${eng.name}-${stamp}`);
+  const meta = { engine: eng.name, simulated: eng.simulated, note: eng.note, date: new Date().toISOString(), git, region: eng.simulated ? null : region, node: process.version, filter: filters.join(' '), stability: eng.simulated ? null : stability, leadSilenceMs, speaker: engineName === 'scripted' ? 'none (script)' : engineName === 'polly-transcribe' ? `Amazon Polly ${opt('voices') ?? 'Kajal'} (adult synthetic)` : (opt('speaker') ?? 'UNKNOWN — pass --speaker "adult control" or "child (consented)"') };
+  const out = opt('out') ?? path.join(ROOT, eng.simulated ? 'bench/runs/s2' : 'docs/results/s2', `${eng.name}-${stamp}${opt('tag') ? '-' + opt('tag') : ''}`);
   mkdirSync(out, { recursive: true });
   writeFileSync(path.join(out, 'results.json'), JSON.stringify({ meta, metrics: m, cases: rows }, null, 1));
   writeFileSync(path.join(out, 'report.md'), report(meta, m, rows));

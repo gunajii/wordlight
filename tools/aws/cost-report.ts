@@ -20,8 +20,9 @@ const local = (tsec / 60) * PRICE.transcribePerMin + (polly / 1e6) * PRICE.polly
 console.log(`local meter (this Mac's tools, INFERRED): Polly ${polly} chars · Transcribe ${(tsec / 60).toFixed(1)} min · Bedrock ${bcalls} calls → ≈ USD ${local.toFixed(2)} (+ Bedrock, a few cents)`);
 const dir = path.join(ROOT, '.dev/aws');
 const ce = process.argv[2] ?? (existsSync(dir) ? readdirSync(dir).filter((f) => f.startsWith('ce-')).sort().map((f) => path.join(dir, f)).at(-1) : undefined);
-if (ce && existsSync(ce)) {
-  const j = JSON.parse(readFileSync(ce, 'utf8'));
+let j: any = null;
+if (ce && existsSync(ce)) { try { j = JSON.parse(readFileSync(ce, 'utf8')); } catch { j = null; } }
+if (j) {
   const total = (j.ResultsByTime ?? []).reduce((s: number, r: any) => s + Number(r.Total?.UnblendedCost?.Amount ?? 0), 0);
   console.log(`AWS Cost Explorer (gross, before credits; may lag ~24 h): USD ${total.toFixed(2)} → band: ${band(total)}`);
-} else console.log('AWS Cost Explorer: no snapshot yet');
+} else console.log("AWS Cost Explorer: no usable snapshot (empty file, no permission yet, or not enabled — normal for a new account)");

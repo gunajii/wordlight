@@ -53,13 +53,20 @@ async function main() {
       outs.push({ scenario: sc.name, source: r.source, fallback: r.fallbackReason ?? null, ms, text: r.text });
       if (r.fallbackReason?.startsWith('error:')) break; // model unusable (access, region): stop spending calls on it
     }
+    // Record WHY a model is unusable (the service only keeps the error name): one bare call, message kept verbatim.
+    let errorMessage: string | null = null;
+    if (!accepted && outs.at(-1)?.fallback?.startsWith('error:')) {
+      try { await client.send(new ConverseCommand({ modelId: model, messages: [{ role: 'user', content: [{ text: 'Say OK.' }] }], inferenceConfig: { maxTokens: 5 } })); errorMessage = 'bare call succeeded (the failure is specific to the summary request)'; }
+      catch (e: any) { errorMessage = `${e?.name ?? 'Error'}: ${String(e?.message ?? e).slice(0, 400)}`; }
+    }
     const raw = async (p: string) => { const r: any = await client.send(new ConverseCommand({ modelId: model, messages: [{ role: 'user', content: [{ text: p }] }], inferenceConfig: { maxTokens: 200, temperature: 0 } })); return String(r?.output?.message?.content?.[0]?.text ?? ''); };
     const turns = accepted ? await chooseTurnsWithModel(LINES, 1, raw, model) : null;
     lat.sort((x, y) => x - y);
     const u = usage.snapshot();
     rows.push({ model, priceRank: priceRank(model), accepted, of: SCENARIOS.length, medianMs: lat.length ? lat[lat.length >> 1] : null, maxMs: lat.length ? lat[lat.length - 1] : null,
-      tokensIn: u.bedrockTokensIn - usage0.bedrockTokensIn, tokensOut: u.bedrockTokensOut - usage0.bedrockTokensOut, turnSelection: turns ? { source: turns.source, indexes: turns.indexes, fallback: turns.fallback ?? null, reason: turns.reason ?? null } : null, outputs: outs });
+      tokensIn: u.bedrockTokensIn - usage0.bedrockTokensIn, tokensOut: u.bedrockTokensOut - usage0.bedrockTokensOut, errorMessage, turnSelection: turns ? { source: turns.source, indexes: turns.indexes, fallback: turns.fallback ?? null, reason: turns.reason ?? null } : null, outputs: outs });
     console.log(`${model.padEnd(48)} accepted ${accepted}/${SCENARIOS.length} · median ${rows.at(-1).medianMs ?? '–'} ms · turns ${turns?.source ?? '–'}${turns?.fallback ? ` (${turns.fallback})` : ''}`);
+    if (errorMessage) console.log(`  ↳ ${errorMessage}`);
   }
   const pick = rows.find((r) => r.accepted >= 7 && r.medianMs !== null && r.medianMs <= 2500) ?? null;
   const stamp = new Date().toISOString().slice(0, 16).replace(/:/g, '-');
@@ -70,7 +77,8 @@ async function main() {
     `**Recommended:** ${pick ? `\`${pick.model}\` (cheapest model with ≥ 7/8 accepted and median ≤ 2.5 s)` : 'none — keep the template'}`, '',
     '| model | accepted | median ms | max ms | tokens in/out | turn selection |', '|---|---|---|---|---|---|',
     ...rows.map((r) => `| ${r.model} | ${r.accepted}/${r.of} | ${r.medianMs ?? '–'} | ${r.maxMs ?? '–'} | ${r.tokensIn}/${r.tokensOut} | ${r.turnSelection ? `${r.turnSelection.source}${r.turnSelection.fallback ? ` (${r.turnSelection.fallback})` : ''} ${JSON.stringify(r.turnSelection.indexes)}` : '–'} |`),
-    '', '## Sample outputs', '', ...rows.flatMap((r) => [`### ${r.model}`, ...r.outputs.slice(0, 3).map((o: any) => `- ${o.scenario}: ${o.source === 'bedrock' ? '“' + o.text + '”' : `template (${o.fallback})`}`), '']),
+    '', ...(rows.some((r) => r.errorMessage) ? ['## Errors (verbatim)', '', ...rows.filter((r) => r.errorMessage).map((r) => `- \`${r.model}\`: ${r.errorMessage}`), ''] : []),
+    '## Sample outputs', '', ...rows.flatMap((r) => [`### ${r.model}`, ...r.outputs.slice(0, 3).map((o: any) => `- ${o.scenario}: ${o.source === 'bedrock' ? '“' + o.text + '”' : `template (${o.fallback})`}`), '']),
     `Template for comparison: “${templateSummary(SCENARIOS[0])}”`];
   writeFileSync(path.join(dir, `bench-${stamp}.md`), md.join('\n') + '\n');
   console.log(`recommended: ${pick?.model ?? 'none'} · wrote docs/results/bedrock/bench-${stamp}.md`);

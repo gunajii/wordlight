@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { labelsFor, metrics, report, type CaseResult } from '../../tools/s2/eval.ts';
+import { labelsFor, metrics, report, soundEndMs, withLeadSilence, type CaseResult } from '../../tools/s2/eval.ts';
 import { buildCases, type Case } from '../../tools/s2/make-cases.ts';
 import { scoreObserved } from '../../tools/s2/score-observed.ts';
 
@@ -58,4 +58,30 @@ test('end-to-end latency joins spoken (recogniser), emitted (server) and lit (TV
   assert.deepEqual(r.rows.map((x) => x.e2eMs), [650, 790]);
   assert.deepEqual(r.rows.map((x) => x.serverToTvMs), [50, 90]);
   assert.equal(r.summary.within1s, 2);
+});
+
+test('S2 word end (INFERRED) is the last sound before the next word; lead silence shifts audio and times together', async () => {
+  const pcm = new Int16Array(16 * 1000); // 1 s
+  for (let i = 16 * 100; i < 16 * 340; i++) pcm[i] = i % 2 ? 8000 : -8000; // a "word" from 100 to 340 ms
+  for (let i = 16 * 600; i < 16 * 800; i++) pcm[i] = i % 2 ? 8000 : -8000;  // next word from 600 ms
+  assert.equal(soundEndMs(pcm, 100, 600), 340);
+  assert.equal(soundEndMs(pcm, 600, 1000), 800);
+  assert.equal(soundEndMs(new Int16Array(16000), 100, 500), 500, 'no sound → falls back to the window end');
+  const eng: any = { name: 'x', simulated: false, concurrency: 1, note: '', source: () => null, prepare: async () => ({ pcm, spokenAtMs: [100, 600], spokenEndMs: [340, 800], spokenSource: 'polly-marks' }) };
+  const p = await withLeadSilence(eng, 600).prepare({} as any);
+  assert.equal(p.pcm!.length, pcm.length + 600 * 16);
+  assert.equal(p.pcm![600 * 16 + 16 * 100 + 1], pcm[16 * 100 + 1]);
+  assert.deepEqual(p.spokenAtMs, [700, 1200]);
+  assert.deepEqual(p.spokenEndMs, [940, 1400]);
+  assert.equal(withLeadSilence(eng, 0), eng);
+});
+
+test('S2 follow-up: the stability pick uses the fixed rule (lead silence, ≤ 10 % misreads per language, best recall, ties → more stable)', async () => {
+  const { pickBest } = await import('../../tools/s2/compare.ts');
+  const M = (all: number, faEn: number, faHi = 0) => ({ all: { recallWithin1sPct: all, latencyMs: {} }, 'en-IN': { falseAcceptPct: faEn }, 'hi-IN': { falseAcceptPct: faHi } });
+  const R = (stability: string, lead: number, m: any) => ({ dir: stability + lead, stability, leadSilenceMs: lead, cases: 40, metrics: m });
+  assert.equal(pickBest([R('high', 0, M(99, 0)), R('high', 600, M(60, 5)), R('low', 600, M(70, 5))])!.stability, 'low', 'lead-0 baseline is never chosen');
+  assert.equal(pickBest([R('high', 600, M(60, 5)), R('none', 600, M(80, 12))])!.stability, 'high', 'too many misreads accepted → excluded');
+  assert.equal(pickBest([R('none', 600, M(70, 5)), R('medium', 600, M(70, 5))])!.stability, 'medium', 'tie → more stable');
+  assert.equal(pickBest([R('none', 600, M(70, 11))]), null);
 });

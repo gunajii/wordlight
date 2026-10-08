@@ -21,7 +21,7 @@ tar -rf "$TMP/app.tar" $(find content/stories -type f \( -name '*.mp3' -o -name 
 # runtime settings travel with the code (the unit reads them as EnvironmentFile, overriding the stack defaults),
 # so changing the reading mode or the coach model is just another deploy
 mkdir -p .dev/aws; [ -s .dev/aws/admin-token ] || (umask 077; openssl rand -hex 16 > .dev/aws/admin-token)   # operator endpoints; never committed
-printf 'READING_MODE=%s\nSUMMARY=%s\nBEDROCK_MODEL_ID=%s\nADMIN_TOKEN=%s\n' "${READING_MODE:-free}" "${SUMMARY:-template}" "${BEDROCK_MODEL_ID:-}" "$(cat .dev/aws/admin-token)" > "$TMP/.deploy.env"
+printf 'READING_MODE=%s\nSUMMARY=%s\nBEDROCK_MODEL_ID=%s\nTRANSCRIBE_STABILITY=%s\nADMIN_TOKEN=%s\n' "${READING_MODE:-free}" "${SUMMARY:-template}" "${BEDROCK_MODEL_ID:-}" "${TRANSCRIBE_STABILITY:-high}" "$(cat .dev/aws/admin-token)" > "$TMP/.deploy.env"
 tar -rf "$TMP/app.tar" -C "$TMP" .deploy.env
 gzip -9 "$TMP/app.tar" && aws s3 cp "$TMP/app.tar.gz" "s3://$BUCKET/wordlight/app.tgz" --region "$REGION" >/dev/null && rm -rf "$TMP"
 echo "uploaded code to s3://$BUCKET/wordlight/app.tgz"
