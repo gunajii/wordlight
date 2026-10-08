@@ -133,3 +133,15 @@ Only problems actually encountered. Format: Date / Environment / Component / Exp
 - **Workaround:** the Mac only synthesizes audio; analysis runs elsewhere. Our friction, not AWS's; recorded so
   the setup notes stay honest.
 - **Severity:** low.
+
+## W14 — Vega Virtual Device clock 7 h 22 min slow → every HTTPS request fails as "Network request failed" (MEASURED, 2026-10-08)
+- **Component:** Vega Virtual Device (SDK 0.24.12112) on macOS, `fetch` in a React Native for Vega app.
+- **Expected:** the virtual device keeps the host's time, or a TLS failure names its cause.
+- **Actual:** the app logged the device clock as 10:04 UTC while the real time was 17:26 UTC. Our server's Let's
+  Encrypt certificate (valid from 16:21 UTC) was therefore "not yet valid". JavaScript saw only `Network request
+  failed`; the system log said `CURL Error code 60`, with no hint of a time problem. The same server passed every check
+  from the Mac. We first suspected the certificate chain and switched Caddy to RSA, which changed nothing.
+- **Workaround:** restart the virtual device; the app now prints its own clock on the error screen.
+- **Potential improvement:** sync the virtual device clock with the host after the Mac wakes from sleep, and report
+  certificate-validity failures distinctly (`certificate not yet valid`) to the app and the log.
+- **Severity:** high for first-time developers. It looks exactly like a server or network outage.

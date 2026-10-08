@@ -89,7 +89,7 @@ export const App = () => {
     else if (screen.name === 'end' && evt.eventType === 'back') setScreen({ name: 'home' });
   });
 
-  if (error) return <View style={s.root}><Text style={s.err}>{error}</Text><Text style={s.hint}>{/^https:/.test(SERVER_URL) ? 'Check the server (node tools/ops/healthcheck.ts) and .dev/tv-app.log: "CURL Error code 60" means this device rejected the HTTPS certificate.' : 'Is `npm start` running on the Mac? Then restart this app.'}</Text></View>;
+  if (error) return <View style={s.root}><Text style={s.err}>{error}</Text><Text style={s.hint}>{/^https:/.test(SERVER_URL) ? `This device's clock says ${new Date().toISOString().slice(0, 16).replace('T', ' ')} UTC. If that is wrong, HTTPS certificates look invalid: restart the device (Virtual Device: vega virtual-device stop, then start). Otherwise check the server (node tools/ops/healthcheck.ts) and .dev/tv-app.log.` : 'Is `npm start` running on the Mac? Then restart this app.'}</Text></View>;
   if (!base) return <View style={s.root}><Text style={s.hint}>Finding the WordLight server…</Text></View>;
   if (screen.name === 'fonts') return <FontCheck fontReady={fontReady} />;
   if (screen.name === 's1') return <S1PlayerLoader base={base} mediaBase={mediaBase} run={screen.run} k={screen.key} fontReady={fontReady} onExit={() => setScreen({ name: 'home' })} />;

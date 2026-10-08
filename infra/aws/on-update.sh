@@ -1,8 +1,10 @@
 #!/bin/bash
 # Runs as root on the instance after each code update (deploy.sh → SSM → wordlight-update, then this script).
 # Owns the Caddy configuration so it can change without replacing the instance.
-#  • key_type rsa2048: an RSA certificate chains to ISRG Root X1 (Let's Encrypt), which embedded devices trust.
-#    The default ECDSA certificate was rejected by the Vega Virtual Device's TLS stack (curl error 60, 2026-10-08).
+#  • key_type rsa2048: an RSA certificate chains to ISRG Root X1 (Let's Encrypt), the most widely trusted chain.
+#    (Added while diagnosing curl error 60 on the Vega Virtual Device, 2026-10-08. The actual cause there turned out
+#    to be the VVD's clock running 7 h 22 min slow, so a certificate issued hours earlier looked "not yet valid".
+#    RSA is kept for broad device compatibility; it wasn't the fix.)
 set -euo pipefail
 HOST="$(sed 's#https://##' /opt/wordlight/host)"
 cat > /etc/caddy.json.Caddyfile <<CADDY

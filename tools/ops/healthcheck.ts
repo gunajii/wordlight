@@ -29,9 +29,9 @@ try {
   check('https + certificate + /healthz', h.ok === true, `${Math.round(performance.now() - t0)} ms`);
   try {
     const c = await certChain(new URL(url).hostname);
-    // RSA leaves chain to ISRG Root X1 (Let's Encrypt), present on all devices we know of; ECDSA leaves may chain
-    // to ISRG Root X2, which the Vega Virtual Device rejected (curl error 60, 2026-10-08).
-    check('certificate an embedded TV will accept (RSA key)', c.keyType.startsWith('RSA'), `${c.keyType} · ${c.chain.join(' ← ')} · valid from ${c.notBefore}`);
+    // RSA leaves chain to ISRG Root X1 (Let's Encrypt), the most widely trusted chain. A device whose clock is behind
+    // `valid from` rejects the certificate (curl error 60), as the Vega Virtual Device did on 2026-10-08.
+    check('certificate (RSA, widest device support)', c.keyType.startsWith('RSA'), `${c.keyType} · ${c.chain.join(' ← ')} · valid from ${c.notBefore} — a TV whose clock is earlier than this will reject it`);
   } catch (e: any) { check('certificate details', false, e?.message ?? String(e)); }
   const cfg = await (await fetch(`${url}/api/config`)).json();
   check('speech recognition is real (not simulated)', cfg?.speech?.simulated === false && cfg?.speech?.source === 'transcribe', JSON.stringify(cfg?.speech));
