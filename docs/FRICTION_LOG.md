@@ -123,7 +123,7 @@ Only problems actually encountered. Format: Date / Environment / Component / Exp
   `ListInferenceProfiles` listed them. `GetFoundationModelAvailability` reported region, entitlement and agreement
   AVAILABLE but `authorizationStatus: NOT_AUTHORIZED`, with no console action to change it. The message doesn't say
   what to do; two different exception names describe the same block.
-- **Workaround:** a deterministic template summary. The product works without Bedrock. A support case was opened (see AWS.md).
+- **Workaround:** a deterministic template summary. The product works without Bedrock. The remaining route is an AWS Support case.
 - **Potential improvement:** an actionable message ("new accounts need …; open a case at …") and one exception name.
 - **Severity:** medium for a hackathon. It blocked the Bedrock feature on day one.
 
