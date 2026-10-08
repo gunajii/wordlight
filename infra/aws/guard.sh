@@ -12,8 +12,8 @@ echo "Account $ACCOUNT  ($ARN)  region $REGION"
 case "$ARN" in *:root) echo "  NOTE  signed in as root; switch to an IAM user once services work.";; esac
 
 echo; echo "== Services"
-V=$(aws polly describe-voices --region "$REGION" --engine neural --language-code hi-IN --query 'Voices[].Id' --output text 2>&1) \
-  && ok "Polly neural hi-IN: $V" || bad "Polly: $(echo "$V" | tail -1)"
+V=$(aws polly describe-voices --region "$REGION" --engine neural --language-code hi-IN --include-additional-language-codes --query 'Voices[].Id' --output text 2>&1) \
+  && { [ -n "$V" ] && ok "Polly neural hi-IN: $V" || bad "Polly reachable, but no neural hi-IN voice listed"; } || bad "Polly: $(echo "$V" | tail -1)"
 T=$(aws transcribe list-vocabularies --region "$REGION" --max-results 1 2>&1) \
   && ok "Transcribe reachable" || bad "Transcribe: $(echo "$T" | tail -1)"
 

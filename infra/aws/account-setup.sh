@@ -48,5 +48,5 @@ fi
 echo; echo "== 3. Developer permissions needed (least privilege): infra/aws/iam-dev-policy.json"
 cat "$(dirname "$0")/iam-dev-policy.json"
 echo; echo "== 4. Quick service check in $REGION"
-aws polly describe-voices --region "$REGION" --engine neural --language-code hi-IN --query 'Voices[].Id' --output text && echo "(neural hi-IN voices)"
+aws polly describe-voices --region "$REGION" --engine neural --language-code hi-IN --include-additional-language-codes --query 'Voices[].Id' --output text && echo "(neural hi-IN voices)"
 echo "Done. Next: AWS_REGION=$REGION node tools/s4/polly-s4.ts"

@@ -79,7 +79,7 @@ async function main() {
   const { passages } = JSON.parse(readFileSync(path.join(ROOT, 'tools/s4/passages.json'), 'utf8'));
   const summary: any = { simulated: false, region, voice: VOICE, at: new Date().toISOString(), voices: {}, passages: [] };
   for (const lang of ['hi-IN', 'en-IN']) {
-    const v = await polly.send(new DescribeVoicesCommand({ LanguageCode: lang as any, Engine: 'neural' }));
+    const v = await polly.send(new DescribeVoicesCommand({ LanguageCode: lang as any, Engine: 'neural', IncludeAdditionalLanguageCodes: true })); // Kajal: en-IN, with hi-IN as an additional language
     summary.voices[lang] = (v.Voices ?? []).map((x) => ({ id: x.Id, engines: x.SupportedEngines, lang: x.LanguageCode, extra: x.AdditionalLanguageCodes }));
     console.log(`${lang} neural voices in ${region}: ${summary.voices[lang].map((x: any) => x.id).join(', ') || 'NONE'}`);
     if (!summary.voices[lang].some((x: any) => x.id === VOICE)) throw new Error(`${VOICE} (neural, ${lang}) not offered in ${region}`);
