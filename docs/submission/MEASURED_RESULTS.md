@@ -75,10 +75,19 @@ Nothing on this page comes from a child: no child has used WordLight.
 |---|---|
 | Result | After phase A: Polly 17 566 characters, Transcribe 10.6 min, 5 Bedrock calls (refused) → **≈ USD 0.54** at list price (**INFERRED** from the local meter), plus the EC2 t4g.micro from deployment onwards. Cost Explorer: no data yet (new account) |
 
-## End to end — child speaks a word → the TV lights it
+## End to end — reader speaks a word → the TV lights it (real loop, AWS)
 | | |
 |---|---|
-| Measurement | TV `word-lit` time − word spoken time (recogniser word start, mapped through the phone's capture clock) |
-| Method | `tools/e2e/word-lit-latency.ts https://<aws-host> <session>` |
-| Result | — |
-| Status | **UNKNOWN.** INFERRED lower bound from parts measured so far: phone → server ≈ 50–90 ms (S3, tunnel path) plus Transcribe partial-result latency (UNKNOWN) plus server → TV (UNKNOWN on AWS) |
+| Measurement | TV `word-lit` time − word spoken time (the recogniser's word start, mapped through the phone's capture clock) |
+| Path | Phone browser mic → WSS → EC2 t4g.micro (ap-south-1, Caddy TLS) → Amazon Transcribe Streaming → reading engine → WSS → Vega Virtual Device. Echo Mode, Transcribe stability high |
+| Reader | ONE ADULT (the developer), English, Busy Ants, 4 turns, 2026-10-08. Not a child |
+| Method | `tools/e2e/word-lit-latency.ts` on the session's traces and the TV's word-lit telemetry (`docs/results/e2e/real-20261008T182033Z.json`) |
+| Result | **8 words lit: e2e median 1 089 ms, p95 1 156 ms; 1 of 8 within 1 s.** Recognition (spoken → server emits) median 1 046 ms; server → TV median 28 ms (p95 111 ms). In the same turns, 11 words were helped after a 3 s stall and 1 skipped (see the note) |
+| Status | **MEASURED, very small sample (n = 8), one adult.** Against the ≤ 1 s median target: **not met** (1.09 s). Almost all of the delay is speech recognition, as S2 predicted; network and TV add ≈ 30–110 ms |
+| Note | Many words were helped. Production traces keep no transcript text (privacy), so whether those words weren't spoken (the tester was testing stalls) or weren't recognised is **UNKNOWN** from the logs alone |
+
+## Privacy audit — real loop on AWS
+| | |
+|---|---|
+| Result | Session N25T (adult tester): **249 microphone status reports from the phone, 0 violations** (mic live only during turns; 55 live-in-turn, 6 off-in-turn reports while turns were starting). Mic off **11–67 ms** after each of the 4 turn ends. Audio path: phone → AWS HTTPS endpoint only (no dev tunnel; checked by the health check). `docs/results/privacy/aws-20261008T182033Z.json` |
+| Status | **MEASURED** (one session, one adult) |
