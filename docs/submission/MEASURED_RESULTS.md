@@ -60,7 +60,9 @@ Nothing on this page comes from a child: no child has used WordLight.
 | Result: stability | high 46.1 % · medium 47.1 % · low 44.6 % · **none 63.7 %** (median latency 708 ms vs 1 000 ms; from the word END 451 ms vs 740 ms, INFERRED) |
 | Pick rule | It excluded every configuration. The sample holds only 9 misread words, so one word is 11 points, and even the repeat of the phase A setting showed 22 %. Result: "keep high". This weakness is in our sample design and is recorded as found |
 | Result: 169 cases, high + 600 ms | **FAIL**: 49.2 % within 1 s (en 47.7 %, hi 50.7 %), misreads accepted 8.9 % (4/45), median 989 ms. Recognised eventually: 95 %. From the word END (INFERRED): median 720 ms, 85.6 % within 1 s |
-| Status | **MEASURED.** Echo Mode stays. Stability "none" looks markedly faster on 40 cases. Whether it holds on 169 cases without accepting more misreads is **UNKNOWN** until measured (phase A3) |
+| Result: 169 cases, none + 600 ms (phase A3) | **FAIL**: 58.8 % within 1 s (en 60.6 %, hi 57 %), misreads accepted 11.1 % (5/45: en 4/25, hi 1/20), median 798 ms but p95 1 883 ms (high: 1 553). From the word END (INFERRED): median 524 ms |
+| Decision (rule committed before phase A3) | "none" only if more words lit within 1 s AND no more misreads accepted in either language. It accepted one more Hindi misread (काल heard as कल), so the server keeps **stability high**. **Echo Mode** stays. Redeployed 2026-10-08 with the latest code; health check OK |
+| What this means | With adult synthetic speech, Transcribe streaming recognises about 95 % of words eventually, but typically 0.7–1 s after the word starts. The 1-second-from-start target isn't met with any setting we tried. The highlight will trail the reader. Echo Mode keeps the turn understandable: the child has just heard the line, and the highlight confirms rather than leads. Child speech: **UNKNOWN** |
 
 ## Bedrock — Personalized Reading Coach
 | | |

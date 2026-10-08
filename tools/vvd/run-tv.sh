@@ -9,7 +9,7 @@ DEVICE=VirtualDevice; BUILD=1; LOGS=0
 while [ $# -gt 0 ]; do case "$1" in --device) DEVICE="$2"; shift 2;; --no-build) BUILD=0; shift;; --logs) LOGS=1; shift;; *) echo "unknown $1"; exit 2;; esac; done
 [ -f "$HOME/vega/env" ] && source "$HOME/vega/env"
 command -v vega >/dev/null || { echo "Vega CLI not found (source ~/vega/env)"; exit 1; }
-curl -sf -o /dev/null http://localhost:8787/healthz || echo "WARNING: no WordLight server on :8787 — start npm start or tools/demo/local-demo.sh"
+[ -n "${SERVER_URL:-}" ] || curl -sf -o /dev/null http://localhost:8787/healthz || echo "WARNING: no WordLight server on :8787 — start npm start or tools/demo/local-demo.sh"
 bash apps/vega-tv/sync.sh
 APP=apps/vega-tv/WordLightTV
 # Build-time config (src/wordlight.config.ts):

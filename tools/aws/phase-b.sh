@@ -30,7 +30,8 @@ When the TV home screen shows the QR code:
  2. Consent → name "Riya" → age 7 → English → Start reading session. (Mic must say "Microphone off".)
  3. TV: wait 10 s on the shelf (privacy check: mic stays off), then OK on the English story.
  4. During narration: mic must stay OFF on the phone.
- 5. First "Riya, your turn": read the line normally at a natural pace.
+ The server runs ECHO MODE (S2 decision): on each turn the TV reads the line first, then it's the reader's turn.
+ 5. First "Riya, your turn": after the TV reads the line, read it back at a natural pace.
  6. Second turn: read the first word, then STAY SILENT ~4 s (TV helps), then finish the line.
  7. If there is a third turn: say one WRONG word on purpose, then correct it.
  8. Optional privacy checks during a turn: press → on the TV (cancel), or lock the phone for 5 s.
