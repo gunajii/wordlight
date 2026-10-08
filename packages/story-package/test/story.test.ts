@@ -133,7 +133,11 @@ test('SSML narration: marks with SSML byte offsets map back onto the plain page 
     // marks as Polly would return them for the SSML input: byte offsets into `ssml`
     const words = text.split(' ');
     const ssmlMarks = marksFor(ssml, words.map((w, i) => [w, i * 300] as [string, number]));
-    const mapped = marksToText(ssmlMarks, toTextByte);
+    // Polly hi-IN also emits a word mark for the <break/> tag; it must be dropped
+    const bi = ssml.indexOf('<break'); const be = ssml.indexOf('/>', bi) + 2;
+    const tagMark = { time: 1000, type: 'word' as const, start: enc.encode(ssml.slice(0, bi)).length, end: enc.encode(ssml.slice(0, be)).length, value: ssml.slice(bi, be) };
+    const mapped = marksToText([...ssmlMarks, tagMark].sort((x, y) => x.start - y.start), toTextByte);
+    assert.equal(mapped.length, ssmlMarks.length);
     assert.deepEqual(markByteMismatches(text, mapped), []);
     assert.deepEqual(timeTokens(text, mapped, 5000).map((t) => t.w), words);
   }

@@ -42,7 +42,8 @@ export function pageSsml(lines: string[], style: NarrationStyle): { ssml: string
 
 /** Word/sentence marks with SSML offsets → offsets in the plain text. */
 export function marksToText(marks: SpeechMark[], toTextByte: (b: number) => number): SpeechMark[] {
-  return marks.map((m) => (m.type === 'word' || m.type === 'sentence' ? { ...m, start: toTextByte(m.start), end: toTextByte(m.end) } : m));
+  // Polly (Kajal, hi-IN, 2026-10-08) also returned a "word" mark for the <break/> tag itself: drop marks for tags.
+  return marks.filter((m) => !(m.type === 'word' && /^<[^>]*>$/.test(m.value))).map((m) => (m.type === 'word' || m.type === 'sentence' ? { ...m, start: toTextByte(m.start), end: toTextByte(m.end) } : m));
 }
 
 /** End of the last sound in [fromMs, toMs) of 16 kHz PCM16 (10 ms frames above 3 % of the page's peak). */
