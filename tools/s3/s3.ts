@@ -26,7 +26,8 @@ const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 const say = (m: string) => console.log(`${new Date().toISOString().slice(11, 19)}  ${m}`);
 
 async function api(p: string, body?: unknown) {
-  const r = await fetch(`${BASE}${p}`, body === undefined ? {} : { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
+  const admin = { 'x-wordlight-admin': process.env.ADMIN_TOKEN ?? '' }; // needed on the AWS server (operator endpoints)
+  const r = await fetch(`${BASE}${p}`, body === undefined ? { headers: admin } : { method: 'POST', headers: { 'content-type': 'application/json', ...admin }, body: JSON.stringify(body) });
   return r.json() as Promise<any>;
 }
 

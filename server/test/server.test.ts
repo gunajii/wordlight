@@ -78,3 +78,23 @@ test('config: the scripted simulation is refused in production', () => {
   try { assert.throws(() => createServer({ log: () => {}, s3ResultsDir: null, speechSource: 'scripted' }), /refused when NODE_ENV=production/); }
   finally { process.env.NODE_ENV = prev; }
 });
+
+test('operator endpoints need the admin token when ADMIN_TOKEN is set; public ones do not', async () => {
+  const prev = process.env.ADMIN_TOKEN; process.env.ADMIN_TOKEN = 'secret-1';
+  try {
+    const { server: srv } = createServer({ publicUrl: 'http://t:1', log: () => {}, s3ResultsDir: null, mediaUrl: async () => null, tvRun: async () => ({}) });
+    await new Promise<void>((r) => srv.listen(0, '127.0.0.1', () => r()));
+    const b = `http://127.0.0.1:${(srv.address() as any).port}`;
+    assert.equal((await fetch(`${b}/api/sessions`)).status, 401);
+    assert.equal((await fetch(`${b}/api/reading/traces`)).status, 401);
+    assert.equal((await fetch(`${b}/api/usage`)).status, 401);
+    assert.equal((await fetch(`${b}/api/usage`, { headers: { 'x-wordlight-admin': 'secret-1' } })).status, 200);
+    const { sessionId } = await (await fetch(`${b}/api/sessions`, { method: 'POST' })).json();
+    assert.ok(sessionId, 'the TV can still create a session');
+    assert.equal((await fetch(`${b}/api/sessions/${sessionId}/privacy`)).status, 401);
+    assert.equal((await (await fetch(`${b}/api/sessions/${sessionId}/privacy`, { headers: { 'x-wordlight-admin': 'secret-1' } })).json()).micAudit.violations.length, 0);
+    assert.equal((await fetch(`${b}/api/config`)).status, 200);
+    assert.equal((await fetch(`${b}/healthz`)).status, 200);
+    srv.close();
+  } finally { if (prev === undefined) delete process.env.ADMIN_TOKEN; else process.env.ADMIN_TOKEN = prev; }
+});

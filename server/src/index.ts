@@ -113,10 +113,15 @@ export function createServer({ hub = new SessionHub({ now: serverNow }), publicU
     const url = new URL(req.url ?? '/', 'http://x');
     const p = url.pathname;
     res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Headers', 'content-type');
+    res.setHeader('Access-Control-Allow-Headers', 'content-type, x-wordlight-admin');
     if (req.method === 'OPTIONS') return void res.writeHead(204).end();
     try {
       if (p === '/healthz') return json(res, 200, { ok: true, sessions: hub.sessions.size, publicUrl, lastActivityMs: Math.round(Date.now() - lastActivity), speech: speechName, simulated: speechSimulated });
+      // Operator endpoints (session list, traces, telemetry, privacy audit, usage, S3 test sessions): numbers only, but
+      // they must not be open on a public server. With ADMIN_TOKEN set (AWS), they need the x-wordlight-admin header.
+      const ADMIN = process.env.ADMIN_TOKEN;
+      const isOperator = p === '/api/usage' || p === '/api/reading/traces' || p.startsWith('/api/s3/') || (p === '/api/sessions' && req.method === 'GET') || /^\/api\/sessions\/[A-Za-z0-9]+\/(telemetry\.json|privacy)$/.test(p);
+      if (isOperator && ADMIN && req.headers['x-wordlight-admin'] !== ADMIN) return json(res, 401, { error: 'operator endpoint' });
       if (p === '/api/usage') return json(res, 200, usage.snapshot());
       // ---- S3 microphone spike (test sessions only; numbers only, never audio) ----
       if (p === '/api/s3/sessions' && req.method === 'POST') {
@@ -190,6 +195,8 @@ export function createServer({ hub = new SessionHub({ now: serverNow }), publicU
           return void res.end(png);
         }
         if (sub === '/telemetry.json') return json(res, 200, s.telemetry);
+        // privacy audit of a real session: phone microphone status reports vs turns (no audio, no text)
+        if (sub === '/privacy') return json(res, 200, { sessionId: s.id, micAudit: s.micAudit, phones: [...s.phoneStatus.entries()].map(([c, st]) => ({ clientId: c, micLive: st.micLive, turnId: st.turnId, visible: st.visible })), turnActive: !!s.turn });
       }
       if (p === '/' || p === '/j' || (m = p.match(/^\/j\/([A-Za-z0-9]+)$/))) return sendFile(res, path.join(ROOT, 'web/phone/index.html'), req);
       for (const [prefix, dir] of STATIC) {

@@ -25,9 +25,10 @@ export function e2eRows(traces: any[], telemetry: any[]) {
 if (import.meta.url === `file://${process.argv[1]}`) {
   const [base, code] = process.argv.slice(2);
   const a = process.argv.slice(2); const out = a.includes('--out') ? a[a.indexOf('--out') + 1] : null;
-  const traces = await (await fetch(`${base}/api/reading/traces?session=${code}`)).json();
+  const H = { headers: { 'x-wordlight-admin': process.env.ADMIN_TOKEN ?? '' } };
+  const traces = await (await fetch(`${base}/api/reading/traces?session=${code}`, H)).json();
   if (traces.some((t: any) => t.simulated)) { console.error('SIMULATED speech source — not an end-to-end measurement'); process.exit(2); }
-  const telemetry = await (await fetch(`${base}/api/sessions/${code}/telemetry.json`)).json();
+  const telemetry = await (await fetch(`${base}/api/sessions/${code}/telemetry.json`, H)).json();
   const r = e2eRows(traces, telemetry);
   console.log(JSON.stringify(r.summary, null, 1));
   if (out) { mkdirSync(path.dirname(out), { recursive: true }); writeFileSync(out, JSON.stringify({ measuredAt: new Date().toISOString(), base, session: code, ...r }, null, 1)); console.log('wrote', out); }

@@ -3,7 +3,7 @@
 # (INFERRED: Polly ≈ 25k chars, Transcribe ≈ 25 min, Bedrock ≈ 60 short calls, EC2 from deploy onwards).
 #   cd ~/Projects/wordlight && bash tools/aws/phase-a.sh            [--skip-s2] [--skip-deploy]
 # Steps: account + region checks → spending policy budget → Bedrock model discovery → S4 (Polly timing) →
-# S2 (Transcribe, 169 cases) → Bedrock coach benchmark → deploy the server (mode chosen from S2) → health check.
+# S2 (Transcribe, 169 cases) → Bedrock coach benchmark → stories narrated by Polly → deploy (mode from S2) → health check.
 # Stops at the first failing step. Everything is logged to .dev/aws/ and results go to docs/results/.
 set -uo pipefail
 cd "$(dirname "$0")/../.."
@@ -60,11 +60,22 @@ if [ "$(cat .dev/aws/bedrock-candidates.json)" != "[]" ]; then
   node tools/bedrock/bench.ts --candidates .dev/aws/bedrock-candidates.json --max 5 || echo "(Bedrock benchmark failed — the template summary stays)"
 else echo "no small text models listed in $AWS_REGION — the template summary stays (documented)"; fi
 
-step "7. usage so far"
+step "7. stories with real Polly narration"
+S4_V=$(ls -d docs/results/s4/2* 2>/dev/null | sort | tail -1); S4_V=$( [ -n "$S4_V" ] && node -e 'console.log(require("./'"$S4_V"'/results.json").verdict)' || echo UNKNOWN)
+VER=""; [ "$S4_V" = PASS ] && VER="--verified"; echo "S4 verdict $S4_V → timings ${VER:-not} marked verified"
+MODEL=$(cat .dev/aws/bedrock-model 2>/dev/null || true)
+[ -f content/sources/wl-test-kite/p1.png ] || python3 tools/content/make-test-art.py
+node tools/content/build-story.ts wl-test-kite $VER ${MODEL:+--turn-model "$MODEL"} || fail "story build (test story, Polly) failed"
+for d in content/sources/*/; do id=$(basename "$d"); [ "$id" = wl-test-kite ] && continue
+  [ -f "$d/source.json" ] && ! grep -q CHECK "$d/source.json" && { node tools/content/build-story.ts "$id" $VER ${MODEL:+--turn-model "$MODEL"} || echo "(story $id failed to build)"; }
+done
+node tools/content/validate-story.ts || fail "story validation failed"
+
+step "8. usage so far"
 node tools/aws/cost-report.ts
 
 if [ $SKIP_DEPLOY = 0 ]; then
-  step "8. deploy the WordLight server to AWS"
+  step "9. deploy the WordLight server to AWS"
   LATEST_S2=$(ls -d docs/results/s2/polly-transcribe-* 2>/dev/null | sort | tail -1)
   VERDICT=$( [ -n "$LATEST_S2" ] && node -e 'console.log(require("./'"$LATEST_S2"'/results.json").metrics.verdict)' || echo UNKNOWN)
   MODE=free; [ "$VERDICT" = FAIL ] && MODE=echo
