@@ -1,0 +1,85 @@
+{
+ "measuredAt": "2026-10-08T18:25:11.238Z",
+ "base": "https://3-110-13-229.sslip.io",
+ "session": "N25T",
+ "rows": [
+  {
+   "turnId": "busy-ants-0-1-muzv4tu7",
+   "index": 0,
+   "recognitionMs": 1050,
+   "serverToTvMs": 74,
+   "e2eMs": 1125
+  },
+  {
+   "turnId": "busy-ants-0-1-muzv4tu7",
+   "index": 1,
+   "recognitionMs": 1042,
+   "serverToTvMs": 111,
+   "e2eMs": 1154
+  },
+  {
+   "turnId": "busy-ants-2-0-muzv5axf",
+   "index": 0,
+   "recognitionMs": 1128,
+   "serverToTvMs": 28,
+   "e2eMs": 1156
+  },
+  {
+   "turnId": "busy-ants-2-0-muzv5axf",
+   "index": 4,
+   "recognitionMs": 1066,
+   "serverToTvMs": 23,
+   "e2eMs": 1089
+  },
+  {
+   "turnId": "busy-ants-5-1-muzv608r",
+   "index": 0,
+   "recognitionMs": 1073,
+   "serverToTvMs": 26,
+   "e2eMs": 1099
+  },
+  {
+   "turnId": "busy-ants-5-1-muzv608r",
+   "index": 3,
+   "recognitionMs": 943,
+   "serverToTvMs": 87,
+   "e2eMs": 1031
+  },
+  {
+   "turnId": "busy-ants-7-0-muzv6feb",
+   "index": 2,
+   "recognitionMs": 903,
+   "serverToTvMs": 12,
+   "e2eMs": 915
+  },
+  {
+   "turnId": "busy-ants-7-0-muzv6feb",
+   "index": 5,
+   "recognitionMs": 1046,
+   "serverToTvMs": 38,
+   "e2eMs": 1084
+  }
+ ],
+ "summary": {
+  "words": 8,
+  "spokenToEmit": {
+   "n": 8,
+   "median": 1046,
+   "p95": 1128,
+   "max": 1128
+  },
+  "serverToTv": {
+   "n": 8,
+   "median": 28,
+   "p95": 111,
+   "max": 111
+  },
+  "e2e": {
+   "n": 8,
+   "median": 1089,
+   "p95": 1156,
+   "max": 1156
+  },
+  "within1s": 1
+ }
+}
