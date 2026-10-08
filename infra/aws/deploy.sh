@@ -20,7 +20,11 @@ git archive --format=tar HEAD -o "$TMP/app.tar"
 tar -rf "$TMP/app.tar" $(find content/stories -type f \( -name '*.mp3' -o -name '*.m4a' -o -name '*.jpg' -o -name '*.png' -o -name 'story.json' \) ! -path '*/s1-timing/*')
 # runtime settings travel with the code (the unit reads them as EnvironmentFile, overriding the stack defaults),
 # so changing the reading mode or the coach model is just another deploy
-mkdir -p .dev/aws; [ -s .dev/aws/admin-token ] || (umask 077; openssl rand -hex 16 > .dev/aws/admin-token)   # operator endpoints; never committed
+mkdir -p .dev/aws
+LAST=.dev/aws/last-deploy.env; if [ -f "$LAST" ]; then while IFS="=" read -r k v; do [ -n "$k" ] && [ -z "${!k:-}" ] && export "$k=$v" || true; done < "$LAST"; fi
+printf 'READING_MODE=%s\nSUMMARY=%s\nBEDROCK_MODEL_ID=%s\nTRANSCRIBE_STABILITY=%s\n' "${READING_MODE:-free}" "${SUMMARY:-template}" "${BEDROCK_MODEL_ID:-}" "${TRANSCRIBE_STABILITY:-high}" > "$LAST"
+echo "runtime: READING_MODE=${READING_MODE:-free} TRANSCRIBE_STABILITY=${TRANSCRIBE_STABILITY:-high} SUMMARY=${SUMMARY:-template} ${BEDROCK_MODEL_ID:-}"
+[ -s .dev/aws/admin-token ] || (umask 077; openssl rand -hex 16 > .dev/aws/admin-token)   # operator endpoints; never committed
 printf 'READING_MODE=%s\nSUMMARY=%s\nBEDROCK_MODEL_ID=%s\nTRANSCRIBE_STABILITY=%s\nADMIN_TOKEN=%s\n' "${READING_MODE:-free}" "${SUMMARY:-template}" "${BEDROCK_MODEL_ID:-}" "${TRANSCRIBE_STABILITY:-high}" "$(cat .dev/aws/admin-token)" > "$TMP/.deploy.env"
 tar -rf "$TMP/app.tar" -C "$TMP" .deploy.env
 gzip -9 "$TMP/app.tar" && aws s3 cp "$TMP/app.tar.gz" "s3://$BUCKET/wordlight/app.tgz" --region "$REGION" >/dev/null && rm -rf "$TMP"
@@ -28,8 +32,9 @@ echo "uploaded code to s3://$BUCKET/wordlight/app.tgz"
 if aws cloudformation describe-stacks --region "$REGION" --stack-name $STACK >/dev/null 2>&1; then
   ID=$(aws cloudformation describe-stacks --region "$REGION" --stack-name $STACK --query "Stacks[0].Outputs[?OutputKey=='InstanceId'].OutputValue" --output text)
   aws ec2 start-instances --region "$REGION" --instance-ids "$ID" >/dev/null; aws ec2 wait instance-running --region "$REGION" --instance-ids "$ID"
-  CMD=$(aws ssm send-command --region "$REGION" --instance-ids "$ID" --document-name AWS-RunShellScript --parameters 'commands=["/usr/local/bin/wordlight-update"]' --query Command.CommandId --output text)
+  CMD=$(aws ssm send-command --region "$REGION" --instance-ids "$ID" --document-name AWS-RunShellScript --parameters 'commands=["/usr/local/bin/wordlight-update","bash /opt/wordlight/app/infra/aws/on-update.sh"]' --query Command.CommandId --output text)
   echo "update sent ($CMD); waiting…"; aws ssm wait command-executed --region "$REGION" --command-id "$CMD" --instance-id "$ID" || true
+  aws ssm get-command-invocation --region "$REGION" --command-id "$CMD" --instance-id "$ID" --query StandardOutputContent --output text 2>/dev/null | grep -E 'served key|s:|i:|requesting' || true
 else
   aws cloudformation deploy --region "$REGION" --stack-name $STACK --template-file infra/aws/wordlight-dev.yaml --capabilities CAPABILITY_IAM --parameter-overrides ArtifactBucket="$BUCKET" ReadingMode="${READING_MODE:-free}" Summary="${SUMMARY:-template}" BedrockModelId="${BEDROCK_MODEL_ID:-}"
 fi

@@ -37,7 +37,7 @@ export async function fetchConfig(): Promise<DevConfig> {
     if (cfg?.readingMode === 'echo') readingMode = 'echo';
     simulated = !!cfg?.speech?.simulated; // the server's speech source is a local simulation: say so on screen
     ok = true;
-  } catch (e: any) { log(`config fetch failed: ${e?.message ?? e}`); }
+  } catch (e: any) { log(`config fetch failed: ${e?.message ?? e} (device clock ${new Date().toISOString()})`); // the clock matters for certificate validity }
   return { ok, mediaBase, run, readingMode, simulated };
 }
 export async function resolveMediaBase(): Promise<string | null> { return (await fetchConfig()).mediaBase; }
