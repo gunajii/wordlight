@@ -35,11 +35,11 @@ interface Live {
 export class ReadingDriver implements TurnDriver {
   private live = new Map<string, Live>();
   readonly traces: TurnTrace[] = [];
-  private readonly o: { hub: SessionHub; source: SpeechSource; now: () => number; stallMs: number; firstStallMs: number; maxStallMs: number; awaitHelpDone: boolean; helpPendingMaxMs: number; devTranscripts: boolean; log: (m: string) => void; onTrace?: (t: TurnTrace) => void };
-  constructor(o: { hub: SessionHub; source: SpeechSource; now: () => number; stallMs?: number; firstStallMs?: number; maxStallMs?: number; awaitHelpDone?: boolean; helpPendingMaxMs?: number; devTranscripts?: boolean; log?: (m: string) => void; onTrace?: (t: TurnTrace) => void }) {
+  private readonly o: { hub: SessionHub; source: SpeechSource; now: () => number; stallMs: number; firstStallMs: number; maxStallMs: number; awaitHelpDone: boolean; helpPendingMaxMs: number; voiceActivity: boolean; devTranscripts: boolean; log: (m: string) => void; onTrace?: (t: TurnTrace) => void };
+  constructor(o: { hub: SessionHub; source: SpeechSource; now: () => number; stallMs?: number; firstStallMs?: number; maxStallMs?: number; awaitHelpDone?: boolean; helpPendingMaxMs?: number; voiceActivity?: boolean; devTranscripts?: boolean; log?: (m: string) => void; onTrace?: (t: TurnTrace) => void }) {
     // awaitHelpDone: the TV reports when the help word has finished (turn.help.done); older TV builds don't, and the
     // engine then restarts the clock after helpPendingMaxMs
-    this.o = { stallMs: 3000, firstStallMs: 5000, maxStallMs: 8000, awaitHelpDone: true, helpPendingMaxMs: 4000, devTranscripts: false, log: () => {}, ...o };
+    this.o = { stallMs: 3000, firstStallMs: 5000, maxStallMs: 8000, awaitHelpDone: true, helpPendingMaxMs: 4000, voiceActivity: true, devTranscripts: false, log: () => {}, ...o };
   }
 
   start(s: Session, t: ActiveTurn) {
@@ -68,7 +68,7 @@ export class ReadingDriver implements TurnDriver {
       L.trace.firstAudioServerMs = this.o.now();
     }
     this.ensureEngine(s, L);
-    if (L.vad.push(frame.pcm)) L.engine!.activity(this.o.now());
+    if (L.vad.push(frame.pcm) && this.o.voiceActivity) L.engine!.activity(this.o.now());
     L.speech.push(frame.pcm);
   }
 
