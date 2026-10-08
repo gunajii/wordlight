@@ -23,6 +23,8 @@ import { TranscribeSource, type SpeechSource } from './reading/speech.ts';
 import { scriptedFromEnv } from './reading/scripted.ts';
 import { checkAllStories } from './content.ts';
 import { summaryFromEnv } from './summary.ts';
+import { usage } from './usage.ts';
+import { progressFromEnv } from './progress.ts';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const PORT = Number(process.env.PORT || 8787);
@@ -84,6 +86,7 @@ const STATIC: [string, string][] = [
 
 export function createServer({ hub = new SessionHub({ now: serverNow }), publicUrl = PUBLIC_URL, log = console.log, heartbeat = HEARTBEAT, mediaUrl = currentMediaUrl, tvRun = currentTvRun, s3ResultsDir = path.join(ROOT, 'bench/runs/s3') as string | null, speechSource = (process.env.SPEECH ?? 'transcribe') as string, traceSink = null as null | ((t: TurnTrace) => void), readingModeOpt = null as null | 'free' | 'echo' } = {}) {
   let reading: ReadingDriver | null = null;
+  let lastActivity = Date.now(); // any WebSocket message: used by the EC2 idle auto-stop
   // Reading strategy (config, not code): 'free' = the child reads the line first; 'echo' = the TV reads it, the child repeats.
   const readingMode: 'free' | 'echo' = (readingModeOpt ?? process.env.READING_MODE) === 'echo' ? 'echo' : 'free';
   let speechName = 'unknown', speechSimulated = false;
@@ -103,6 +106,8 @@ export function createServer({ hub = new SessionHub({ now: serverNow }), publicU
     hub.driver = new RouterDriver({ test: s3, reading });
   }
   // Parent summary wording: template by default; Bedrock only with SUMMARY=bedrock + BEDROCK_MODEL_ID (always falls back).
+  hub.meta = { mode: readingMode, speech: speechName };
+  if (process.env.PROGRESS === 'dynamodb') progressFromEnv(log).then((p) => { hub.progress = p; log(`[progress] ${p.name}`); });
   if (process.env.SUMMARY === 'bedrock') summaryFromEnv(log).then((sv) => { hub.summary = sv; log(`[summary] ${sv.name}`); });
   const server = http.createServer(async (req, res) => {
     const url = new URL(req.url ?? '/', 'http://x');
@@ -111,7 +116,8 @@ export function createServer({ hub = new SessionHub({ now: serverNow }), publicU
     res.setHeader('Access-Control-Allow-Headers', 'content-type');
     if (req.method === 'OPTIONS') return void res.writeHead(204).end();
     try {
-      if (p === '/healthz') return json(res, 200, { ok: true, sessions: hub.sessions.size, publicUrl });
+      if (p === '/healthz') return json(res, 200, { ok: true, sessions: hub.sessions.size, publicUrl, lastActivityMs: Math.round(Date.now() - lastActivity), speech: speechName, simulated: speechSimulated });
+      if (p === '/api/usage') return json(res, 200, usage.snapshot());
       // ---- S3 microphone spike (test sessions only; numbers only, never audio) ----
       if (p === '/api/s3/sessions' && req.method === 'POST') {
         const id = hub.createSession({ testMode: true });
@@ -211,7 +217,7 @@ export function createServer({ hub = new SessionHub({ now: serverNow }), publicU
       if (now - lastPing >= heartbeat.pingMs) { lastPing = now; try { ws.ping(); } catch {} }
     }, Math.min(1000, heartbeat.pingMs));
     ws.on('message', (data, isBinary) => {
-      lastRx = Date.now();
+      lastRx = Date.now(); lastActivity = lastRx;
       if (isBinary) {
         const buf = Array.isArray(data) ? Buffer.concat(data) : Buffer.from(data as ArrayBuffer);
         const frame = decodeAudioFrame(new Uint8Array(buf.buffer, buf.byteOffset, buf.byteLength));

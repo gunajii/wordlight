@@ -5,10 +5,13 @@
 //                          limit, stay within a call budget, and its text must contain exactly the numbers it was
 //                          given and no claims about reading ability/progress. Any failure → the local template.
 // Bedrock can never break the demo and never changes the numbers.
+import { usage as defaultUsage, type UsageMeter } from './usage.ts';
 export interface SummaryInput {
   name: string; lang: 'hi-IN' | 'en-IN';
   read: number; helped: number; skipped: number; lines: number;
   storiesCompleted: string[]; storyTitles: string[]; sessionMs: number;
+  /** book words the TV helped with (optional; lets the coach name them) */
+  helpedWords?: string[];
 }
 export interface SummaryResult { text: string; source: 'template' | 'bedrock'; fallbackReason?: string }
 export interface SummaryService { readonly name: string; summarize(i: SummaryInput): Promise<SummaryResult> }
@@ -53,9 +56,9 @@ type BedrockLike = { send(cmd: any, opts?: { abortSignal?: AbortSignal }): Promi
 export class BedrockSummaryService implements SummaryService {
   readonly name = 'bedrock';
   private calls = 0;
-  private readonly o: { client: BedrockLike; ConverseCommand: any; modelId: string; timeoutMs: number; maxCalls: number; fallback: SummaryService; log: (m: string) => void };
-  constructor(o: { client: BedrockLike; ConverseCommand: any; modelId: string; timeoutMs?: number; maxCalls?: number; fallback?: SummaryService; log?: (m: string) => void }) {
-    this.o = { timeoutMs: 2500, maxCalls: 30, fallback: new LocalSummaryService(), log: () => {}, ...o };
+  private readonly o: { client: BedrockLike; ConverseCommand: any; modelId: string; timeoutMs: number; maxCalls: number; fallback: SummaryService; log: (m: string) => void; usage: UsageMeter };
+  constructor(o: { client: BedrockLike; ConverseCommand: any; modelId: string; timeoutMs?: number; maxCalls?: number; fallback?: SummaryService; log?: (m: string) => void; usage?: UsageMeter }) {
+    this.o = { timeoutMs: 2500, maxCalls: 30, fallback: new LocalSummaryService(), log: () => {}, usage: defaultUsage, ...o };
   }
   static async create(o: { region: string; modelId: string; log?: (m: string) => void }) {
     const { BedrockRuntimeClient, ConverseCommand } = await import('@aws-sdk/client-bedrock-runtime');
@@ -68,14 +71,16 @@ export class BedrockSummaryService implements SummaryService {
   async summarize(i: SummaryInput): Promise<SummaryResult> {
     if (i.lines === 0) return this.o.fallback.summarize(i); // nothing to reword
     if (this.calls >= this.o.maxCalls) return this.fallback(i, 'budget');
-    this.calls++;
+    try { this.o.usage.check('bedrockCalls', 1); } catch { return this.fallback(i, 'daily-cap'); }
+    this.calls++; this.o.usage.add('bedrockCalls', 1);
     const mins = Math.max(1, Math.round(i.sessionMs / 60000));
-    const facts = { childFirstName: i.name, wordsReadIndependently: i.read, wordsHelped: i.helped, wordsSkipped: i.skipped, readingTurns: i.lines, storiesFinished: i.storiesCompleted.length, minutes: mins, storyTitles: i.storyTitles };
+    const facts = { childFirstName: i.name, wordsReadIndependently: i.read, wordsHelped: i.helped, wordsSkipped: i.skipped, readingTurns: i.lines, storiesFinished: i.storiesCompleted.length, minutes: mins, storyTitles: i.storyTitles, wordsThatNeededHelp: (i.helpedWords ?? []).map((w) => w.replace(/[\p{P}\p{S}]/gu, '')).filter(Boolean).slice(0, 5), language: i.lang === 'hi-IN' ? 'Hindi' : 'English' };
     const prompt = `Write one or two short, warm sentences for a parent about tonight's read-along session, in plain English. Use ONLY these facts and these exact numbers; do not add any other number, praise level, judgement, or claim about reading ability or progress. Facts: ${JSON.stringify(facts)}`;
     const ctl = new AbortController();
     const timer = setTimeout(() => ctl.abort(), this.o.timeoutMs);
     try {
       const r = await this.o.client.send(new this.o.ConverseCommand({ modelId: this.o.modelId, messages: [{ role: 'user', content: [{ text: prompt }] }], inferenceConfig: { maxTokens: 120, temperature: 0.3 } }), { abortSignal: ctl.signal });
+      if (r?.usage) { this.o.usage.add('bedrockTokensIn', r.usage.inputTokens ?? 0); this.o.usage.add('bedrockTokensOut', r.usage.outputTokens ?? 0); }
       const text = String(r?.output?.message?.content?.[0]?.text ?? '').trim().replace(/\s+/g, ' ');
       const bad = checkGenerated(text, i, mins);
       if (bad) return this.fallback(i, `rejected:${bad}`);

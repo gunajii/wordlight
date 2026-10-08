@@ -5,6 +5,7 @@
 // against a fake Polly client (fakePollyClient) — no network.
 import { execFileSync } from 'node:child_process';
 import { fixtureMarks, fixturePcm, toNdjson, type StoryPackage } from '@wordlight/story-package';
+import { usage } from '../../server/src/usage.ts';
 
 export interface Narrated { mp3: Uint8Array; durationMs: number; marksNdjson: string }
 export interface NarrationService {
@@ -27,6 +28,7 @@ export class PollyNarration implements NarrationService {
     return new PollyNarration({ client: new PollyClient({ region: o.region }), SynthesizeSpeechCommand, voiceId: o.voiceId });
   }
   private async synth(text: string, lang: string, format: 'mp3' | 'pcm' | 'json'): Promise<Uint8Array> {
+    usage.check('pollyChars', text.length); usage.add('pollyChars', text.length); // cost guard (Polly bills characters, per request)
     const r = await this.client.send(new this.Cmd({ Engine: 'neural', VoiceId: this.voice.id, LanguageCode: lang, Text: text, TextType: 'text', OutputFormat: format, ...(format === 'pcm' ? { SampleRate: '16000' } : {}), ...(format === 'json' ? { SpeechMarkTypes: ['word'] } : {}) }));
     return await r.AudioStream!.transformToByteArray();
   }

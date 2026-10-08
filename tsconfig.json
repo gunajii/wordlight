@@ -16,6 +16,6 @@
     "types": ["node"],
     "lib": ["ES2022", "DOM"]
   },
-  "include": ["oss/*/src/*.ts", "oss/*/test/**/*.ts", "packages/*/src/**/*", "packages/*/test/**/*", "server/src/**/*", "server/test/**/*", "tools/content/**/*.ts", "tools/s2/**/*.ts", "tools/s4/**/*.ts", "tools/demo/**/*.ts", "tools/ops/**/*.ts", "tools/e2e/**/*.ts"],
+  "include": ["oss/*/src/*.ts", "oss/*/test/**/*.ts", "packages/*/src/**/*", "packages/*/test/**/*", "server/src/**/*", "server/test/**/*", "tools/content/**/*.ts", "tools/s2/**/*.ts", "tools/s4/**/*.ts", "tools/demo/**/*.ts", "tools/ops/**/*.ts", "tools/e2e/**/*.ts", "tools/bedrock/**/*.ts", "tools/aws/**/*.ts"],
   "exclude": ["**/node_modules/**", "apps/**", "packages/session-client/**", "oss/*/src/index.ts"]
 }

@@ -54,5 +54,7 @@ export interface StoryPackage {
   voice: { engine: 'polly-neural' | 'polly-standard' | 'synthetic-clicks' | 'recorded'; id: string };
   /** how word timings were produced, and whether they were measured against the audio (S4) */
   timing: { source: 'polly-speech-marks' | 'transcribe' | 'synthetic' | 'manual'; verified: boolean };
+  /** how the Your Turn lines were chosen (rules = deterministic; bedrock = a model's choice, validated against the rules) */
+  turnSelection?: { source: 'rules' | 'bedrock'; model?: string; level?: number; reason?: string };
   pages: Page[];
 }

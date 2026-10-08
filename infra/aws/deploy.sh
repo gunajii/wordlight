@@ -18,6 +18,10 @@ aws s3api put-public-access-block --bucket "$BUCKET" --public-access-block-confi
 TMP=$(mktemp -d)
 git archive --format=tar HEAD -o "$TMP/app.tar"
 tar -rf "$TMP/app.tar" $(find content/stories -type f \( -name '*.mp3' -o -name '*.m4a' -o -name '*.jpg' -o -name '*.png' -o -name 'story.json' \) ! -path '*/s1-timing/*')
+# runtime settings travel with the code (the unit reads them as EnvironmentFile, overriding the stack defaults),
+# so changing the reading mode or the coach model is just another deploy
+printf 'READING_MODE=%s\nSUMMARY=%s\nBEDROCK_MODEL_ID=%s\n' "${READING_MODE:-free}" "${SUMMARY:-template}" "${BEDROCK_MODEL_ID:-}" > "$TMP/.deploy.env"
+tar -rf "$TMP/app.tar" -C "$TMP" .deploy.env
 gzip -9 "$TMP/app.tar" && aws s3 cp "$TMP/app.tar.gz" "s3://$BUCKET/wordlight/app.tgz" --region "$REGION" >/dev/null && rm -rf "$TMP"
 echo "uploaded code to s3://$BUCKET/wordlight/app.tgz"
 if aws cloudformation describe-stacks --region "$REGION" --stack-name $STACK >/dev/null 2>&1; then

@@ -6,6 +6,7 @@
 //                        silence). It never reads the audio. Results from it are labelled SIMULATED everywhere.
 import { StartStreamTranscriptionCommand, TranscribeStreamingClient } from '@aws-sdk/client-transcribe-streaming';
 import type { TranscriptUpdate } from '@wordlight/reading-engine';
+import { usage as defaultUsage, type UsageMeter } from '../usage.ts';
 
 export interface SpeechWord { text: string; stable?: boolean; confidence?: number; startMs?: number; endMs?: number }
 /** An update plus timing: startMs/endMs of words are relative to the first audio sent in this session. */
@@ -29,13 +30,21 @@ export class TranscribeSource implements SpeechSource {
   private readonly client: ClientLike;
   private readonly now: () => number;
   private readonly stability: 'high' | 'medium' | 'low' | null;
-  constructor(o: { region?: string; client?: ClientLike; now?: () => number; stability?: 'high' | 'medium' | 'low' | null } = {}) {
+  private readonly usage: UsageMeter;
+  constructor(o: { region?: string; client?: ClientLike; now?: () => number; stability?: 'high' | 'medium' | 'low' | null; usage?: UsageMeter } = {}) {
+    this.usage = o.usage ?? defaultUsage;
     this.client = o.client ?? new TranscribeStreamingClient({ region: o.region ?? process.env.AWS_REGION ?? 'ap-south-1' });
     this.now = o.now ?? (() => performance.timeOrigin + performance.now());
     this.stability = o.stability === undefined ? 'high' : o.stability;
   }
 
   open(o: { lang: 'hi-IN' | 'en-IN' }, h: SpeechHandlers): SpeechSession {
+    const meter = this.usage;
+    // Cost guard: refuse a new stream once today's Transcribe cap is reached (the turn ends with an error).
+    try { meter.check('transcribeSeconds'); } catch (e: any) {
+      setTimeout(() => { h.onError(e); h.onClose(); }, 0);
+      return { stats: { chunks: 0, bytes: 0, updates: 0 }, push() {}, end() {} };
+    }
     const queue: Uint8Array[] = [];
     let wake: (() => void) | null = null;
     let ended = false, closed = false;
@@ -81,6 +90,7 @@ export class TranscribeSource implements SpeechSource {
       push(pcm: Int16Array) {
         if (ended) return;
         stats.chunks++; stats.bytes += pcm.byteLength;
+        meter.add('transcribeSeconds', pcm.length / 16000); // billed audio duration
         queue.push(new Uint8Array(pcm.buffer.slice(pcm.byteOffset, pcm.byteOffset + pcm.byteLength))); // little-endian PCM16 as Transcribe expects
         notify();
       },

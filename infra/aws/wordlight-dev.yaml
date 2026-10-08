@@ -11,6 +11,7 @@ Parameters:
   ReadingMode: { Type: String, Default: free, AllowedValues: [free, echo], Description: 'free = child reads first; echo = TV reads, child repeats (S2 fallback)' }
   Summary: { Type: String, Default: template, AllowedValues: [template, bedrock], Description: 'bedrock also needs BedrockModelId; always falls back to the template' }
   BedrockModelId: { Type: String, Default: '' }
+  IdleStopMinutes: { Type: Number, Default: 90, Description: 'stop the instance after this long with no WebSocket activity (cost guard); 0 = never' }
   ImageId: { Type: 'AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>', Default: /aws/service/ami-amazon-linux-latest/al2023-ami-kernel-default-arm64 }
   NodeVersion: { Type: String, Default: 22.20.0 }
 
@@ -30,6 +31,16 @@ Resources:
               - { Effect: Allow, Action: [transcribe:StartStreamTranscription, transcribe:StartStreamTranscriptionWebSocket, polly:SynthesizeSpeech, polly:DescribeVoices], Resource: '*' }
               - { Effect: Allow, Action: [s3:GetObject], Resource: !Sub 'arn:aws:s3:::${ArtifactBucket}/*' }
               - { Effect: Allow, Action: [bedrock:InvokeModel, bedrock:Converse], Resource: '*' }  # used only when Summary=bedrock
+              - { Effect: Allow, Action: [dynamodb:PutItem, dynamodb:Query], Resource: !GetAtt ProgressTable.Arn }
+  ProgressTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: wordlight-progress
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions: [{ AttributeName: pk, AttributeType: S }, { AttributeName: sk, AttributeType: S }]
+      KeySchema: [{ AttributeName: pk, KeyType: HASH }, { AttributeName: sk, KeyType: RANGE }]
+      TimeToLiveSpecification: { AttributeName: ttl, Enabled: true }
+      Tags: [{ Key: app, Value: wordlight }]
   Profile:
     Type: AWS::IAM::InstanceProfile
     Properties: { Roles: [!Ref Role] }
@@ -50,6 +61,7 @@ Resources:
       IamInstanceProfile: !Ref Profile
       SecurityGroupIds: [!GetAtt SecurityGroup.GroupId]
       MetadataOptions: { HttpTokens: required }
+      InstanceInitiatedShutdownBehavior: stop
       Tags: [{ Key: Name, Value: wordlight-dev }]
       UserData:
         Fn::Base64: !Sub |
@@ -88,7 +100,9 @@ Resources:
           [Service]
           User=wordlight
           WorkingDirectory=/opt/wordlight/app
-          Environment=NODE_ENV=production PORT=8787 HOST=127.0.0.1 AWS_REGION=${AWS::Region} PUBLIC_URL=https://$HOST MEDIA_URL=https://$HOST SPEECH=transcribe READING_MODE=${ReadingMode} SUMMARY=${Summary} BEDROCK_MODEL_ID=${BedrockModelId}
+          Environment=NODE_ENV=production PORT=8787 HOST=127.0.0.1 AWS_REGION=${AWS::Region} PUBLIC_URL=https://$HOST MEDIA_URL=https://$HOST SPEECH=transcribe READING_MODE=${ReadingMode} SUMMARY=${Summary} BEDROCK_MODEL_ID=${BedrockModelId} PROGRESS=dynamodb PROGRESS_TABLE=${ProgressTable} USAGE_FILE=/var/lib/wordlight/usage.json
+          EnvironmentFile=-/opt/wordlight/app/.deploy.env
+          StateDirectory=wordlight
           ExecStart=/usr/local/bin/node server/src/index.ts
           Restart=always
           [Install]
@@ -110,7 +124,20 @@ Resources:
           mkdir -p /etc/systemd/journald.conf.d
           printf '[Journal]\nSystemMaxUse=50M\nMaxRetentionSec=7day\n' > /etc/systemd/journald.conf.d/wordlight.conf
           systemctl restart systemd-journald
+          # Cost guard: stop the instance when nobody has used it for IdleStopMinutes (checked every 10 min).
+          cat > /usr/local/bin/wordlight-idle-stop <<IDLE
+          #!/bin/bash
+          LIMIT=\$(( ${IdleStopMinutes} * 60000 ))
+          [ "\$LIMIT" -gt 0 ] || exit 0
+          UP=\$(cut -d. -f1 /proc/uptime); [ "\$UP" -gt 1800 ] || exit 0
+          IDLE=\$(curl -sf --max-time 5 http://127.0.0.1:8787/healthz | sed -n 's/.*"lastActivityMs":\([0-9]*\).*/\1/p')
+          [ -n "\$IDLE" ] && [ "\$IDLE" -gt "\$LIMIT" ] && { logger "wordlight: idle \$IDLE ms, stopping instance"; /sbin/shutdown -h now; }
+          IDLE
+          chmod +x /usr/local/bin/wordlight-idle-stop
+          printf '[Unit]\nDescription=WordLight idle stop\n[Service]\nType=oneshot\nExecStart=/usr/local/bin/wordlight-idle-stop\n' > /etc/systemd/system/wordlight-idle.service
+          printf '[Unit]\nDescription=WordLight idle stop timer\n[Timer]\nOnBootSec=30min\nOnUnitActiveSec=10min\n[Install]\nWantedBy=timers.target\n' > /etc/systemd/system/wordlight-idle.timer
           systemctl daemon-reload
+          systemctl enable --now wordlight-idle.timer
           systemctl enable --now wordlight caddy
           systemctl restart wordlight caddy
           UPD

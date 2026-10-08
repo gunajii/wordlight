@@ -6,6 +6,7 @@
 // Control messages use `t` (hello, ping, telemetry), app events use `type` (see shared-protocol).
 import { validateEvent, mayClientSend, type Reader, type TurnStart, type WordLightEvent, type AudioFrame } from '@wordlight/shared-protocol';
 import { LocalSummaryService, templateSummary, type SummaryService, type SummaryInput } from './summary.ts';
+import { MemoryProgressStore, type ProgressStore } from './progress.ts';
 
 export interface Conn { send: (msg: unknown) => void }
 interface ConnInfo { role: 'tv' | 'phone'; sessionId: string; clientId: string }
@@ -25,7 +26,7 @@ export const TURN_MAX_MS = { tv: 90_000, test: 11 * 60_000 };
 export const MIC_GRACE_MS = 2000;
 export const CHUNK_MS_ALLOWED = [20, 40, 60, 100];
 
-export interface ReaderProgress { readerId: string; lines: number; read: number; helped: number; skipped: number; readingMs: number; stories: string[] }
+export interface ReaderProgress { readerId: string; lines: number; read: number; helped: number; skipped: number; readingMs: number; stories: string[]; helpedWords?: string[] }
 
 /** Deterministic parent summary from real counts only (no generated claims). Kept for callers of the old API. */
 export function summaryText(name: string, p: ReaderProgress): string {
@@ -76,6 +77,10 @@ export class SessionHub {
   driver: TurnDriver | null = null;
   /** turns counts into the parent's sentence; the counts never depend on it */
   summary: SummaryService = new LocalSummaryService();
+  /** session records (counts only); DynamoDB in production */
+  progress: ProgressStore = new MemoryProgressStore();
+  /** labels stored with each record */
+  meta: { mode: 'free' | 'echo'; speech: string } = { mode: 'free', speech: 'unknown' };
   private readonly o: { now: () => number; random?: () => number; telemetryLimit?: number };
   constructor(o: { now: () => number; random?: () => number; telemetryLimit?: number }) {
     this.o = o;
@@ -292,10 +297,11 @@ export class SessionHub {
   }
 
   /** Called by the reading driver when a line is finished (counts only). */
-  recordLine(s: Session, t: ActiveTurn, e: { read: number; helped: number; skipped: number; durationMs: number }) {
+  recordLine(s: Session, t: ActiveTurn, e: { read: number; helped: number; skipped: number; durationMs: number; helpedWords?: string[] }) {
     const id = t.turn.readerId;
     const p = s.progress.get(id) ?? { readerId: id, lines: 0, read: 0, helped: 0, skipped: 0, readingMs: 0, stories: [] };
     p.lines++; p.read += e.read; p.helped += e.helped; p.skipped += e.skipped; p.readingMs += e.durationMs;
+    p.helpedWords = [...(p.helpedWords ?? []), ...(e.helpedWords ?? [])].slice(0, 50);
     if (!p.stories.includes(t.turn.storyId)) p.stories.push(t.turn.storyId);
     s.progress.set(id, p);
     this.log(s, { kind: 'line-done', readerId: id, turnId: t.turn.turnId, storyId: t.turn.storyId, page: t.turn.page, line: t.turn.line, read: e.read, helped: e.helped, skipped: e.skipped, durationMs: e.durationMs });
@@ -311,7 +317,7 @@ export class SessionHub {
     const sessionMs = typeof msg.durationMs === 'number' && Number.isFinite(msg.durationMs) && msg.durationMs >= 0 ? Math.round(msg.durationMs) : Math.round(this.o.now() - s.createdAt);
     for (const r of s.readers.values()) {
       const p = s.progress.get(r.readerId) ?? { readerId: r.readerId, lines: 0, read: 0, helped: 0, skipped: 0, readingMs: 0, stories: [] };
-      const input: SummaryInput = { name: r.firstName, lang: r.lang, read: p.read, helped: p.helped, skipped: p.skipped, lines: p.lines, storiesCompleted: s.storiesCompleted.slice(), storyTitles: s.storyTitles.slice(), sessionMs };
+      const input: SummaryInput = { name: r.firstName, lang: r.lang, read: p.read, helped: p.helped, skipped: p.skipped, lines: p.lines, storiesCompleted: s.storiesCompleted.slice(), storyTitles: s.storyTitles.slice(), sessionMs, helpedWords: (p.helpedWords ?? []).slice() };
       let out: { text: string; source: 'template' | 'bedrock'; fallbackReason?: string };
       try { out = await this.summary.summarize(input); } catch { out = { text: templateSummary(input), source: 'template', fallbackReason: 'error' }; }
       const ev = { type: 'session.summary', sessionId: s.id, readerId: r.readerId, wordsReadAlone: p.read, wordsHelped: p.helped, wordsSkipped: p.skipped, turns: p.lines,
@@ -319,6 +325,10 @@ export class SessionHub {
       this.toTv(s, ev);
       s.phones.get(r.phoneClientId)?.send(ev);
       this.log(s, { kind: 'session-summary', readerId: r.readerId, read: p.read, helped: p.helped, skipped: p.skipped, lines: p.lines, source: out.source, fallback: out.fallbackReason });
+      // persist counts only (never the name, audio or transcripts); a failing store never breaks the session
+      this.progress.save({ readerId: r.readerId, sessionId: s.id, endedAt: new Date().toISOString(), lang: r.lang, age: r.age, storyIds: [...new Set([...p.stories, ...s.storiesCompleted])], storiesCompleted: s.storiesCompleted.slice(),
+        turns: p.lines, read: p.read, helped: p.helped, skipped: p.skipped, durationMs: sessionMs, helpedWords: (p.helpedWords ?? []).slice(0, 50), mode: this.meta.mode, speech: this.meta.speech })
+        .catch((e: any) => this.log(s, { kind: 'progress-save-failed', error: String(e?.name ?? e).slice(0, 80) }));
     }
   }
 

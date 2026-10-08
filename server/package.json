@@ -6,6 +6,7 @@
   "description": "WordLight session server: pairing, live events, content, the reading pipeline (speech recognition + reading engine) and the parent summary.",
   "dependencies": {
     "@aws-sdk/client-bedrock-runtime": "^3.1146.0",
+    "@aws-sdk/client-dynamodb": "^3.1147.0",
     "@aws-sdk/client-transcribe-streaming": "^3.1143.0",
     "@wordlight/reading-engine": "*",
     "@wordlight/shared-protocol": "*",

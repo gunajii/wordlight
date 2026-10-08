@@ -11,8 +11,9 @@
 import { mkdirSync, readFileSync, writeFileSync, copyFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { parseSpeechMarks, timeTokens, markByteMismatches, chooseTurns, validateStory, PACKAGE_VERSION, type StoryPackage, type Line, type Issue } from '@wordlight/story-package';
+import { parseSpeechMarks, timeTokens, markByteMismatches, validateStory, PACKAGE_VERSION, type StoryPackage, type Line, type Issue } from '@wordlight/story-package';
 import { PollyNarration, FixtureNarration, type NarrationService } from './narration.ts';
+import { chooseTurnsWithModel, bedrockConverse } from './ai-turns.ts';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 
@@ -28,7 +29,7 @@ export function splitLines(text: string): string[] {
   return out;
 }
 
-export async function buildStory(o: { src: any; srcDir: string; outDir: string; narration: NarrationService; verified?: boolean; log?: (m: string) => void }): Promise<{ story: StoryPackage; issues: Issue[] }> {
+export async function buildStory(o: { src: any; srcDir: string; outDir: string; narration: NarrationService; verified?: boolean; log?: (m: string) => void; converse?: ((p: string) => Promise<string>) | null; turnModel?: string }): Promise<{ story: StoryPackage; issues: Issue[] }> {
   const { src, narration } = o;
   const log = o.log ?? (() => {});
   mkdirSync(o.outDir, { recursive: true });
@@ -59,10 +60,13 @@ export async function buildStory(o: { src: any; srcDir: string; outDir: string; 
     log(`page ${pi + 1}: ${outLines.length} lines, ${toks.length} words, ${n.durationMs} ms`);
   }
   const flat = pages.flatMap((p, pi) => p.lines.map((l, li) => ({ page: pi, line: li, words: l.words.map((w) => w.w) })));
-  for (const i of chooseTurns(flat)) pages[flat[i].page].lines[flat[i].line].turn = true;
+  const choice = await chooseTurnsWithModel(flat, src.level ?? 1, o.converse ?? null, o.turnModel);
+  if (choice.fallback) log(`turn lines: rules (model not used: ${choice.fallback})`);
+  for (const i of choice.indexes) pages[flat[i].page].lines[flat[i].line].turn = true;
   const story: StoryPackage = {
     packageVersion: PACKAGE_VERSION, id: src.id, lang: src.lang, level: src.level ?? 1, title: src.title, credits: src.credits,
     voice: narration.voice as StoryPackage['voice'], timing: { source: narration.timingSource, verified: !!o.verified }, pages,
+    turnSelection: { source: choice.source, ...(choice.model ? { model: choice.model } : {}), level: src.level ?? 1, ...(choice.reason ? { reason: choice.reason } : {}) },
   };
   const issues = validateStory(story);
   if (!issues.some((i) => i.level === 'error')) writeFileSync(path.join(o.outDir, 'story.json'), JSON.stringify(story, null, 1));
@@ -79,7 +83,9 @@ async function main() {
   const srcDir = path.join(ROOT, 'content/sources', id);
   const src = JSON.parse(readFileSync(path.join(srcDir, 'source.json'), 'utf8'));
   if (JSON.stringify(src.credits ?? {}).includes('CHECK')) { console.error('source.json credits still contain CHECK markers: verify author/illustrator/licence/URL against the StoryWeaver page first'); process.exit(1); }
-  const { story, issues } = await buildStory({ src, srcDir, outDir: path.join(ROOT, 'content/stories', id), narration, verified: args.includes('--verified'), log: console.log });
+  const turnModel = opt('turn-model') ?? undefined; // e.g. the model chosen by tools/bedrock/bench.ts
+  const converse = turnModel ? await bedrockConverse(process.env.AWS_REGION || 'ap-south-1', turnModel) : null;
+  const { story, issues } = await buildStory({ src, srcDir, outDir: path.join(ROOT, 'content/stories', id), narration, verified: args.includes('--verified'), log: console.log, converse, turnModel });
   for (const i of issues) console.log(`${i.level}: ${i.path} — ${i.message}`);
   if (issues.some((i) => i.level === 'error')) process.exit(1);
   console.log(`wrote content/stories/${id} · ${story.pages.length} pages · ${story.pages.flatMap((p) => p.lines).filter((l) => l.turn).length} Your Turn lines · narration ${narration.voice.engine}/${narration.voice.id}`);

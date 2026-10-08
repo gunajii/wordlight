@@ -25,6 +25,7 @@ import { ReadingDriver, type TurnTrace } from '../../server/src/reading/driver.t
 import type { SpeechSource, SpeechUpdate } from '../../server/src/reading/speech.ts';
 import { ScriptedSource, DEFAULT_TIMING, type ScriptStep } from '../../server/src/reading/scripted.ts';
 import { tokenize } from '@wordlight/reading-engine';
+import { usage } from '../../server/src/usage.ts';
 import type { Case, SpokenItem } from './make-cases.ts';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
@@ -77,6 +78,8 @@ async function pollyEngine(region: string, voices: string[]): Promise<Engine> {
   const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   const voice = (lang: string) => voices.find((v) => v.includes(':') ? v.startsWith(lang) : true)?.replace(/^.*:/, '') ?? 'Kajal';
   const synth = async (ssml: string, lang: string, format: 'pcm' | 'json') => {
+    const chars = ssml.replace(/<[^>]+>/g, '').length; // Polly bills SSML text without tags
+    usage.check('pollyChars', chars); usage.add('pollyChars', chars); // cost guard
     const r = await polly.send(new SynthesizeSpeechCommand({ Engine: 'neural', VoiceId: voice(lang) as any, LanguageCode: lang as any, Text: ssml, TextType: 'ssml', OutputFormat: format, ...(format === 'pcm' ? { SampleRate: '16000' } : { SpeechMarkTypes: ['word'] }) }));
     return Buffer.from(await r.AudioStream!.transformToByteArray());
   };

@@ -18,14 +18,23 @@ export const DEFAULT_TURN_RULES: TurnRules = { minWords: 3, maxWords: 8, maxWord
 
 const bare = (w: string) => [...w.replace(/[\p{P}\p{S}]/gu, '')].length;
 
+/** Lines that MAY be turns (word count, word length, no digits, not the first line). Any chooser — rules or a
+ *  model — must pick from these. */
+export function eligibleTurnLines(lines: TurnCandidate[], r: TurnRules = DEFAULT_TURN_RULES): number[] {
+  return lines
+    .map((l, i) => ({ i, l }))
+    .filter(({ i }) => !(r.skipFirstLine && i === 0))
+    .filter(({ l }) => l.words.length >= r.minWords && l.words.length <= r.maxWords)
+    .filter(({ l }) => l.words.every((w) => bare(w) <= r.maxWordLength && !/\d/.test(w)))
+    .map(({ i }) => i);
+}
+export const turnCount = (lines: TurnCandidate[], r: TurnRules = DEFAULT_TURN_RULES) => Math.max(1, Math.round(lines.length / r.linesPerTurn));
+
 /** Indexes (into `lines`) of the lines to mark as turns, spread across the story. */
 export function chooseTurns(lines: TurnCandidate[], r: TurnRules = DEFAULT_TURN_RULES): number[] {
-  const eligible = lines
-    .map((l, i) => ({ i, l }))
-    .filter(({ i, l }) => !(r.skipFirstLine && i === 0))
-    .filter(({ l }) => l.words.length >= r.minWords && l.words.length <= r.maxWords)
-    .filter(({ l }) => l.words.every((w) => bare(w) <= r.maxWordLength && !/\d/.test(w)));
-  const want = Math.max(1, Math.round(lines.length / r.linesPerTurn));
+  const ok = new Set(eligibleTurnLines(lines, r));
+  const eligible = lines.map((l, i) => ({ i, l })).filter(({ i }) => ok.has(i));
+  const want = turnCount(lines, r);
   if (eligible.length <= want) return eligible.map((e) => e.i);
   // Spread: split the story into `want` equal windows, take the simplest eligible line in each
   // (fewest long words, then shortest), earliest on ties. Deterministic.

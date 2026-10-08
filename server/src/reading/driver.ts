@@ -121,7 +121,7 @@ export class ReadingDriver implements TurnDriver {
         this.o.hub.emit(s, { type: 'word.skipped', sessionId: s.id, turnId, index: e.index }, true);
       } else if (e.type === 'line.done') {
         L.trace.result = { read: e.read, helped: e.helped, skipped: e.skipped, durationMs: e.durationMs };
-        this.o.hub.recordLine(s, L.t, e);
+        this.o.hub.recordLine(s, L.t, { ...e, helpedWords: L.engine ? L.engine.display.filter((_, i) => L.engine!.states[i] === 'helped') : [] });
         this.o.hub.emit(s, { type: 'line.done', sessionId: s.id, turnId, read: e.read, helped: e.helped, skipped: e.skipped, durationMs: e.durationMs }); // ends the turn → stop()
       }
     }

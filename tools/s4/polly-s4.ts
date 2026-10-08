@@ -13,6 +13,7 @@ import { createHash } from 'node:crypto';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseSpeechMarks, timeTokens, displayTokens, markByteMismatches, fixtureMarks, fixturePcm } from '@wordlight/story-package';
+import { usage } from '../../server/src/usage.ts';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const region = process.env.AWS_REGION || 'ap-south-1';
@@ -27,6 +28,7 @@ const transcribe = new TranscribeStreamingClient({ region });
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 async function synth(text: string, lang: string, format: 'pcm' | 'mp3' | 'json') {
+  usage.check('pollyChars', text.length); usage.add('pollyChars', text.length); // cost guard
   const r = await polly.send(new SynthesizeSpeechCommand({
     Engine: 'neural', VoiceId: VOICE, LanguageCode: lang as any, Text: text, TextType: 'text',
     OutputFormat: format, ...(format === 'pcm' ? { SampleRate: '16000' } : {}), ...(format === 'json' ? { SpeechMarkTypes: ['word', 'sentence'] } : {}),
