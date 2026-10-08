@@ -1,0 +1,140 @@
+{
+ "story": "busy-ants",
+ "region": "ap-south-1",
+ "date": "2026-10-08T18:06:09.321Z",
+ "offsetMs": 49,
+ "matchPct": 93.8,
+ "adopt": true,
+ "R": {
+  "marksN": {
+   "n": 38,
+   "within50": 47.4,
+   "medianAbs": 52,
+   "p95Abs": 101,
+   "bias": 22
+  },
+  "alignN": {
+   "n": 37,
+   "within50": 54.1,
+   "medianAbs": 49,
+   "p95Abs": 184,
+   "bias": -49
+  },
+  "alignG": {
+   "n": 26,
+   "within50": 65.4,
+   "medianAbs": 34,
+   "p95Abs": 186,
+   "bias": -19
+  },
+  "alignGcalibrated": {
+   "n": 26,
+   "within50": 69.2,
+   "medianAbs": 40,
+   "p95Abs": 235,
+   "bias": 30
+  }
+ },
+ "pages": [
+  {
+   "page": 1,
+   "words": 13,
+   "matchedN": 12,
+   "matchedG": 10,
+   "onsetsN": 4,
+   "onsetsG": 3,
+   "durN": 4689,
+   "durG": 4267
+  },
+  {
+   "page": 2,
+   "words": 10,
+   "matchedN": 9,
+   "matchedG": 9,
+   "onsetsN": 6,
+   "onsetsG": 5,
+   "durN": 5590,
+   "durG": 5547
+  },
+  {
+   "page": 3,
+   "words": 17,
+   "matchedN": 15,
+   "matchedG": 15,
+   "onsetsN": 3,
+   "onsetsG": 2,
+   "durN": 5919,
+   "durG": 5035
+  },
+  {
+   "page": 4,
+   "words": 13,
+   "matchedN": 13,
+   "matchedG": 13,
+   "onsetsN": 3,
+   "onsetsG": 2,
+   "durN": 6012,
+   "durG": 5291
+  },
+  {
+   "page": 5,
+   "words": 12,
+   "matchedN": 12,
+   "matchedG": 12,
+   "onsetsN": 3,
+   "onsetsG": 2,
+   "durN": 3631,
+   "durG": 3371
+  },
+  {
+   "page": 6,
+   "words": 8,
+   "matchedN": 8,
+   "matchedG": 8,
+   "onsetsN": 5,
+   "onsetsG": 3,
+   "durN": 4621,
+   "durG": 4267
+  },
+  {
+   "page": 7,
+   "words": 11,
+   "matchedN": 11,
+   "matchedG": 11,
+   "onsetsN": 3,
+   "onsetsG": 3,
+   "durN": 3555,
+   "durG": 3371
+  },
+  {
+   "page": 8,
+   "words": 19,
+   "matchedN": 19,
+   "matchedG": 17,
+   "onsetsN": 5,
+   "onsetsG": 3,
+   "durN": 6629,
+   "durG": 5717
+  },
+  {
+   "page": 9,
+   "words": 14,
+   "matchedN": 14,
+   "matchedG": 14,
+   "onsetsN": 3,
+   "onsetsG": 2,
+   "durN": 5597,
+   "durG": 4736
+  },
+  {
+   "page": 10,
+   "words": 12,
+   "matchedN": 12,
+   "matchedG": 12,
+   "onsetsN": 3,
+   "onsetsG": 2,
+   "durN": 3999,
+   "durG": 3627
+  }
+ ]
+}
