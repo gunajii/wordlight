@@ -32,8 +32,9 @@ When the TV home screen shows the QR code:
  4. During narration: mic must stay OFF on the phone.
  The server runs ECHO MODE (S2 decision): on each turn the TV reads the line first, then it's the reader's turn.
  5. First "Riya, your turn": after the TV reads the line, read it back at a natural pace.
- 6. Second turn: read the first word, then STAY SILENT ~4 s (TV helps), then finish the line.
- 7. If there is a third turn: say one WRONG word on purpose, then correct it.
+ 6. Second turn: read the first word, then STUTTER on the next ("s… s…") for ~2 s and go quiet. The TV helps after
+    ~3 s of quiet. When the help word has finished, repeat it and read the rest at a natural pace.
+ 7. Third turn: read it normally. Fourth: say one WRONG word on purpose, then correct it.
  8. Optional privacy checks during a turn: press → on the TV (cancel), or lock the phone for 5 s.
  9. Let the story finish → end card. Check the phone shows the summary and "Microphone off".
 =======================================================================================
@@ -47,6 +48,6 @@ curl -s -H "x-wordlight-admin: $ADMIN_TOKEN" "$URL/api/sessions/$SID/privacy" > 
 curl -s -H "x-wordlight-admin: $ADMIN_TOKEN" "$URL/api/reading/traces?session=$SID" > ".dev/aws/traces-$STAMP.json"
 curl -s -H "x-wordlight-admin: $ADMIN_TOKEN" "$URL/api/usage" > ".dev/aws/usage-server-$STAMP.json"
 node -e 'const p=require("./docs/results/privacy/aws-'"$STAMP"'.json");console.log("privacy: status reports",p.micAudit.statusReports,"· violations",p.micAudit.violations.length,"· mic off after turn end (ms)",JSON.stringify(p.micAudit.offAfterEndMs))'
-node -e 'const t=require("./.dev/aws/traces-'"$STAMP"'.json");for(const x of t)console.log(x.turnId,x.source,x.simulated?"SIMULATED":"real",x.endReason??"",JSON.stringify(x.result),"events",x.events.map(e=>e.kind[0]+e.index).join(" "))'
+node -e 'const t=require("./.dev/aws/traces-'"$STAMP"'.json");for(const x of t){const T=(v)=>v==null?"-":"+"+Math.round(v-x.startedAtServerMs);console.log(x.turnId,x.source,x.simulated?"SIMULATED":"real",x.endReason??"",JSON.stringify(x.result),"activity",JSON.stringify(x.activity??null));for(const e of x.events)console.log("   ",e.kind,e.index,x.words[e.index],"at",T(e.emitServerMs),e.reason??"",e.helpDoneServerMs?"help word ended "+T(e.helpDoneServerMs):"")}'
 echo; echo "Phase B done. Log: $LOG — tell Claude \"phase B done\". (The server stops itself after 90 min idle; or: bash infra/aws/deploy.sh --stop)"
 wait $TVPID 2>/dev/null
