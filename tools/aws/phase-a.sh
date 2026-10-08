@@ -21,7 +21,7 @@ ce_snapshot() { aws ce get-cost-and-usage --time-period Start=2026-10-01,End=$(d
 
 step "0. tools"
 for t in aws node python3 git; do command -v $t >/dev/null || fail "$t not installed"; done
-python3 -c "import numpy" 2>/dev/null || fail "python3 numpy missing (pip3 install numpy)"
+NUMPY=1; python3 -c "import numpy" 2>/dev/null || { NUMPY=0; echo "python3 numpy not installed: S4 audio is synthesized here and analysed by Claude afterwards"; }
 git status --short | head -5
 
 step "1. account and region"
@@ -48,7 +48,7 @@ console.log("text models listed:",m.length,"· inference profiles:",p.length,"·
 
 step "4. S4 — Polly word timing (real)"
 node tools/s4/polly-s4.ts || fail "S4 synthesis failed"
-python3 tools/s4/analyze.py content/build/s4 --report docs/results/s4 || fail "S4 analysis failed"
+if [ $NUMPY = 1 ]; then python3 tools/s4/analyze.py content/build/s4 --report docs/results/s4 || fail "S4 analysis failed"; else echo "(S4 analysis deferred: no numpy on this Mac)"; fi
 
 if [ $SKIP_S2 = 0 ]; then
   step "5. S2 — Transcribe in the reading loop (169 cases, real time, ~12–20 min)"

@@ -21,3 +21,6 @@ content/sources/*/*
 !content/sources/*/source.json
 content/stories/*/*.jpg
 content/stories/*/*.png
+content/sources/*.zip
+content/sources/*.pdf
+content/sources/*.epub

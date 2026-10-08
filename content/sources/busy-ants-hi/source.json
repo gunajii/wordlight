@@ -1,0 +1,59 @@
+{
+ "id": "busy-ants-hi",
+ "lang": "hi-IN",
+ "level": 1,
+ "title": "व्यस्त चींटियाँ",
+ "credits": {
+  "source": "StoryWeaver (adapted)",
+  "license": "CC BY 4.0",
+  "title": "Busy Ants",
+  "author": "Kanchan Bannerjee",
+  "illustrator": "Deepa Balsavar",
+  "translator": "WordLight project (unofficial translation)",
+  "publisher": "Pratham Books",
+  "url": "https://storyweaver.org.in/en/stories/1052-busy-ants",
+  "attribution": "व्यस्त चींटियाँ: Hindi translation by the WordLight project (2026) of “Busy Ants” (English), written by Kanchan Bannerjee, illustrated by Deepa Balsavar, published by Pratham Books (© Pratham Books, 2015) under a CC BY 4.0 license on StoryWeaver. Changes: text translated into Hindi; not an official Pratham Books translation. This translation: CC BY 4.0."
+ },
+ "pages": [
+  {
+   "image": "p1.jpg",
+   "text": "नमस्ते, मैं इस कतार में चौथी चींटी हूँ। क्या तुम मुझे देख सकते हो?"
+  },
+  {
+   "image": "p2.jpg",
+   "text": "बायाँ, दायाँ, बायाँ, दायाँ। हम चुपचाप एक कतार में चलते हैं।"
+  },
+  {
+   "image": "p3.jpg",
+   "text": "मुझे एक तरकीब सूझी है। तेज़ चलने के लिए मैं पहिए ले आऊँगी!"
+  },
+  {
+   "image": "p4.jpg",
+   "text": "हम दूसरे जानवरों की तरह शोर नहीं करते। हमारी भाषा गंध की भाषा है।"
+  },
+  {
+   "image": "p5.jpg",
+   "text": "एक गंध कहती है, “इस तरफ़ आओ, यहाँ दावत है।”"
+  },
+  {
+   "image": "p6.jpg",
+   "text": "दूसरी गंध कहती है, “ख़तरा! उधर मत जाना।”"
+  },
+  {
+   "image": "p7.jpg",
+   "text": "मुझे केक और हर तरह की मिठाई पसंद है, बिल्कुल तुम्हारी तरह।"
+  },
+  {
+   "image": "p8.jpg",
+   "text": "मेरी ताक़त देखनी है? मैं तुम्हें बहुत छोटी लगती हूँ, पर मैं बहुत ताक़तवर हूँ।"
+  },
+  {
+   "image": "p9.jpg",
+   "text": "दरवाज़ा बंद है तो क्या हुआ? मैं सबसे छोटी दरार से भी निकल जाती हूँ।"
+  },
+  {
+   "image": "p10.jpg",
+   "text": "मानो या न मानो, हम सैकड़ों चींटियाँ एक बस्ती में ख़ुशी-ख़ुशी रहती हैं।"
+  }
+ ]
+}

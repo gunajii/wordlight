@@ -1,0 +1,58 @@
+{
+ "id": "busy-ants",
+ "lang": "en-IN",
+ "level": 1,
+ "title": "Busy Ants",
+ "credits": {
+  "source": "StoryWeaver",
+  "license": "CC BY 4.0",
+  "title": "Busy Ants",
+  "author": "Kanchan Bannerjee",
+  "illustrator": "Deepa Balsavar",
+  "publisher": "Pratham Books",
+  "url": "https://storyweaver.org.in/en/stories/1052-busy-ants",
+  "attribution": "Busy Ants (English), written by Kanchan Bannerjee, illustrated by Deepa Balsavar, published by Pratham Books (© Pratham Books, 2015) under a CC BY 4.0 license on StoryWeaver. Read, create and translate stories for free on www.storyweaver.org.in"
+ },
+ "pages": [
+  {
+   "image": "p1.jpg",
+   "text": "Hello, I am the fourth one in the line. Can you see me?"
+  },
+  {
+   "image": "p2.jpg",
+   "text": "Left, right, left, right. We walk silently in a line."
+  },
+  {
+   "image": "p3.jpg",
+   "text": "I just got an idea. I am going to get a set of WHEELS to move faster!"
+  },
+  {
+   "image": "p4.jpg",
+   "text": "We are not noisy like other animals. Ours is a language of smells."
+  },
+  {
+   "image": "p5.jpg",
+   "text": "One kind of smell says, “Follow me this way for a feast.”"
+  },
+  {
+   "image": "p6.jpg",
+   "text": "Another smell says, “Danger! Do not go there.”"
+  },
+  {
+   "image": "p7.jpg",
+   "text": "I love cakes and all kinds of sweets, just like you."
+  },
+  {
+   "image": "p8.jpg",
+   "text": "Want to see my muscles at work? I may look very tiny to you, but I am very strong."
+  },
+  {
+   "image": "p9.jpg",
+   "text": "Never mind if the door is shut. I can slip through the smallest crack."
+  },
+  {
+   "image": "p10.jpg",
+   "text": "Believe it or not, hundreds of us live happily in a colony."
+  }
+ ]
+}
