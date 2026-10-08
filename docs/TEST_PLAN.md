@@ -50,7 +50,13 @@ and the local demo loop. Phone tests cover: lifecycle, the privacy invariant tab
 
 ## Not yet tested
 
-Real speech (S2), Polly (S4), AWS deployment, end-to-end latency, physical Fire TV. **The latest TV build (Your Turn UI, echo mode, diagnostics, `<KaraokeLine>`) type-checks but has not yet been built or run on the Virtual Device.**
+Real speech (S2), Polly (S4), AWS deployment, end-to-end latency, physical Fire TV. **Vega Virtual Device run of the latest build (2026-10-08, local demo mode, SIMULATED speech): MEASURED from logs.**
+- The app launched and found the server at `10.0.2.2:8787`. The VVD's host alias works; the baked LAN IP had gone stale.
+- Mina's Red Kite played; narration stopped at both Your Turn lines (free mode).
+- The scripted reader's microphone opened for each turn and closed on `line.done` (“Her kite goes up and up.”, then “Look at the bird!”).
+- The server produced the summary: “Riya read 8 words independently and needed help with 2 words, and finished “Mina's Red Kite” (2 reading turns, 1 minute).”
+
+Not visually verified by us yet: the turn panel's green/amber rendering, the SIMULATED badge, the diagnostics panel and the end card layout. Those need a screenshot or a screen recording. The first attempt found and fixed two demo bugs: the scripted reader stayed on a stale session, and a stale S1 run file auto-started the timing test.
 
 ## S3 — real-phone tests (to run: `npm run s3 -- --label <device>`)
 

@@ -4,7 +4,7 @@ export const log = (m: string) => console.log(`[wordlight] ${m}`); // vega devic
 export const logKey = (where: string, evt: any) => log(`key ${where} type=${evt?.eventType} action=${evt?.eventKeyAction}`);
 // The Mac's LAN IP changes (DHCP: .35 → .33 → .34 in two days) and a baked IP then means a rebuild. So the app
 // tries candidates in order and keeps the first that answers /healthz: the build-time LAN IP, the Mac's
-// Bonjour name, and 10.0.2.2 (QEMU's usual host alias — whether the VVD provides it is UNKNOWN until logged).
+// Bonjour name, and 10.0.2.2 (the VVD's host alias — confirmed working on 2026-10-08).
 export let serverUrl = SERVER_URL;
 export const withTimeout = <T,>(p: Promise<T>, ms: number) => Promise.race([p, new Promise<T>((_, rej) => setTimeout(() => rej(new Error(`timeout ${ms} ms`)), ms))]);
 export async function findServer(): Promise<string | null> {
