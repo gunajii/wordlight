@@ -2,14 +2,48 @@
   "Version": "2012-10-17",
   "Statement": [
     {
-      "Sid": "WordLightSpeech",
+      "Sid": "SpeechAndBedrock",
       "Effect": "Allow",
       "Action": [
-        "polly:SynthesizeSpeech",
-        "polly:DescribeVoices",
-        "transcribe:StartStreamTranscription",
-        "transcribe:StartStreamTranscriptionWebSocket"
+        "polly:SynthesizeSpeech", "polly:DescribeVoices",
+        "transcribe:StartStreamTranscription", "transcribe:StartStreamTranscriptionWebSocket",
+        "bedrock:InvokeModel", "bedrock:Converse", "bedrock:ListFoundationModels", "bedrock:ListInferenceProfiles", "bedrock:GetFoundationModelAvailability"
       ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "OperateTheWordLightServer",
+      "Effect": "Allow",
+      "Action": ["cloudformation:DescribeStacks", "ec2:DescribeInstances", "ssm:GetCommandInvocation", "sts:GetCallerIdentity"],
+      "Resource": "*"
+    },
+    {
+      "Sid": "StartStopOnlyTheWordLightInstance",
+      "Effect": "Allow",
+      "Action": ["ec2:StartInstances", "ec2:StopInstances"],
+      "Resource": "arn:aws:ec2:ap-south-1:*:instance/*",
+      "Condition": { "StringEquals": { "aws:ResourceTag/Name": "wordlight-dev" } }
+    },
+    {
+      "Sid": "RunTheUpdateOnlyOnTheWordLightInstance",
+      "Effect": "Allow",
+      "Action": "ssm:SendCommand",
+      "Resource": [
+        "arn:aws:ssm:ap-south-1::document/AWS-RunShellScript",
+        "arn:aws:ec2:ap-south-1:*:instance/*"
+      ],
+      "Condition": { "StringEqualsIfExists": { "aws:ResourceTag/Name": "wordlight-dev" } }
+    },
+    {
+      "Sid": "CodeBucket",
+      "Effect": "Allow",
+      "Action": ["s3:PutObject", "s3:GetObject", "s3:ListBucket", "s3:CreateBucket", "s3:PutBucketPublicAccessBlock"],
+      "Resource": ["arn:aws:s3:::wordlight-dev-artifacts-*", "arn:aws:s3:::wordlight-dev-artifacts-*/*"]
+    },
+    {
+      "Sid": "SeeTheBill",
+      "Effect": "Allow",
+      "Action": ["ce:GetCostAndUsage", "budgets:ViewBudget"],
       "Resource": "*"
     }
   ]
