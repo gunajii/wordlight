@@ -3,7 +3,7 @@ import { PACKAGE_VERSION, type StoryPackage } from './schema.ts';
 export interface Issue { level: 'error' | 'warning'; path: string; message: string }
 
 const LICENSES = ['CC BY 4.0', 'CC BY-SA 4.0', 'CC0', 'original'];
-const ENGINES = ['polly-neural', 'polly-standard', 'synthetic-clicks', 'recorded'];
+const ENGINES = ['polly-neural', 'polly-generative', 'polly-standard', 'synthetic-clicks', 'recorded'];
 const TIMINGS = ['polly-speech-marks', 'transcribe', 'synthetic', 'manual'];
 /** Turn lines outside this range are refused (3–8 is the recommended range, warned). */
 export const TURN_WORDS_HARD = { min: 2, max: 12 };

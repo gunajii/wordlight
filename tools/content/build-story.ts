@@ -12,7 +12,8 @@ import { mkdirSync, readFileSync, writeFileSync, copyFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseSpeechMarks, timeTokens, markByteMismatches, validateStory, soundEndMs, PACKAGE_VERSION, type StoryPackage, type Line, type Issue, type NarrationStyle } from '@wordlight/story-package';
-import { PollyNarration, FixtureNarration, type NarrationService } from './narration.ts';
+import { PollyNarration, FixtureNarration, GenerativeNarration, type NarrationService } from './narration.ts';
+import { existsSync } from 'node:fs';
 import { chooseTurnsWithModel, bedrockConverse } from './ai-turns.ts';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
@@ -86,18 +87,27 @@ async function main() {
   const id = args[0] ?? '';
   const opt = (k: string) => (args.includes(`--${k}`) ? args[args.indexOf(`--${k}`) + 1] : null);
   if (!id || id.startsWith('--')) { console.error('usage: node tools/content/build-story.ts <id> [--narration polly|fixture] [--voice Kajal] [--verified]'); process.exit(2); }
-  const kind = opt('narration') ?? 'polly';
   const srcDir = path.join(ROOT, 'content/sources', id);
   const src = JSON.parse(readFileSync(path.join(srcDir, 'source.json'), 'utf8'));
   // narration style: --rate/--volume/--line-break-ms, else source.json "narration", else DEFAULT_STYLE
   const style: NarrationStyle = { ...DEFAULT_STYLE, ...(src.narration ?? {}), ...(opt('rate') ? { rate: opt('rate')! } : {}), ...(opt('volume') ? { volume: opt('volume')! } : {}), ...(opt('line-break-ms') ? { lineBreakMs: Number(opt('line-break-ms')) } : {}) };
-  const narration = kind === 'fixture' ? new FixtureNarration() : await PollyNarration.create({ region: process.env.AWS_REGION || 'ap-south-1', voiceId: opt('voice') ?? 'Kajal', style: args.includes('--plain') ? null : style });
+  // engine: --narration fixture|polly|generative, else source.json narration.engine ('generative' → expressive English
+  // voice, word times from Transcribe alignment with the offset measured by tools/s4/align-check.ts)
+  const engine = opt('narration') ?? (src.narration?.engine === 'generative' ? 'generative' : 'polly');
+  const decision = path.join(ROOT, '.dev/aws/align-decision.json');
+  const offsetMs = opt('align-offset-ms') !== null ? Number(opt('align-offset-ms')) : existsSync(decision) ? JSON.parse(readFileSync(decision, 'utf8')).offsetMs : 0;
+  const { engine: _e, ...styleOnly } = style as any;
+  const narration = engine === 'fixture' ? new FixtureNarration()
+    : engine === 'generative' ? await GenerativeNarration.create({ region: process.env.GENERATIVE_REGION || 'ap-southeast-1', transcribeRegion: process.env.AWS_REGION || 'ap-south-1', voiceId: opt('voice') ?? 'Kajal', style: { volume: styleOnly.volume, lineBreakMs: styleOnly.lineBreakMs }, offsetMs })
+    : await PollyNarration.create({ region: process.env.AWS_REGION || 'ap-south-1', voiceId: opt('voice') ?? 'Kajal', style: args.includes('--plain') ? null : styleOnly });
+  if (engine === 'generative') console.log(`generative narration: word times from Transcribe alignment, offset ${offsetMs} ms`);
   if (JSON.stringify(src.credits ?? {}).includes('CHECK')) { console.error('source.json credits still contain CHECK markers: verify author/illustrator/licence/URL against the StoryWeaver page first'); process.exit(1); }
   const turnModel = opt('turn-model') ?? undefined; // e.g. the model chosen by tools/bedrock/bench.ts
   const converse = turnModel ? await bedrockConverse(process.env.AWS_REGION || 'ap-south-1', turnModel) : null;
   const { story, issues } = await buildStory({ src, srcDir, outDir: path.join(ROOT, 'content/stories', id), narration, verified: args.includes('--verified'), log: console.log, converse, turnModel });
   for (const i of issues) console.log(`${i.level}: ${i.path} — ${i.message}`);
   if (issues.some((i) => i.level === 'error')) process.exit(1);
+  if (narration instanceof GenerativeNarration) { const st = narration.stats; const m = st.reduce((a, x) => a + x.matched, 0), t = st.reduce((a, x) => a + x.tokens, 0); console.log(`alignment: ${m}/${t} words matched to the recogniser (${Math.round((100 * m) / t)} %), rest interpolated`); }
   console.log(`wrote content/stories/${id} · ${story.pages.length} pages · ${story.pages.flatMap((p) => p.lines).filter((l) => l.turn).length} Your Turn lines · narration ${narration.voice.engine}/${narration.voice.id}`);
 }
 if (import.meta.url === `file://${process.argv[1]}`) main().catch((e) => { console.error(e?.name ?? '', e?.message ?? e); process.exit(1); });
