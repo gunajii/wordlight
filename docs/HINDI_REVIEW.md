@@ -35,6 +35,7 @@ young readers should be consistent. **Proposed (minimal) change, pending the dev
 - p2: हम चुपचाप एक कतार में **चलती हैं**।
 - p4: हम दूसरे जानवरों की तरह शोर नहीं **करतीं**।
 Neither sentence is a “Your turn” line, so the reading turns are unaffected; the page audio would be re-narrated.
+**Decision (developer, 2026-10-09): keep the text as it is** (the default plural with हम is natural spoken Hindi).
 
 ## TV words in Hindi (`packages/tv-core/src/text.ts`) — shown for Hindi stories only
 | situation | English | Hindi |
@@ -52,6 +53,6 @@ gender-neutral wording where the reader's gender is unknown (“पाठक: �
 “wrong” (a test enforces it). The parent summary stays in the parent's (phone) language.
 
 ## Pending
-- Developer (native speaker) review of this page and the decision on the p2/p4 agreement change.
+- ~~Decision on the p2/p4 agreement change~~ — kept as is (2026-10-09). The developer tested both stories end to end.
 - How Transcribe hi-IN handles ख़ुशी-ख़ुशी (hyphenated compound): covered by the engine's compound rule only if
   Transcribe returns the two halves; not a turn line.

@@ -12,7 +12,7 @@
 **Where it lives now:** `oss/karaoke-vega/` in the WordLight repository. WordLight uses it as its single source:
 the TV subtitle is `<KaraokeLine>`, and the server and content pipeline import its Polly mapping.
 
-**Standalone repository:** https://github.com/gunajii/karaoke-vega. **Published 2026-10-08** (commit `4ad482b`, branch `main`, 11 tests, MIT). The CI workflow runs `npm test` on Node 22.18.
+**Standalone repository:** https://github.com/gunajii/karaoke-vega. **Published 2026-10-08** (commit `d99a46f` on `main` — the same files as the first push `4ad482b`, message rewritten on 2026-10-09; 11 tests, MIT). The CI workflow runs `npm test` on Node 22.18.
 Further changes are published with `bash tools/oss/publish.sh` (subtree split, tests first).
 
 **Devpost fields**

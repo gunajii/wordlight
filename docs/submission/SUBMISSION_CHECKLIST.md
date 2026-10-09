@@ -15,7 +15,7 @@ Official deadline: **2026-10-23, 12:00 PM PDT**. Submit as soon as everything be
 
 ## Documentation
 - ✅ README · ARCHITECTURE · TEST_PLAN · PRIVACY · SECURITY · MEASURED_RESULTS (every number labelled)
-- ✅ Hindi review (docs/HINDI_REVIEW.md) — ⬜ developer decision on the p2/p4 agreement change
+- ✅ Hindi review (docs/HINDI_REVIEW.md); p2/p4 wording kept by the developer
 
 ## AWS Builder
 - ✅ Services listed only if they ran (AWS_BUILDER.md); Bedrock marked blocked
