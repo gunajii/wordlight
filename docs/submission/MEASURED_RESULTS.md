@@ -113,3 +113,10 @@ Nothing on this page comes from a child: no child has used WordLight.
 ## Deployment checks (2026-10-09)
 - **Certificate reuse:** a redeploy kept the same certificate (serial `…5F309FAAF5`, issued 2026-10-08) — no new Let's Encrypt issuance. `docs/results/deploy/cert-reuse-20261009T115329Z.txt`
 - **Start-up:** EC2 refused to start the stopped t4g.micro (`InsufficientInstanceCapacity`, W15); the start script switched it to **t4g.small** (same image), which started.
+
+## Third real loop (2026-10-09, “say it back”)
+- ONE ADULT, English, Busy Ants, 4 turns, Echo Mode, real Transcribe. 3 words helped; the tester **said 2 of them back**
+  (`word.repeated said: true`) and went straight on after the third; every line completed.
+- Privacy audit: **137 reports, 0 violations**; mic off 32–107 ms after each turn end.
+- English and Hindi stories both played end to end (tester report).
+- Privacy across the three AWS sessions: **561 microphone status reports, 0 violations.**

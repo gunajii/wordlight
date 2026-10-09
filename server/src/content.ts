@@ -22,7 +22,8 @@ export async function checkStoryDir(dir: string): Promise<Checked> {
     try { const st = await stat(path.join(dir, f)); if (!st.isFile() || st.size === 0) issues.push({ level: 'error', path: f, message: 'empty or not a file' }); }
     catch { issues.push({ level: 'error', path: f, message: 'missing asset (narration/image not built?)' }); }
   }
-  const test = story.timing?.source === 'synthetic' || story.voice?.engine === 'synthetic-clicks';
+  // test content: synthetic narration, or our own test story (kept off the demo shelf unless SHOW_TEST_CONTENT=1)
+  const test = story.timing?.source === 'synthetic' || story.voice?.engine === 'synthetic-clicks' || story.credits?.source === 'WordLight test content';
   return { id, dir, story, issues, ok: !issues.some((i) => i.level === 'error'), test };
 }
 
