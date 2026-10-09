@@ -38,7 +38,10 @@ export const App = () => {
 
   useEffect(() => {
     (async () => {
-      const b = await findServer();
+      // Keep trying for ~60 s: right after the (virtual) device boots its network/DNS may not be up yet
+      // (2026-10-09: curl error 6, "could not resolve host", at first launch after a Virtual Device restart).
+      let b: string | null = null;
+      for (let i = 0; i < 20 && !b; i++) { b = await findServer(); if (!b) await new Promise<void>((r) => setTimeout(() => r(), 3000)); }
       if (!b) { setError(`No WordLight server answered: ${[SERVER_URL, ...SERVER_CANDIDATES].join(' · ')}`); return; }
       setBase(b);
       try { setShelf(await (await withTimeout(fetch(`${b}/api/stories`), 6000)).json()); } catch (e: any) { log(`shelf: ${e?.message ?? e}`); }
