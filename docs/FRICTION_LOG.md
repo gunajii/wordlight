@@ -145,3 +145,14 @@ Only problems actually encountered. Format: Date / Environment / Component / Exp
 - **Potential improvement:** sync the virtual device clock with the host after the Mac wakes from sleep, and report
   certificate-validity failures distinctly (`certificate not yet valid`) to the app and the log.
 - **Severity:** high for first-time developers. It looks exactly like a server or network outage.
+
+## W15 — EC2: a stopped t4g.micro could not be started (InsufficientInstanceCapacity) (MEASURED, 2026-10-09)
+- **Component:** Amazon EC2 `StartInstances`, ap-south-1, t4g.micro (Graviton), instance stopped overnight.
+- **Expected:** starting a stopped instance of the smallest size just works, or the CLI waits for capacity.
+- **Actual:** `InsufficientInstanceCapacity … (reached max retries: 2): Insufficient capacity.` The instance is tied to
+  its Availability Zone (its disk lives there), so the only choices are to wait or to change the instance type.
+- **Workaround:** `tools/aws/start-server.sh` retries three times a minute apart, then switches the stopped instance to
+  the next Graviton size (same image) and starts that; every switch is logged.
+- **Potential improvement:** a suggested alternative type (or an automatic "start when capacity returns" option) in the
+  error, and capacity guidance for the burstable Graviton family per AZ.
+- **Severity:** medium. A cost-saving "stop when idle" design turns into "the demo server may not come back".
