@@ -195,8 +195,8 @@ invented; where a detail was not recorded at the time it says so. Severity is ou
   clock from the app → restarted the Virtual Device.
 - **Expected:** the virtual device keeps the host's time, or a TLS failure names its cause.
 - **Actual:** the device clock read 10:04 UTC at 17:26 UTC; the certificate (valid from 16:21 UTC) looked “not yet
-  valid”. JavaScript saw only `Network request failed`; nothing mentioned time. On 2026-10-09 the device log was again
-  hours behind (HTTPS still worked because the certificate was older).
+  valid”. JavaScript saw only `Network request failed`; nothing mentioned time. On 2026-10-09 the device's log timestamps again
+  lagged the real time by many hours (their time zone not verified; HTTPS still worked because the certificate was older).
 - **Severity:** High for first-time developers (looks exactly like a server or network outage; ~1 hour lost).
 - **Workaround:** restart the Virtual Device before testing (our demo script offers it); the app shows its clock on
   the error screen.
