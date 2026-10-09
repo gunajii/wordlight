@@ -92,6 +92,8 @@ The tests cover:
 
 ## Limitations
 - One line at a time: `<KaraokeLine>` renders a line and does not lay out paragraphs.
+- Highlight with text colour. On the Vega Virtual Device a `backgroundColor` on a nested `<Text>` is not drawn, so a
+  "dark text on a yellow box" style shows dark text on nothing. The default current-word style is yellow text.
 - Right-to-left scripts have not been tested.
 - The WebVTT parser handles cue timestamps and word timestamps. It ignores styling, regions and voice spans.
 - Polly speech marks are trusted as given. How well they match the audio depends on the voice and language;

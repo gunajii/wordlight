@@ -2,6 +2,8 @@
 // Each word is a nested <Text>, styled by its phase at `positionMs`: spoken · current (highlighted) · upcoming.
 // `leadMs` shifts the text relative to the audio (positive lights words earlier) — use it to cancel the device's
 // measured audio output latency.
+// Highlight with text colour, not backgroundColor: on the Vega Virtual Device a backgroundColor on a nested <Text>
+// is not drawn (seen in a screen recording), so dark text on a missing yellow box disappears on a dark background.
 import React from 'react';
 import { Text, type TextStyle, type StyleProp } from 'react-native';
 import { phasesAt, type TimedWord } from './timing.ts';
@@ -18,7 +20,7 @@ export interface KaraokeLineProps {
   accessibilityLabel?: string;
 }
 
-const DEFAULTS = { spoken: { color: '#ffffff' }, current: { color: '#101820', backgroundColor: '#ffd166' }, upcoming: { color: '#8899aa' } };
+const DEFAULTS = { spoken: { color: '#ffffff' }, current: { color: '#ffd166' }, upcoming: { color: '#8899aa' } };
 
 export function KaraokeLine({ words, positionMs, leadMs = 0, style, spokenStyle, currentStyle, upcomingStyle, accessibilityLabel }: KaraokeLineProps) {
   const phases = phasesAt(words, positionMs, leadMs);

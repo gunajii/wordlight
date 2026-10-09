@@ -6,7 +6,7 @@
 // Dev tools kept: S1 timing player (driven by tools/s1-run via /api/config) and the Devanagari check (Down on Home).
 // A server whose speech recognition is a local simulation is labelled on every screen (SIMULATED SPEECH).
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, Image, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, Image, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
 import { useTVEventHandler } from '@amazon-devices/react-native-kepler';
 import { totals, formatDuration, playableStoryProblem, childText, type ReadingMode } from './vendor/tv-core/index';
 import { SERVER_URL, SERVER_CANDIDATES, AUDIO_FILE, LEAD_MS } from './wordlight.config';
@@ -33,7 +33,7 @@ export const App = () => {
   const [error2, setError2] = useState<string | null>(null); // a story that could not be opened (home stays usable)
   const session = useRef<TvSession | null>(null);
   const fontReady = useDevanagariFont();
-  useEffect(() => { log(`device clock ${new Date().toISOString()} (a clock behind the server certificate's start breaks HTTPS)`); }, []);
+  useEffect(() => { log(`device clock ${new Date().toISOString()} (a clock behind the server certificate's start breaks HTTPS)`); const w = Dimensions.get('window'); log(`screen ${w.width}×${w.height} dp, scale ${w.scale} (layout sized for 960×540)`); }, []);
   const baselineRunId = useRef<string | undefined | null>(null);
 
   useEffect(() => {
@@ -119,7 +119,7 @@ export const App = () => {
         ) : <Text style={[s.endSub, hf]}>{E.pairNext}</Text>}
         <Text style={s.hint}>{screen.story.title} · {screen.info.completed ? 'story finished' : 'stopped early'} · {formatDuration(screen.info.durationMs)}{t.skipped ? ` · ${t.skipped} word${t.skipped === 1 ? '' : 's'} skipped` : ''}</Text>
         {summary ? <Text style={s.summary}>For the parent: “{summary}”</Text> : null}
-        <TouchableOpacity hasTVPreferredFocus style={[s.btn, focused === 'end' && s.btnFocus]} onFocus={() => setFocused('end')} onBlur={() => setFocused(null)} onPress={() => setScreen({ name: 'home' })}>
+        <TouchableOpacity hasTVPreferredFocus activeOpacity={1} style={[s.btn, focused === 'end' && s.btnFocus]} onFocus={() => setFocused('end')} onBlur={() => setFocused(null)} onPress={() => setScreen({ name: 'home' })}>
           <Text style={s.btnText}>Back to stories</Text>
         </TouchableOpacity>
         <Text style={s.credit}>{screen.story.credits.attribution}</Text>
@@ -136,7 +136,7 @@ export const App = () => {
         {simulated ? <Text style={s.sim}>SIMULATED SPEECH · local demo — not real recognition</Text> : null}
         <View style={s.shelf}>
           {shelf.length === 0 ? <Text style={s.hint}>No stories yet on the server.</Text> : shelf.map((it, i) => (
-            <TouchableOpacity key={it.id} hasTVPreferredFocus={i === 0} style={[s.card, focused === it.id && s.cardFocus]} onFocus={() => setFocused(it.id)} onBlur={() => setFocused((f) => (f === it.id ? null : f))} onPress={() => openStory(it.id)}>
+            <TouchableOpacity key={it.id} hasTVPreferredFocus={i === 0} activeOpacity={1} style={[s.card, focused === it.id && s.cardFocus]} onFocus={() => setFocused(it.id)} onBlur={() => setFocused((f) => (f === it.id ? null : f))} onPress={() => openStory(it.id)}>
               {mediaBase && it.cover ? <Image source={{ uri: `${mediaBase}/content/stories/${it.id}/${it.cover}` }} style={s.cardImg} /> : <View style={s.cardImg} />}
               <Text style={s.cardTitle}>{it.title}</Text>
               <Text style={s.cardMeta}>{it.lang === 'hi-IN' ? 'हिंदी' : 'English'} · {it.turns} reading turn{it.turns === 1 ? '' : 's'}{it.test ? ' · test story' : ''}</Text>
@@ -168,37 +168,40 @@ function S1PlayerLoader({ base, mediaBase, run, k, fontReady, onExit }: { base: 
   return <S1Player key={k} story={story} fontReady={fontReady} mediaBase={mediaBase} audioFile={run.audioFile} leadMs={run.leadMs} autoplay={!!run.autorun} onExit={onExit} />;
 }
 
+// Sizes are for the screen the Vega Virtual Device reports to the app: 960×540 dp (measured from a screen recording;
+// the earlier 1920×1080 sizes overflowed the home and end screens). TouchableOpacity gets activeOpacity={1}: on
+// Vega the focused item is shown at activeOpacity, which made the focused card look disabled.
 const s = StyleSheet.create({
-  root: { flex: 1, backgroundColor: '#101820', alignItems: 'center', justifyContent: 'center', padding: 40 },
-  homeRoot: { flex: 1, backgroundColor: '#101820', flexDirection: 'row', padding: 56 },
+  root: { flex: 1, backgroundColor: '#101820', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 40, paddingVertical: 20 },
+  homeRoot: { flex: 1, backgroundColor: '#101820', flexDirection: 'row', padding: 28 },
   left: { flex: 2, justifyContent: 'center' },
-  right: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: '#17222e', borderRadius: 24, padding: 28, marginLeft: 40 },
-  brand: { color: '#ffd166', fontSize: 72, fontWeight: '700' },
-  tag: { color: '#cfe3f5', fontSize: 30, marginTop: 6, marginBottom: 30 },
+  right: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: '#17222e', borderRadius: 16, padding: 16, marginLeft: 24 },
+  brand: { color: '#ffd166', fontSize: 44, fontWeight: '700' },
+  tag: { color: '#cfe3f5', fontSize: 19, marginTop: 2, marginBottom: 18 },
   shelf: { flexDirection: 'row', flexWrap: 'wrap' },
-  card: { width: 380, backgroundColor: '#1d2b3a', borderRadius: 16, padding: 14, marginRight: 24, marginBottom: 24, borderWidth: 4, borderColor: '#2a3a4c' },
-  cardFocus: { borderColor: '#ffd166', transform: [{ scale: 1.04 }] },
-  sim: { color: '#fff', backgroundColor: '#8a1c1c', fontSize: 20, fontWeight: '700', paddingHorizontal: 14, paddingVertical: 6, borderRadius: 10, marginBottom: 16, alignSelf: 'flex-start' },
-  statRow: { flexDirection: 'row', marginTop: 24 },
-  stat: { alignItems: 'center', marginHorizontal: 36 },
-  statNum: { color: '#fff', fontSize: 84, fontWeight: '700' },
-  statLbl: { color: '#cfe3f5', fontSize: 28 },
-  summary: { color: '#ffffff', fontSize: 26, marginTop: 28, textAlign: 'center', maxWidth: 1400 },
-  btn: { marginTop: 30, backgroundColor: '#1d2b3a', borderRadius: 16, paddingHorizontal: 36, paddingVertical: 16, borderWidth: 4, borderColor: '#2a3a4c' },
-  btnFocus: { borderColor: '#ffd166' },
-  btnText: { color: '#fff', fontSize: 30 },
-  cardImg: { width: 348, height: 196, borderRadius: 8, backgroundColor: '#0c131a' },
-  cardTitle: { color: '#fff', fontSize: 30, marginTop: 10 },
-  cardMeta: { color: '#9fb3c8', fontSize: 20, marginTop: 4 },
-  pairTitle: { color: '#fff', fontSize: 30, fontWeight: '700', textAlign: 'center', marginBottom: 16 },
-  qr: { width: 300, height: 300, backgroundColor: '#fff', borderRadius: 8 },
-  code: { color: '#ffd166', fontSize: 26, marginTop: 12 },
-  reader: { color: '#5dd39e', fontSize: 26, marginTop: 10 },
-  small: { color: '#9fb3c8', fontSize: 18, marginTop: 14, textAlign: 'center' },
-  hint: { color: '#9fb3c8', fontSize: 24, marginTop: 24, textAlign: 'center' },
-  err: { color: '#ff9f80', fontSize: 24, marginTop: 16 },
-  endBig: { color: '#ffd166', fontSize: 80, fontWeight: '700' },
-  endSub: { color: '#ffffff', fontSize: 40, marginTop: 12 },
-  credit: { color: '#8fa3b8', fontSize: 18, marginTop: 30 },
+  card: { width: 262, backgroundColor: '#1d2b3a', borderRadius: 12, padding: 8, marginRight: 16, marginBottom: 16, borderWidth: 3, borderColor: '#2a3a4c' },
+  cardFocus: { borderColor: '#ffd166', backgroundColor: '#24364a', transform: [{ scale: 1.05 }] },
+  sim: { color: '#fff', backgroundColor: '#8a1c1c', fontSize: 13, fontWeight: '700', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8, marginBottom: 10, alignSelf: 'flex-start' },
+  statRow: { flexDirection: 'row', marginTop: 10 },
+  stat: { alignItems: 'center', marginHorizontal: 28 },
+  statNum: { color: '#fff', fontSize: 52, fontWeight: '700' },
+  statLbl: { color: '#cfe3f5', fontSize: 17 },
+  summary: { color: '#ffffff', fontSize: 16, marginTop: 10, textAlign: 'center', maxWidth: 780 },
+  btn: { marginTop: 14, backgroundColor: '#1d2b3a', borderRadius: 12, paddingHorizontal: 24, paddingVertical: 8, borderWidth: 3, borderColor: '#2a3a4c' },
+  btnFocus: { borderColor: '#ffd166', backgroundColor: '#24364a' },
+  btnText: { color: '#fff', fontSize: 20 },
+  cardImg: { width: 240, height: 135, borderRadius: 6, backgroundColor: '#0c131a' },
+  cardTitle: { color: '#fff', fontSize: 20, marginTop: 6 },
+  cardMeta: { color: '#9fb3c8', fontSize: 14, marginTop: 2 },
+  pairTitle: { color: '#fff', fontSize: 19, fontWeight: '700', textAlign: 'center', marginBottom: 10 },
+  qr: { width: 170, height: 170, backgroundColor: '#fff', borderRadius: 6 },
+  code: { color: '#ffd166', fontSize: 18, marginTop: 8 },
+  reader: { color: '#5dd39e', fontSize: 17, marginTop: 6, textAlign: 'center' },
+  small: { color: '#9fb3c8', fontSize: 13, marginTop: 8, textAlign: 'center' },
+  hint: { color: '#9fb3c8', fontSize: 16, marginTop: 12, textAlign: 'center' },
+  err: { color: '#ff9f80', fontSize: 18, marginTop: 10 },
+  endBig: { color: '#ffd166', fontSize: 44, fontWeight: '700' },
+  endSub: { color: '#ffffff', fontSize: 22, marginTop: 4 },
+  credit: { color: '#8fa3b8', fontSize: 11, lineHeight: 14, marginTop: 12, textAlign: 'center', maxWidth: 860 },
 });
 export default App;

@@ -41,6 +41,8 @@ grep -q '"@amazon-devices/expo-constants"' package.json || npm install \
   "@amazon-devices/keplerscript-turbomodule-api@~1.0.0" "@amazon-devices/expo-asset@~2.0.0" \
   "@amazon-devices/expo-constants@~2.0.0" "@amazon-devices/expo-font@~2.0.0" "expo@~50.0.0" || FONT_OK=0
 
+# launcher name: the helloWorld template's title is "Basic UI React Native Application for project …"
+sed -i.bak -E 's/^title = ".*"/title = "WordLight"/' manifest.toml && rm -f manifest.toml.bak
 if ! grep -q "wordlight: media playback" manifest.toml; then
   say "Adding media manifest entries (as declared by Amazon's vega-audio-sample)"
   cat >> manifest.toml <<'TOML'
