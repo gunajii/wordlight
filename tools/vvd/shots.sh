@@ -11,9 +11,13 @@ echo "capturing to $OUT every ${1:-2} s — Ctrl-C to stop"
 n=0
 while true; do
   t=$(date +%H%M%S)
-  if vega exec vda shell gwsi-tool-screenshooter /tmp/wl-shot.png >/dev/null 2>&1 \
-     && (cd "$OUT" && vega exec vda pull /tmp/wl-shot.png >/dev/null 2>&1 && mv wl-shot.png "$t.png"); then
+  if E1=$(vega exec vda shell gwsi-tool-screenshooter /tmp/wl-shot.png 2>&1) \
+     && E2=$(cd "$OUT" && vega exec vda pull /tmp/wl-shot.png 2>&1 && mv wl-shot.png "$t.png" 2>&1); then
     n=$((n+1)); printf '\r%d shots (last %s)' "$n" "$t"
-  else printf '\rcapture failed at %s (is the Virtual Device running?)   ' "$t"; fi
+  else
+    echo; echo "capture failed at $t:"; echo "  screenshooter: ${E1:-}" | head -5; echo "  pull: ${E2:-}" | head -5
+    [ -n "${DEBUGGED:-}" ] || { DEBUGGED=1; echo "--- vega exec vda devices:"; vega exec vda devices 2>&1 | head -5; ls -la "$OUT" | head -5; }
+    sleep 3
+  fi
   sleep "${1:-2}"
 done
