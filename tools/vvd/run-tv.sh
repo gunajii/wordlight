@@ -31,7 +31,14 @@ if [ $BUILD = 1 ]; then (cd "$APP" && npx tsc --noEmit -p tsconfig.json && npm r
 ARCH=$(uname -m); case "$ARCH" in arm64|aarch64) A=aarch64;; *) A=x86_64;; esac
 [ "$DEVICE" != VirtualDevice ] && A=armv7 && echo "physical device: using the armv7 build (check 'vega device info' if it differs)"
 VPKG=$(ls "$APP"/build/${A}-debug/*.vpkg | head -1)
-if [ "$DEVICE" = VirtualDevice ]; then vega virtual-device status 2>/dev/null | grep -qi running || vega virtual-device start; fi
+# Start the Virtual Device if the CLI cannot see it ("grep running" also matched "not running"), then wait for it.
+vvd_up() { vega device list 2>/dev/null | grep -q VirtualDevice; }
+if [ "$DEVICE" = VirtualDevice ] && ! vvd_up; then
+  echo "Virtual Device not running: starting it"; vega virtual-device start || true
+  for i in $(seq 1 40); do vvd_up && break; sleep 3; done
+  vvd_up || { echo "Virtual Device still not visible to 'vega device list' after 2 min; open it from the Vega tools and rerun"; exit 1; }
+  echo "Virtual Device up; giving it 20 s to finish booting"; sleep 20
+fi
 mkdir -p .dev
 # app log → .dev/tv-app.log (lets the session check the run without screenshots); stops when the terminal closes
 ( vega device start-log-stream --device "$DEVICE" 2>&1 | grep --line-buffered -i wordlight > .dev/tv-app.log ) &
