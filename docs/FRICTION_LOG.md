@@ -23,6 +23,8 @@ invented; where a detail was not recorded at the time it says so. Severity is ou
 | [W15](#w15) | AWS · EC2 | Stopped t4g.micro would not start (`InsufficientInstanceCapacity`) | Medium |
 | [W16](#w16) | AWS · Polly SSML marks | hi-IN returned a *word* speech mark for a `<break/>` tag | Low |
 | [W17](#w17) | AWS · Polly generative | Generative voices return no speech marks — no word highlighting | Medium |
+| [W18](#w18) | Vega · TouchableOpacity focus | The focused card is drawn faded, so it looks disabled | Medium |
+| [W19](#w19) | Vega · Text styling | `backgroundColor` on a nested `<Text>` is not drawn | Medium |
 
 ---
 
@@ -239,3 +241,27 @@ invented; where a detail was not recorded at the time it says so. Severity is ou
 - **Workaround:** Amazon Transcribe listens to the generative narration and our aligner maps its words onto the known
   text (measured before adoption: median 40 ms vs 52 ms for neural speech marks on the same pages).
 - **Suggestion:** speech marks for generative voices — it would make them usable for read-along and karaoke apps.
+
+### W18 — The focused TouchableOpacity is drawn faded
+**Date / env:** 2026-10-09 · Vega Virtual Device (SDK 0.24.12112), React Native for Vega, D-pad focus
+- **Task:** a story shelf and an end-card button that a child moves through with the remote.
+- **Steps:** `TouchableOpacity` cards with a yellow border while focused (`onFocus` → style) → recorded the screen.
+- **Expected:** the focused card looks highlighted.
+- **Actual:** the focused card had the yellow border but its whole content was faded, so the selected item looked
+  disabled and the unselected one looked active (screen recording frames, 2026-10-09 23:51 IST). The faded look matches
+  `TouchableOpacity`'s pressed opacity, so we believe focus applies `activeOpacity`; we did not find this documented.
+- **Severity:** Medium (the main navigation looked broken on a TV).
+- **Workaround:** `activeOpacity={1}` and our own focus style; checked in a second recording (2026-10-10 00:20 IST).
+- **Suggestion:** document how focus interacts with `activeOpacity` on Vega, or keep focused items at full opacity.
+
+### W19 — `backgroundColor` on a nested `<Text>` is not drawn
+**Date / env:** 2026-10-09 · Vega Virtual Device (SDK 0.24.12112), React Native for Vega
+- **Task:** karaoke subtitles: the word being spoken shown as dark text on a yellow box (a nested `<Text>` per word).
+- **Steps:** per-word `<Text style={{ color: '#101820', backgroundColor: '#ffd166' }}>` inside a line `<Text>` → screen recording.
+- **Expected:** a yellow box behind the current word (standard React Native behaviour for nested text).
+- **Actual:** no box; the dark text sat on the dark subtitle panel, so the current word was nearly invisible — the one
+  word the child should be following. The same style on a `<View>` (our word chips) draws correctly.
+- **Severity:** Medium (silent visual failure; it took a screen recording to notice).
+- **Workaround:** highlight with text colour (yellow) instead; checked in a second recording. Fixed in the open-source
+  `<KaraokeLine>` default as well (karaoke-vega `8624470`).
+- **Suggestion:** support or document `backgroundColor` for nested `<Text>` spans.

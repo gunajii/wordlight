@@ -1,7 +1,7 @@
 # Product feedback
 
 Every tool, API and SDK we used. This is first-hand only. "Not used yet" means exactly that. Dated entries with
-reproduction details are in [docs/FRICTION_LOG.md](../FRICTION_LOG.md) (W1–W17).
+reproduction details are in [docs/FRICTION_LOG.md](../FRICTION_LOG.md) (W1–W19).
 
 ## Vega OS / Vega SDK (0.24.12112, CLI 1.4.2) and the Vega Virtual Device
 
@@ -27,6 +27,16 @@ reproduction details are in [docs/FRICTION_LOG.md](../FRICTION_LOG.md) (W1–W17
   minutes and three rebuilds. Please put the reason in `MediaError.message` and document the https requirement.
 - The system Play/Pause key (Player Session) competes with an app that also handles media keys. We stopped handling
   them and instead guard against playback starting during a reading turn.
+
+**UI rendering (found by recording the screen, not by reading code)**
+- A focused `TouchableOpacity` was drawn faded, so the selected story card looked disabled (W18). `activeOpacity={1}`
+  fixed it.
+- `backgroundColor` on a nested `<Text>` is not drawn, so our "dark word on a yellow box" highlight showed the spoken
+  word as dark text on a dark panel (W19). We switched to yellow text, also in the open-source `<KaraokeLine>`.
+- The Virtual Device lays the app out on about 960×540 dp (measured from the recording: a 348 dp-wide image filled
+  36% of the screen width). Our 1920×1080-sized home and end screens overflowed
+  until we resized them. That one was our assumption, not a platform bug, but a note on the dp size of a 1080p TV
+  in the layout docs would have saved a round trip.
 
 **Input**
 - OK on the remote arrives as `select` or `kpenter` depending on context. We found that by logging events. A table of

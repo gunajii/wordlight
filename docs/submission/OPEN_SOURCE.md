@@ -13,7 +13,10 @@
 the TV subtitle is `<KaraokeLine>`, and the server and content pipeline import its Polly mapping.
 
 **Standalone repository:** https://github.com/gunajii/karaoke-vega. **Published 2026-10-08** (commit `2a8f4d9` on `main` — the same files as the first push `4ad482b`; message and author e-mail rewritten on 2026-10-09; 11 tests, MIT). The CI workflow runs `npm test` on Node 22.18.
-Further changes are published with `bash tools/oss/publish.sh` (subtree split, tests first).
+**Update 2026-10-10** (commit `8624470`): `<KaraokeLine>` highlights the current word with text colour, because a
+`backgroundColor` on a nested `<Text>` is not drawn on the Vega Virtual Device (found in a screen recording, fix checked
+in a second one; friction W19). Later changes are committed on top of `main` (the published history is one squashed
+commit, so `tools/oss/publish.sh`'s subtree split no longer lines up with it).
 
 **Devpost fields**
 - Repository URL: `https://github.com/gunajii/karaoke-vega`

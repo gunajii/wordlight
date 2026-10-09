@@ -27,7 +27,7 @@ Official deadline: **2026-10-23, 12:00 PM PDT**. Submit as soon as everything be
 - ⬜ Repository URL, username `gunajii` and description in Devpost
 
 ## Friction log
-- ✅ docs/FRICTION_LOG.md W1–W17, real entries only
+- ✅ docs/FRICTION_LOG.md W1–W19, real entries only
 
 ## Content
 - ✅ Busy Ants credits verbatim from StoryWeaver's attribution file; shown on the end card and in docs/CONTENT.md
