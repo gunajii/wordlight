@@ -176,7 +176,8 @@ invented; where a detail was not recorded at the time it says so. Severity is ou
 - **Actual:** SDK `AccessDeniedException`; CLI `ValidationException: Operation not allowed` for Nova Micro (direct and
   APAC), Nova Lite and Ministral 3B, while `ListFoundationModels`/`ListInferenceProfiles` listed them.
   Availability: region, entitlement, agreement AVAILABLE but `authorizationStatus: NOT_AUTHORIZED`, with no console
-  action to change it.
+  action to change it. Re-checked 2026-10-09 19:00 UTC: unchanged (request ID `5f398b1f-ece7-49ed-bb67-0489cf3bec3d`;
+  the support case still had no reply).
 - **Severity:** Medium (it blocked the Bedrock feature).
 - **Workaround:** a deterministic template summary (the product works without Bedrock).
 - **Suggestion:** an actionable message (“new accounts need …; open a case at …”) and one exception name for one cause.

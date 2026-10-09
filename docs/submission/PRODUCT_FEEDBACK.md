@@ -98,7 +98,8 @@ reproduction details are in [docs/FRICTION_LOG.md](../FRICTION_LOG.md) (W1–W19
 ## Amazon Bedrock
 - **Blocked on a new account:** `ValidationException: Operation not allowed` (CLI) / `AccessDeniedException` (SDK)
   for every model, while listing works; `GetFoundationModelAvailability` says `NOT_AUTHORIZED` with no console action
-  to fix it (W12). Two different exception names and no remedy in the message.
+  to fix it (W12). Two different exception names and no remedy in the message. Re-checked a day later from the same
+  account (2026-10-09 19:00 UTC): unchanged, and the support case had no reply yet.
 
 ## AWS infrastructure and account tools
 - **AWS Organizations + AI services opt-out:** the right mechanism for a children's app, but on a Free plan account

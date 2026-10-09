@@ -26,7 +26,7 @@ story package ─► S3 (private) ─► EC2 ─► HTTPS ─► Vega TV        
 | **Amazon DynamoDB** (on-demand, TTL) | Per-session counts only (words read/helped/skipped, story, duration) — never audio or text | `server/src/progress.ts` | deployed · see MEASURED_RESULTS |
 | **AWS Organizations** — AI services opt-out | Opt out of content use for service improvement, because the users are children | `infra/aws/account-setup.sh` | ran 2026-10-05 |
 | **AWS Budgets** + Cost Explorer | USD 100 project ceiling (gross, before credits), alerts at 60/80/90/95; spend snapshots in the phase scripts | `tools/aws/budget-policy.sh`, `cost-report.ts` | ran |
-| **Amazon Bedrock** | Parent "reading coach" summary from counts only, with numeric/claim guard and template fallback | `server/src/summary.ts`, `tools/bedrock/bench.ts` | integrated · **blocked**: account `NOT_AUTHORIZED` (docs/AWS_BEDROCK_SUPPORT.md) |
+| **Amazon Bedrock** | Parent "reading coach" summary from counts only, with numeric/claim guard and template fallback | `server/src/summary.ts`, `tools/bedrock/bench.ts` | integrated, **not in use**: the account is still `NOT_AUTHORIZED` (re-checked 2026-10-09 19:00 UTC, request `5f398b1f-…`; docs/AWS_BEDROCK_SUPPORT.md). The parent summary uses the deterministic template |
 
 ## Decisions the measurements drove
 - **Echo Mode.** Transcribe recognised ≈ 95 % of words eventually but only ≈ 51 % within 1 s of the word start

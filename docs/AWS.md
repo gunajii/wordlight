@@ -17,7 +17,7 @@
 |---|---|---|
 | Transcribe **streaming**, hi-IN and en-IN | yes — streaming endpoint `transcribestreaming.ap-south-1.amazonaws.com`; hi-IN and en-IN list "batch, streaming"; the regions excluded for these languages are af-south-1, ap-northeast-1, ap-southeast-5, ap-southeast-7, cn-northwest-1 (not Mumbai) | docs.aws.amazon.com/general/latest/gr/transcribe.html · transcribe/latest/dg/supported-languages.html |
 | Polly **neural** + Kajal (hi-IN, en-IN) | neural voices are offered in ap-south-1; Kajal is neural for hi-IN and en-IN (en-IN also generative) | polly/latest/dg/neural-voices.html · available-voices.html |
-| Bedrock | not verified yet (not needed until after S2/S4) | — |
+| Bedrock | Nova Micro / Nova Lite listed and ACTIVE in ap-south-1 via the `apac.` inference profiles, but the account is NOT_AUTHORIZED (2026-10-08, re-checked 2026-10-09) | docs/AWS_BEDROCK_SUPPORT.md |
 
 Runtime check, not assumed: `tools/s4/polly-s4.ts` calls `DescribeVoices` and stops if Kajal (neural) is not offered in the region.
 

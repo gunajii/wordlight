@@ -1,6 +1,6 @@
 # Amazon Bedrock access — support request
 
-Status: **blocked at the account level** (MEASURED 2026-10-08). WordLight works without Bedrock: the parent summary
+Status: **still blocked at the account level** (MEASURED again 2026-10-09 19:00 UTC; first seen 2026-10-08). WordLight works without Bedrock: the parent summary
 falls back to a deterministic template that uses only the session counters.
 
 ## Facts
@@ -15,8 +15,23 @@ falls back to a deterministic template that uses only the session counters.
 | `GetFoundationModelAvailability` (Nova Micro) | `regionAvailability: AVAILABLE`, `entitlementAvailability: AVAILABLE`, `agreementAvailability: AVAILABLE`, **`authorizationStatus: NOT_AUTHORIZED`** |
 | Listing | `ListFoundationModels` (80 text models) and `ListInferenceProfiles` (45) succeed |
 | Time | 2026-10-08 ≈ 12:30 and 12:58 UTC (phase A / A2 logs) |
-| Request ID | not captured by the first runs — `bash tools/aws/bedrock-probe.sh` captures one (no credentials in its output) |
+| Request ID | `5f398b1f-ece7-49ed-bb67-0489cf3bec3d` (2026-10-09 19:00:51 UTC, `apac.amazon.nova-micro-v1:0`, HTTP 400, 517 ms) |
 | Identity | root user at the time; to be repeated from the least-privilege IAM user (docs/SECURITY.md) |
+
+## Re-check 2026-10-09 19:00 UTC (`bash tools/aws/bedrock-verify.sh`; output in `.dev/aws/bedrock-verify-20261009T190051Z.txt`)
+| Check | Result |
+|---|---|
+| Identity | root user of the account (an IAM user is still to be set up — docs/SECURITY.md) |
+| Region | ap-south-1 (configured and used) |
+| `ListFoundationModels` | `amazon.nova-micro-v1:0` and `amazon.nova-lite-v1:0` ACTIVE, inference type `INFERENCE_PROFILE` only |
+| `ListInferenceProfiles` | `apac.amazon.nova-micro-v1:0` and `apac.amazon.nova-lite-v1:0` ACTIVE |
+| `GetFoundationModelAvailability` | Nova Micro and Nova Lite: region, entitlement, agreement AVAILABLE · **authorization NOT_AUTHORIZED** |
+| `Converse` (one call, synthetic numbers) | `ValidationException: Operation not allowed`, HTTP 400 → classified **account-not-authorized**; no further models tried (same cause) |
+| Support case | opened 2026-10-08 by the developer; **no reply as of 2026-10-10 00:31 IST** |
+
+Not the cause, from the same run: the region (models and profiles are listed and active there), the model identifier
+(the APAC profile is listed), IAM (the caller is the root user), throttling (first call of the day), credentials (every
+control-plane call succeeded), network (an HTTP 400 answer came back in 517 ms).
 
 ## What we want
 On-demand inference for one small text model (Amazon Nova Micro, via the APAC inference profile or directly) in
