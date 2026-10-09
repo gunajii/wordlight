@@ -50,7 +50,7 @@ and the local demo loop. Phone tests cover: lifecycle, the privacy invariant tab
 
 ## Real-service tests (2026-10-08/09) — MEASURED, see docs/submission/MEASURED_RESULTS.md
 S2 (169 lines through Transcribe) · S4 (Polly timing) · align-check (generative narration) · help recovery (before/after,
-40 runs) · three real loops on AWS with an adult tester (end-to-end latency n = 38, privacy audit 561 reports) ·
+40 runs) · four real sessions on AWS with an adult tester (end-to-end latency n = 76, privacy audit 790 reports) ·
 certificate reuse on redeploy · English and Hindi stories end to end.
 
 ## Not tested

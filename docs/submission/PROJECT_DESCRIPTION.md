@@ -44,12 +44,12 @@ lets the child read back and get immediate, encouraging feedback.
 - **Phone microphone:** ≈ 52 000 audio chunks, 0 lost; capture → server 50–90 ms (iPhone Safari, Android Chrome).
 - **Speech recognition (169 test lines, synthetic adult voice):** ≈ 95 % of words recognised, but only 51 % within
   1 s. So we chose **Echo Mode** — hear the line, then say it — instead of asking the child to read first.
-- **Real loop (phone → AWS → Transcribe → TV, adult tester):** a word lights a median 1.13 s after it is spoken
+- **Real loop (phone → AWS → Transcribe → TV, adult tester):** a word lights a median 1.08 s after it is spoken
   (38 words); the network and TV add ≈ 60 ms.
 - **Narration timing:** Polly's speech marks were within 50 ms for 53 % of words; our generative-voice alignment
   measured a 40 ms median error vs 52 ms on the same pages.
 - **Help timing:** the next word was helped too early in 1 of 20 synthetic runs before our fix, 0 of 20 after.
-- **Privacy on AWS:** 561 microphone status reports from the phone, 0 violations.
+- **Privacy on AWS:** 790 microphone status reports from the phone, 0 violations.
 - We have **not** tested with children and do **not** claim any effect on reading.
 
 ## Challenges

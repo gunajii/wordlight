@@ -34,7 +34,7 @@ Official deadline: **2026-10-23, 12:00 PM PDT**. Submit as soon as everything be
 - ✅ Our test story (Mina's Red Kite) is off the demo shelf
 
 ## Privacy and security
-- ✅ No audio or transcript text stored; mic audit 0/561 on AWS; child audio only via the AWS endpoint
+- ✅ No audio or transcript text stored; mic audit 0/790 on AWS; child audio only via the AWS endpoint
 - ✅ Repository secret scan clean (2026-10-09)
 - ⬜ Root password changed + MFA, no root access keys; daily work with the limited IAM user (developer, docs/SECURITY.md)
 

@@ -8,7 +8,7 @@ WordLight is for children, so privacy is part of the design. Full record: [docs/
 - **Visible state:** the phone always shows “● Listening…” or “Microphone off”; the TV shows it during a turn.
 - **Tested and measured:** a privacy-invariant test table covers every phone state
   (`web/phone/test/privacy-invariants.test.js`). On the deployed AWS path the server's microphone audit counted
-  **0 violations in 561 status reports** over three sessions, and the mic was off 11–107 ms after every turn end
+  **0 violations in 790 status reports** over four sessions, and the mic was off 8–107 ms after every turn end
   (earlier phone tests: 0 in > 2 300).
 - **No audio, no transcripts stored.** Audio frames go to Amazon Transcribe during a turn and are discarded by
   WordLight. Voice activity is computed as loudness numbers and kept only as counts. Production traces hold timings

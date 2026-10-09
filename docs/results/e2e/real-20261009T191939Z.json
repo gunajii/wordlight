@@ -1,0 +1,295 @@
+{
+ "measuredAt": "2026-10-09T19:23:18.745Z",
+ "base": "https://3-110-13-229.sslip.io",
+ "session": "BEZ9",
+ "rows": [
+  {
+   "turnId": "busy-ants-0-1-mv1cocly",
+   "index": 1,
+   "recognitionMs": 1121,
+   "serverToTvMs": 16,
+   "e2eMs": 1137
+  },
+  {
+   "turnId": "busy-ants-0-1-mv1cocly",
+   "index": 2,
+   "recognitionMs": 921,
+   "serverToTvMs": 16,
+   "e2eMs": 937
+  },
+  {
+   "turnId": "busy-ants-0-1-mv1cocly",
+   "index": 3,
+   "recognitionMs": 731,
+   "serverToTvMs": 16,
+   "e2eMs": 747
+  },
+  {
+   "turnId": "busy-ants-2-0-mv1cp07b",
+   "index": 0,
+   "recognitionMs": 1082,
+   "serverToTvMs": 17,
+   "e2eMs": 1100
+  },
+  {
+   "turnId": "busy-ants-2-0-mv1cp07b",
+   "index": 1,
+   "recognitionMs": 883,
+   "serverToTvMs": 17,
+   "e2eMs": 900
+  },
+  {
+   "turnId": "busy-ants-2-0-mv1cp07b",
+   "index": 2,
+   "recognitionMs": 1121,
+   "serverToTvMs": 30,
+   "e2eMs": 1151
+  },
+  {
+   "turnId": "busy-ants-2-0-mv1cp07b",
+   "index": 3,
+   "recognitionMs": 961,
+   "serverToTvMs": 30,
+   "e2eMs": 991
+  },
+  {
+   "turnId": "busy-ants-2-0-mv1cp07b",
+   "index": 4,
+   "recognitionMs": 847,
+   "serverToTvMs": 6,
+   "e2eMs": 853
+  },
+  {
+   "turnId": "busy-ants-5-1-mv1cphp8",
+   "index": 0,
+   "recognitionMs": 972,
+   "serverToTvMs": 30,
+   "e2eMs": 1001
+  },
+  {
+   "turnId": "busy-ants-5-1-mv1cphp8",
+   "index": 1,
+   "recognitionMs": 702,
+   "serverToTvMs": 34,
+   "e2eMs": 735
+  },
+  {
+   "turnId": "busy-ants-5-1-mv1cphp8",
+   "index": 2,
+   "recognitionMs": 941,
+   "serverToTvMs": 15,
+   "e2eMs": 956
+  },
+  {
+   "turnId": "busy-ants-5-1-mv1cphp8",
+   "index": 3,
+   "recognitionMs": 741,
+   "serverToTvMs": 15,
+   "e2eMs": 756
+  },
+  {
+   "turnId": "busy-ants-7-0-mv1cpq2l",
+   "index": 0,
+   "recognitionMs": 1022,
+   "serverToTvMs": 5,
+   "e2eMs": 1027
+  },
+  {
+   "turnId": "busy-ants-7-0-mv1cpq2l",
+   "index": 1,
+   "recognitionMs": 803,
+   "serverToTvMs": 7,
+   "e2eMs": 809
+  },
+  {
+   "turnId": "busy-ants-7-0-mv1cpq2l",
+   "index": 2,
+   "recognitionMs": 1080,
+   "serverToTvMs": 29,
+   "e2eMs": 1109
+  },
+  {
+   "turnId": "busy-ants-7-0-mv1cpq2l",
+   "index": 3,
+   "recognitionMs": 960,
+   "serverToTvMs": 29,
+   "e2eMs": 990
+  },
+  {
+   "turnId": "busy-ants-7-0-mv1cpq2l",
+   "index": 4,
+   "recognitionMs": 1363,
+   "serverToTvMs": 59,
+   "e2eMs": 1422
+  },
+  {
+   "turnId": "busy-ants-7-0-mv1cpq2l",
+   "index": 5,
+   "recognitionMs": 913,
+   "serverToTvMs": 59,
+   "e2eMs": 972
+  },
+  {
+   "turnId": "busy-ants-7-0-mv1cpq2l",
+   "index": 6,
+   "recognitionMs": 1110,
+   "serverToTvMs": 18,
+   "e2eMs": 1128
+  },
+  {
+   "turnId": "busy-ants-hi-0-1-mv1cqcl4",
+   "index": 0,
+   "recognitionMs": 1043,
+   "serverToTvMs": 107,
+   "e2eMs": 1149
+  },
+  {
+   "turnId": "busy-ants-hi-0-1-mv1cqcl4",
+   "index": 1,
+   "recognitionMs": 783,
+   "serverToTvMs": 107,
+   "e2eMs": 890
+  },
+  {
+   "turnId": "busy-ants-hi-0-1-mv1cqcl4",
+   "index": 2,
+   "recognitionMs": 826,
+   "serverToTvMs": 12,
+   "e2eMs": 839
+  },
+  {
+   "turnId": "busy-ants-hi-0-1-mv1cqcl4",
+   "index": 4,
+   "recognitionMs": 968,
+   "serverToTvMs": 75,
+   "e2eMs": 1043
+  },
+  {
+   "turnId": "busy-ants-hi-0-1-mv1cqcl4",
+   "index": 5,
+   "recognitionMs": 728,
+   "serverToTvMs": 75,
+   "e2eMs": 803
+  },
+  {
+   "turnId": "busy-ants-hi-3-1-mv1cr0xz",
+   "index": 0,
+   "recognitionMs": 1060,
+   "serverToTvMs": 106,
+   "e2eMs": 1167
+  },
+  {
+   "turnId": "busy-ants-hi-3-1-mv1cr0xz",
+   "index": 1,
+   "recognitionMs": 1107,
+   "serverToTvMs": 39,
+   "e2eMs": 1146
+  },
+  {
+   "turnId": "busy-ants-hi-3-1-mv1cr0xz",
+   "index": 3,
+   "recognitionMs": 1230,
+   "serverToTvMs": 101,
+   "e2eMs": 1330
+  },
+  {
+   "turnId": "busy-ants-hi-3-1-mv1cr0xz",
+   "index": 4,
+   "recognitionMs": 2070,
+   "serverToTvMs": 101,
+   "e2eMs": 2170
+  },
+  {
+   "turnId": "busy-ants-hi-3-1-mv1cr0xz",
+   "index": 5,
+   "recognitionMs": 910,
+   "serverToTvMs": 7,
+   "e2eMs": 917
+  },
+  {
+   "turnId": "busy-ants-hi-5-1-mv1crc4i",
+   "index": 0,
+   "recognitionMs": 1054,
+   "serverToTvMs": 46,
+   "e2eMs": 1100
+  },
+  {
+   "turnId": "busy-ants-hi-5-1-mv1crc4i",
+   "index": 1,
+   "recognitionMs": 1139,
+   "serverToTvMs": 10,
+   "e2eMs": 1149
+  },
+  {
+   "turnId": "busy-ants-hi-5-1-mv1crc4i",
+   "index": 2,
+   "recognitionMs": 939,
+   "serverToTvMs": 10,
+   "e2eMs": 949
+  },
+  {
+   "turnId": "busy-ants-hi-8-0-mv1crr0f",
+   "index": 0,
+   "recognitionMs": 1176,
+   "serverToTvMs": 32,
+   "e2eMs": 1208
+  },
+  {
+   "turnId": "busy-ants-hi-8-0-mv1crr0f",
+   "index": 1,
+   "recognitionMs": 815,
+   "serverToTvMs": 5,
+   "e2eMs": 820
+  },
+  {
+   "turnId": "busy-ants-hi-8-0-mv1crr0f",
+   "index": 2,
+   "recognitionMs": 859,
+   "serverToTvMs": 103,
+   "e2eMs": 962
+  },
+  {
+   "turnId": "busy-ants-hi-8-0-mv1crr0f",
+   "index": 3,
+   "recognitionMs": 981,
+   "serverToTvMs": 36,
+   "e2eMs": 1017
+  },
+  {
+   "turnId": "busy-ants-hi-8-0-mv1crr0f",
+   "index": 4,
+   "recognitionMs": 741,
+   "serverToTvMs": 36,
+   "e2eMs": 777
+  },
+  {
+   "turnId": "busy-ants-hi-8-0-mv1crr0f",
+   "index": 5,
+   "recognitionMs": 784,
+   "serverToTvMs": 71,
+   "e2eMs": 855
+  }
+ ],
+ "summary": {
+  "words": 38,
+  "spokenToEmit": {
+   "n": 38,
+   "median": 960,
+   "p95": 1363,
+   "max": 2070
+  },
+  "serverToTv": {
+   "n": 38,
+   "median": 30,
+   "p95": 107,
+   "max": 107
+  },
+  "e2e": {
+   "n": 38,
+   "median": 990,
+   "p95": 1422,
+   "max": 2170
+  },
+  "within1s": 20
+ }
+}

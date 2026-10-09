@@ -34,7 +34,7 @@ Children use WordLight. Privacy is a product requirement, not a feature.
 - Child audio never goes through the Cloudflare dev tunnel; only through the AWS-hosted HTTPS endpoint (deployed 2026-10-08; the health check confirms TLS, real speech and no tunnel links).
 - Voice activity (2026-10-09): the server measures the loudness of each 40 ms chunk to tell "still trying" from silence. It keeps two counts and two loudness numbers per turn; no audio.
 - DynamoDB (2026-10-08): per-session counts only — random reader id, age, language, story ids, words read/helped/skipped, duration, the book words the TV helped with; 30-day TTL. No names, audio or speech text.
-- Measured on the deployed path (2026-10-08/09): 0 violations in 561 microphone status reports over 3 sessions; mic off 11–107 ms after each turn end.
+- Measured on the deployed path (2026-10-08/09): 0 violations in 790 microphone status reports over 4 sessions; mic off 8–107 ms after each turn end.
 
 ## S3 run 2 observations (2026-10-05)
 - Android switched to mobile data when Wi-Fi was turned off, and a later turn streamed over it (TLS end to end). Whether a family wants that is a product choice; the page can show the connection type (`navigator.connection` is available on Chrome, not Safari).

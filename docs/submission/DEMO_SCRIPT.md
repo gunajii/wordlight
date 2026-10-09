@@ -30,8 +30,8 @@ The product must be understood before 2:00. Show WordLight first, AWS later.
 | 2:35–2:50 | `karaoke-vega` README on GitHub | “The word-timing layer is open source for any Vega developer.” |
 | 2:50–3:00 | Logo + tagline | “The TV already has the words. WordLight teaches your child to read them.” |
 
-Allowed numbers on screen: highlight sync −1.0 ms median (VVD) · word lit a median 1.13 s after spoken (38 words,
-adult tester) · 0 microphone violations in 561 reports · 169-line recognition test (95 % recognised, 51 % within 1 s).
+Allowed numbers on screen: highlight sync −1.0 ms median (VVD) · word lit a median 1.08 s after spoken (76 words,
+adult tester) · 0 microphone violations in 790 reports · 169-line recognition test (95 % recognised, 51 % within 1 s).
 
 ## Rehearsal checklist
 - [ ] 3 clean full runs in a row with real-demo.sh

@@ -120,10 +120,26 @@ Nothing on this page comes from a child: no child has used WordLight.
 - Word lit after spoken: **17 words, e2e median 1 137 ms, p95 2 244 ms (one slow server → TV delivery, 907 ms); 6 of 17 within 1 s.** `docs/results/e2e/real-20261009T121612Z.json`
 - Privacy audit: **137 reports, 0 violations**; mic off 32–107 ms after each turn end.
 - English and Hindi stories both played end to end (tester report).
-- Privacy across the three AWS sessions: **561 microphone status reports, 0 violations.**
+- Privacy across the three AWS sessions: **561 microphone status reports, 0 violations** (790 over four sessions, after rehearsal 1).
+
+## Rehearsal 1 of 3 on the final build (2026-10-09 19:19 UTC, session BEZ9)
+Deployed server (Echo Mode, template summary, Bedrock off) + Vega Virtual Device + phone. ONE ADULT, English *Busy Ants*
+then Hindi *व्यस्त चींटियाँ*, 4 turns each, one deliberate stall per story. `.dev/aws/phase-b-20261009T191939Z.log`
+| Check | Result |
+|---|---|
+| Narration, Echo Mode | every turn started after the TV read its line (`turn … (echo)` in the TV log, 8 turns) |
+| Help at the right time | English: help after the stall on “Can”, help clip done 1.34 s later; Hindi: help on “देख” 3.5 s after the last word read (3 s stall rule), clip done 1.33 s later |
+| Say it back, then read on | both helped words said back (`said back: true`), the rest of each line read straight after |
+| Lines completed | 8 / 8. Counts from the traces: English 19 read, 1 helped; Hindi 19 read, 1 helped, 1 skipped (“गंध”, not recognised while the tester read on) |
+| Word lit after spoken | **38 words: e2e median 990 ms, p95 1 422 ms, 20 of 38 within 1 s**; recognition median 960 ms; server → TV median 30 ms. `docs/results/e2e/real-20261009T191939Z.json` |
+| Microphone | **229 status reports, 0 violations**; off 8–24 ms after each turn end. `docs/results/privacy/aws-20261009T191939Z.json` |
+| Bedrock | 0 calls (`SUMMARY=template`; the account is still NOT_AUTHORIZED) — the template summary is the path in use |
+| Transcribe used | 383 s for the day so far (cap 3 600 s); local estimate USD 0.15 today (INFERRED) |
+| End-card counts | seen by the tester; not in the TV log (a log line for them was added after this run) |
+| Status | **PASS, MEASURED, one adult.** Two more rehearsals to go |
 
 ## End to end, all real AWS sessions together (one adult tester, 2026-10-08/09)
-**38 words lit: median 1 125 ms, p95 1 578 ms, 9 of 38 (24 %) within 1 s** from the word being spoken to it lighting
-on the TV (Vega Virtual Device). Against the original ≤ 1 s median target: **not met**; ≈ 1.07 s of it is speech
+**76 words lit over 4 sessions: median 1 077 ms, p95 1 531 ms, 29 of 76 (38 %) within 1 s** from the word being spoken to it lighting
+on the TV (Vega Virtual Device). Against the original ≤ 1 s median target: **not met** (just over); almost all of it is speech
 recognition. In Echo Mode the child has just heard the line, so the highlight confirms what was said rather than
 leading it — which is why Echo Mode is the product's interaction (S2 decision above). MEASURED; one adult; child UNKNOWN.

@@ -41,9 +41,9 @@ Credits are shown in the app and in [docs/CONTENT.md](docs/CONTENT.md).
 | Phone microphone streaming (S3, iPhone + Android) | ≈ 52 000 chunks, 0 lost; capture → server 50–90 ms | MEASURED |
 | Polly word timing (S4) | 53 % of words within 50 ms (target 95 %) — **FAIL**; English now uses the generative voice with Transcribe-aligned timings (median 40 ms vs 52 ms) | MEASURED |
 | Transcribe in the reading loop (S2, 169 lines, synthetic adult voice) | ≈ 95 % recognised, 51 % within 1 s — **FAIL for free reading** → Echo Mode | MEASURED |
-| Real loop: phone → AWS → Transcribe → TV (adult tester) | word lit a median 1.13 s after spoken (n = 38, 3 sessions); target ≤ 1 s not met | MEASURED |
+| Real loop: phone → AWS → Transcribe → TV (adult tester) | word lit a median 1.08 s after spoken (n = 76, 4 sessions); target ≤ 1 s not met | MEASURED |
 | Help recovery (next word helped too early) | 1/20 → 0/20 after the fix (synthetic reader, real Transcribe) | MEASURED |
-| Privacy audit on AWS | 0 violations in 561 microphone reports (3 sessions); mic off 11–107 ms after each turn end | MEASURED |
+| Privacy audit on AWS | 0 violations in 790 microphone reports (4 sessions); mic off 8–107 ms after each turn end | MEASURED |
 | Children | not tested | UNKNOWN |
 
 ## Run it

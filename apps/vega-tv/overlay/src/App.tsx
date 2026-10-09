@@ -47,7 +47,7 @@ export const App = () => {
       try { setShelf(await (await withTimeout(fetch(`${b}/api/stories`), 6000)).json()); } catch (e: any) { log(`shelf: ${e?.message ?? e}`); }
       const s = new TvSession(() => force((n) => n + 1));
       session.current = s;
-      s.on((m: any) => { if (m?.type === 'session.summary') setSummary(m.text); });
+      s.on((m: any) => { if (m?.type === 'session.summary') { setSummary(m.text); log(`summary from server: source ${m.source ?? '?'}${m.fallbackReason ? ` (fallback ${m.fallbackReason})` : ''} · ${m.wordsReadAlone}/${m.wordsHelped}/${m.wordsSkipped} read/helped/skipped`); } });
       s.start(b).catch((e) => setError(`Could not start a session: ${e?.message ?? e}`));
     })();
   }, []);
@@ -99,7 +99,7 @@ export const App = () => {
   if (screen.name === 's1') return <S1PlayerLoader base={base} mediaBase={mediaBase} run={screen.run} k={screen.key} fontReady={fontReady} onExit={() => setScreen({ name: 'home' })} />;
   if (screen.name === 'story' && mediaBase && session.current) {
     return <StoryPlayer story={screen.story} mediaBase={mediaBase} session={session.current} leadMs={LEAD_MS} mode={mode} simulated={simulated} fontReady={fontReady}
-      onEnd={(results, info) => { session.current?.send({ t: 'session.end', storyId: screen.story.id, storyTitle: screen.story.title, completed: info.completed, durationMs: info.durationMs }); setScreen({ name: 'end', story: screen.story, results, info }); }} />;
+      onEnd={(results, info) => { const tt = totals(results); log(`end card ${screen.story.id} · ${info.completed ? 'completed' : 'stopped early'} · read ${tt.onOwn} · helped ${tt.withHelp} · skipped ${tt.skipped} · turns ${tt.turns}`); session.current?.send({ t: 'session.end', storyId: screen.story.id, storyTitle: screen.story.title, completed: info.completed, durationMs: info.durationMs }); setScreen({ name: 'end', story: screen.story, results, info }); }} />;
   }
   if (screen.name === 'end') {
     const t = totals(screen.results);
