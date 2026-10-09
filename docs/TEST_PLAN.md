@@ -15,7 +15,7 @@
 
 ## Automated tests
 
-`npm test`: **165 tests pass** (2026-10-05). `npm run typecheck` is clean, and the Vega app passes its own
+`npm test`: **197 tests pass** (2026-10-09; 165 on 2026-10-05). `npm run typecheck` is clean, and the Vega app passes its own
 `tsc --noEmit` after `sync.sh`.
 
 | Suite | Tests |
@@ -48,9 +48,15 @@ and the local demo loop. Phone tests cover: lifecycle, the privacy invariant tab
 | Privacy invariants | mic OFF on home, shelf, narration, waiting, turn end, cancel, disconnect, reconnect, hidden, visible again, unload, session end, reload, no consent, offline; ON only at turn start; TV phases |
 | Local demo loop (SIMULATED) | story → 2 turns → words lit, one help per turn, mic closed after every turn, summary with real counts, labelled simulated |
 
-## Not yet tested
+## Real-service tests (2026-10-08/09) — MEASURED, see docs/submission/MEASURED_RESULTS.md
+S2 (169 lines through Transcribe) · S4 (Polly timing) · align-check (generative narration) · help recovery (before/after,
+40 runs) · three real loops on AWS with an adult tester (end-to-end latency n = 38, privacy audit 561 reports) ·
+certificate reuse on redeploy · English and Hindi stories end to end.
 
-Real speech (S2), Polly (S4), AWS deployment, end-to-end latency, physical Fire TV. **Vega Virtual Device run of the latest build (2026-10-08, local demo mode, SIMULATED speech): MEASURED from logs.**
+## Not tested
+Children (needs written guardian permission) · physical Fire TV · Bedrock (account blocked).
+
+## Earlier: Vega Virtual Device run of the latest build (2026-10-08, local demo mode, SIMULATED speech): MEASURED from logs.**
 - The app launched and found the server at `10.0.2.2:8787`. The VVD's host alias works; the baked LAN IP had gone stale.
 - Mina's Red Kite played; narration stopped at both Your Turn lines (free mode).
 - The scripted reader's microphone opened for each turn and closed on `line.done` (“Her kite goes up and up.”, then “Look at the bird!”).

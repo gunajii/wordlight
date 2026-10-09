@@ -1,3 +1,15 @@
+# AWS
+
+## Status (2026-10-09)
+- Deployed in ap-south-1 since 2026-10-08: CloudFormation stack `wordlight-dev` (EC2 Graviton — t4g.small since a
+  capacity fallback on 2026-10-09 — Elastic IP, Caddy TLS on `3-110-13-229.sslip.io`, instance role, DynamoDB table,
+  SSM). Echo Mode, Transcribe stability high, template summary.
+- Cost guard now: budget `wordlight-credits` USD 100 gross (before credits) with alerts at 60/80/90/95 and a forecast
+  alert at 100 (`tools/aws/budget-policy.sh`); the earlier USD 5/30 budget was removed. Server ≈ USD 0.015–0.025/h
+  running; stop with `bash infra/aws/deploy.sh --stop`.
+- Bedrock: blocked at account level (docs/AWS_BEDROCK_SUPPORT.md). Security steps: docs/SECURITY.md.
+- The sections below are the original plan (2026-09-30/10-05), kept for the record.
+
 # AWS — development path (2026-09-30)
 
 ## Region: ap-south-1 (Mumbai) — verified against current AWS docs
