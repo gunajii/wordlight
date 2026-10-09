@@ -1,58 +1,47 @@
 # Submission checklist
 
-Official deadline: **2026-10-23, 12:00 PM PDT**. Internal target: as soon as everything below is true.
-Freeze features once it is.
+Official deadline: **2026-10-23, 12:00 PM PDT**. Submit as soon as everything below is ticked.
+✅ done · ⬜ to do (owner)
 
 ## Primary track (Fire TV / Vega)
-- [ ] Latest build runs on the **Vega Virtual Device** (`bash tools/vvd/run-tv.sh`): shelf, story, audio, highlight, Your Turn, help, resume, end card
-- [ ] Physical Vega Fire TV: only if one is available. Report it separately; never imply it if not
-- [ ] The demo uses the **real AWS path** (Transcribe), or the video says plainly that speech is simulated
-- [ ] Repository public, with setup and run instructions (README → Run it)
+- ✅ Latest build runs on the Vega Virtual Device on the real AWS path (English and Hindi, 2026-10-09)
+- ⬜ Physical Vega Fire TV — only if available; otherwise say “Vega Virtual Device” everywhere (it is said)
+- ✅ Demo path uses real Transcribe (no SIMULATED badge on this path)
+- ⬜ Repository public (developer) — README has setup and run instructions
 
 ## Video (< 3 minutes, public)
-- [ ] Shows the app running on the Vega Virtual Device (or Fire TV)
-- [ ] The core loop appears within the first 2 minutes
-- [ ] No SIMULATED SPEECH badge visible, unless the narration says it is simulated
-- [ ] No child's face, voice or name without written parent permission (adult reader otherwise)
-- [ ] Uploaded and public (YouTube/Vimeo); link in Devpost
+- ⬜ Record with `tools/demo/real-demo.sh` following DEMO_SCRIPT.md (developer)
+- ⬜ Core loop before 2:00 · no child's face/voice/name without written permission (adult reader) · uploaded public
 
 ## Documentation
-- [ ] README (status table current)
-- [ ] Architecture (docs/ARCHITECTURE.md)
-- [ ] Testing (docs/TEST_PLAN.md)
-- [ ] Privacy (docs/PRIVACY.md, docs/submission/PRIVACY.md)
-- [ ] Measured results (docs/submission/MEASURED_RESULTS.md): every number labelled
+- ✅ README · ARCHITECTURE · TEST_PLAN · PRIVACY · SECURITY · MEASURED_RESULTS (every number labelled)
+- ✅ Hindi review (docs/HINDI_REVIEW.md) — ⬜ developer decision on the p2/p4 agreement change
 
-## AWS Builder mini-challenge
-- [ ] AWS services actually used are listed with their integration (docs/submission/AWS_BUILDER.md): Polly, Transcribe, EC2/CloudFormation/IAM/SSM/S3, Organizations AI opt-out, Budgets
-- [ ] Each one confirmed working on the account (no service listed as "used" if it never ran)
-- [ ] Product feedback for each tool/API/SDK used (docs/submission/PRODUCT_FEEDBACK.md)
+## AWS Builder
+- ✅ Services listed only if they ran (AWS_BUILDER.md); Bedrock marked blocked
+- ✅ Product feedback for each tool/API/SDK used (PRODUCT_FEEDBACK.md)
+- ⬜ `bash tools/aws/final-checks.sh` (developer): opt-out effective policy, DynamoDB record present, spend by service
 
-## Open Source mini-challenge
-- [ ] `@wordlight/karaoke-vega` in its **own public GitHub repository** (docs/submission/OPEN_SOURCE.md has the commands)
-- [ ] LICENSE (MIT) · README · tests passing · example
-- [ ] Repository URL, GitHub username and description in Devpost
-- [ ] Optional: published to npm
+## Open Source
+- ✅ github.com/gunajii/karaoke-vega (MIT, README, 11 tests, example, CI) — unchanged since publication, so in sync
+- ⬜ Repository URL, username `gunajii` and description in Devpost
 
 ## Friction log
-- [ ] docs/FRICTION_LOG.md: real entries only (W1–W9 so far), each with date, environment, expected/actual, workaround
+- ✅ docs/FRICTION_LOG.md W1–W15, real entries only
 
 ## Content
-- [ ] One real StoryWeaver story: credits checked on the StoryWeaver page (author, illustrator, licence, URL)
-- [ ] Attribution shown in the app and in docs/CONTENT.md
-- [ ] The test story stays hidden from the shelf in the real demo
+- ✅ Busy Ants credits verbatim from StoryWeaver's attribution file; shown on the end card and in docs/CONTENT.md
+- ✅ Our test story (Mina's Red Kite) is off the demo shelf
 
-## Privacy
-- [ ] No raw child audio stored anywhere (server, logs, repo)
-- [ ] Child audio only through the AWS endpoint (health check passed)
-- [ ] AI opt-out effective policy shows `optOut`
+## Privacy and security
+- ✅ No audio or transcript text stored; mic audit 0/561 on AWS; child audio only via the AWS endpoint
+- ✅ Repository secret scan clean (2026-10-09)
+- ⬜ Root password changed + MFA, no root access keys; daily work with the limited IAM user (developer, docs/SECURITY.md)
 
-## Evidence
-- [ ] S1 (VVD) · S3 (phones) · S4 (Polly) · S2 (Transcribe) · end-to-end latency
-- [ ] Every claim in the Devpost text traced to MEASURED_RESULTS.md
+## Cost
+- ✅ ≈ USD 2 of the USD 100 ceiling (INFERRED from meters; ⬜ confirm with final-checks.sh) · reserve untouched
+- ⬜ Stop the server after the recording (`bash infra/aws/deploy.sh --stop`)
 
 ## Devpost form
-- [ ] Track: Fire TV · mini-challenges: AWS Builder, Open Source (and the friction log bonus)
-- [ ] Text from docs/submission/PROJECT_DESCRIPTION.md (with numbers filled in from measured results only)
-- [ ] Screenshots: shelf, Your Turn with green and amber words, end card, phone consent screen
-- [ ] AWS services and Open Source details filled in
+- ⬜ Track: Fire TV · mini-challenges: AWS Builder, Open Source (+ friction log)
+- ⬜ Text from PROJECT_DESCRIPTION.md · screenshots: Your Turn (green + amber + ✓), end card, phone consent, shelf
