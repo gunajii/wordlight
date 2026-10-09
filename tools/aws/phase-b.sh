@@ -16,7 +16,7 @@ URL="https://$(echo "$IP" | tr . -).sslip.io"
 export ADMIN_TOKEN="$(cat .dev/aws/admin-token)"
 ID=$(aws cloudformation describe-stacks --stack-name wordlight-dev --query "Stacks[0].Outputs[?OutputKey=='InstanceId'].OutputValue" --output text)
 STATE=$(aws ec2 describe-instances --instance-ids "$ID" --query 'Reservations[0].Instances[0].State.Name' --output text)
-if [ "$STATE" != running ]; then echo "starting the server instance ($STATE)…"; aws ec2 start-instances --instance-ids "$ID" >/dev/null; aws ec2 wait instance-running --instance-ids "$ID"; sleep 45; fi
+if [ "$STATE" != running ]; then echo "starting the server instance ($STATE)…"; bash tools/aws/start-server.sh || { echo "could not start the server — tell Claude"; exit 1; }; sleep 45; fi
 echo "== server $URL"; node tools/ops/healthcheck.ts "$URL" || { echo "health check failed — tell Claude"; exit 1; }
 curl -s "$URL/api/config"; echo
 echo; echo "== TV app → AWS"

@@ -91,3 +91,11 @@ Nothing on this page comes from a child: no child has used WordLight.
 |---|---|
 | Result | Session N25T (adult tester): **249 microphone status reports from the phone, 0 violations** (mic live only during turns; 55 live-in-turn, 6 off-in-turn reports while turns were starting). Mic off **11–67 ms** after each of the 4 turn ends. Audio path: phone → AWS HTTPS endpoint only (no dev tunnel; checked by the health check). `docs/results/privacy/aws-20261008T182033Z.json` |
 | Status | **MEASURED** (one session, one adult) |
+
+## Help timing — recovery after a help word (real recogniser, synthetic reader)
+| | |
+|---|---|
+| Measurement | After the TV helps with a stuck word: is the NEXT word read, or helped too early? Recovery time = help word ends → next word lit |
+| Method | `tools/s2/help-recovery.ts`: 10 turn lines from the shipped stories (en 6, hi 4) × reading pace after the helped word (600 / 1500 ms) × driver before / after the 2026-10-09 fix. Reader = Polly Kajal (adult synthetic) → Amazon Transcribe Streaming (ap-south-1) → production hub/driver/engine. The reader reacts to the TV: hesitates (“um… um…” / “अ… अ…”), goes quiet, waits for the help word (start latency 300 ms, leaking into the mic at 30 % — INFERRED constants), repeats it 500 ms later, then reads on. `docs/results/help/recovery-2026-10-09T11-47/` |
+| Result | **Next word helped too early: before 1 / 20, after 0 / 20** (the early help was a Hindi line at the slow pace: जाना helped while the reader was still repeating मत). Next word read: 19 / 20 in both (the other “after” case: की was skipped by recognition, not by the timer). Lines completed 20 / 20 in both. Recovery median 3.56 s before, 3.37 s after; help came ≈ 3.6 s after the hesitation ended in both |
+| Status | **MEASURED, small sample, adult synthetic voice.** The synthetic reader reproduces the reported problem only at the slow pace; the fix removed it there and changed nothing else. A child's timing is UNKNOWN. The real-device check (phase B) is still to run |

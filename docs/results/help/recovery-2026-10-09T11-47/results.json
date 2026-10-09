@@ -1,0 +1,1306 @@
+{
+ "date": "2026-10-09T11:47:12.193Z",
+ "region": "ap-south-1",
+ "constants": {
+  "TV_START_MS": 300,
+  "LEAK": 0.3,
+  "REACTION_MS": 500
+ },
+ "summary": {
+  "before": {
+   "runs": 20,
+   "nextRead": 19,
+   "nextHelpedTooEarly": 1,
+   "lineCompleted": 20,
+   "recoveryMedianMs": 3563,
+   "helpAfterQuietMedianMs": 3576
+  },
+  "before pause 600": {
+   "runs": 10,
+   "nextRead": 10,
+   "nextHelpedTooEarly": 0,
+   "lineCompleted": 10,
+   "recoveryMedianMs": 2827,
+   "helpAfterQuietMedianMs": 3574
+  },
+  "before pause 1500": {
+   "runs": 10,
+   "nextRead": 9,
+   "nextHelpedTooEarly": 1,
+   "lineCompleted": 10,
+   "recoveryMedianMs": 3692,
+   "helpAfterQuietMedianMs": 3618
+  },
+  "after": {
+   "runs": 20,
+   "nextRead": 19,
+   "nextHelpedTooEarly": 0,
+   "lineCompleted": 20,
+   "recoveryMedianMs": 3374,
+   "helpAfterQuietMedianMs": 3618
+  },
+  "after pause 600": {
+   "runs": 10,
+   "nextRead": 10,
+   "nextHelpedTooEarly": 0,
+   "lineCompleted": 10,
+   "recoveryMedianMs": 2793,
+   "helpAfterQuietMedianMs": 3618
+  },
+  "after pause 1500": {
+   "runs": 10,
+   "nextRead": 9,
+   "nextHelpedTooEarly": 0,
+   "lineCompleted": 10,
+   "recoveryMedianMs": 3638,
+   "helpAfterQuietMedianMs": 3768
+  }
+ },
+ "rows": [
+  {
+   "id": "busy-ants-0-1",
+   "lang": "en-IN",
+   "config": "before",
+   "pause": 600,
+   "words": "Can you see me?",
+   "stuck": 1,
+   "helps": [
+    1
+   ],
+   "helpAfterHesitationMs": 3574,
+   "helpEmitMs": 5562,
+   "helpDoneMs": 6476,
+   "segBStartMs": 6977,
+   "nextOutcome": "read",
+   "nextAtMs": 9326,
+   "recoveryMs": 2850,
+   "completed": true,
+   "result": {
+    "read": 3,
+    "helped": 1,
+    "skipped": 0,
+    "durationMs": 9319.53173828125
+   },
+   "activity": {
+    "chunks": 234,
+    "speechChunks": 50,
+    "floorRms": 10,
+    "maxRms": 4882
+   }
+  },
+  {
+   "id": "busy-ants-0-1",
+   "lang": "en-IN",
+   "config": "after",
+   "pause": 600,
+   "words": "Can you see me?",
+   "stuck": 1,
+   "helps": [
+    1
+   ],
+   "helpAfterHesitationMs": 3572,
+   "helpEmitMs": 5559,
+   "helpDoneMs": 6472,
+   "segBStartMs": 6972,
+   "nextOutcome": "read",
+   "nextAtMs": 9269,
+   "recoveryMs": 2796,
+   "completed": true,
+   "result": {
+    "read": 3,
+    "helped": 1,
+    "skipped": 0,
+    "durationMs": 9259.266357421875
+   },
+   "activity": {
+    "chunks": 232,
+    "speechChunks": 50,
+    "floorRms": 10,
+    "maxRms": 4882
+   }
+  },
+  {
+   "id": "busy-ants-0-1",
+   "lang": "en-IN",
+   "config": "before",
+   "pause": 1500,
+   "words": "Can you see me?",
+   "stuck": 1,
+   "helps": [
+    1
+   ],
+   "helpAfterHesitationMs": 3572,
+   "helpEmitMs": 5559,
+   "helpDoneMs": 6473,
+   "segBStartMs": 6974,
+   "nextOutcome": "read",
+   "nextAtMs": 10165,
+   "recoveryMs": 3692,
+   "completed": true,
+   "result": {
+    "read": 3,
+    "helped": 1,
+    "skipped": 0,
+    "durationMs": 10158.728515625
+   },
+   "activity": {
+    "chunks": 255,
+    "speechChunks": 50,
+    "floorRms": 10,
+    "maxRms": 4882
+   }
+  },
+  {
+   "id": "busy-ants-0-1",
+   "lang": "en-IN",
+   "config": "after",
+   "pause": 1500,
+   "words": "Can you see me?",
+   "stuck": 1,
+   "helps": [
+    1
+   ],
+   "helpAfterHesitationMs": 3573,
+   "helpEmitMs": 5560,
+   "helpDoneMs": 6474,
+   "segBStartMs": 6975,
+   "nextOutcome": "read",
+   "nextAtMs": 10205,
+   "recoveryMs": 3731,
+   "completed": true,
+   "result": {
+    "read": 3,
+    "helped": 1,
+    "skipped": 0,
+    "durationMs": 10194.756591796875
+   },
+   "activity": {
+    "chunks": 256,
+    "speechChunks": 50,
+    "floorRms": 10,
+    "maxRms": 4882
+   }
+  },
+  {
+   "id": "busy-ants-2-0",
+   "lang": "en-IN",
+   "config": "before",
+   "pause": 600,
+   "words": "I just got an idea.",
+   "stuck": 2,
+   "helps": [
+    2
+   ],
+   "helpAfterHesitationMs": 4557,
+   "helpEmitMs": 6882,
+   "helpDoneMs": 7875,
+   "segBStartMs": 8376,
+   "nextOutcome": "read",
+   "nextAtMs": 12677,
+   "recoveryMs": 4802,
+   "completed": true,
+   "result": {
+    "read": 4,
+    "helped": 1,
+    "skipped": 0,
+    "durationMs": 12793.130859375
+   },
+   "activity": {
+    "chunks": 320,
+    "speechChunks": 55,
+    "floorRms": 10,
+    "maxRms": 5448
+   }
+  },
+  {
+   "id": "busy-ants-2-0",
+   "lang": "en-IN",
+   "config": "after",
+   "pause": 600,
+   "words": "I just got an idea.",
+   "stuck": 2,
+   "helps": [
+    2
+   ],
+   "helpAfterHesitationMs": 3556,
+   "helpEmitMs": 5881,
+   "helpDoneMs": 6875,
+   "segBStartMs": 7376,
+   "nextOutcome": "read",
+   "nextAtMs": 9606,
+   "recoveryMs": 2731,
+   "completed": true,
+   "result": {
+    "read": 4,
+    "helped": 1,
+    "skipped": 0,
+    "durationMs": 9957.17431640625
+   },
+   "activity": {
+    "chunks": 250,
+    "speechChunks": 55,
+    "floorRms": 10,
+    "maxRms": 5448
+   }
+  },
+  {
+   "id": "busy-ants-2-0",
+   "lang": "en-IN",
+   "config": "before",
+   "pause": 1500,
+   "words": "I just got an idea.",
+   "stuck": 2,
+   "helps": [
+    2
+   ],
+   "helpAfterHesitationMs": 3556,
+   "helpEmitMs": 5881,
+   "helpDoneMs": 6874,
+   "segBStartMs": 7376,
+   "nextOutcome": "read",
+   "nextAtMs": 10485,
+   "recoveryMs": 3611,
+   "completed": true,
+   "result": {
+    "read": 4,
+    "helped": 1,
+    "skipped": 0,
+    "durationMs": 10826.568359375
+   },
+   "activity": {
+    "chunks": 271,
+    "speechChunks": 54,
+    "floorRms": 10,
+    "maxRms": 5448
+   }
+  },
+  {
+   "id": "busy-ants-2-0",
+   "lang": "en-IN",
+   "config": "after",
+   "pause": 1500,
+   "words": "I just got an idea.",
+   "stuck": 2,
+   "helps": [
+    2
+   ],
+   "helpAfterHesitationMs": 3556,
+   "helpEmitMs": 5881,
+   "helpDoneMs": 6875,
+   "segBStartMs": 7377,
+   "nextOutcome": "read",
+   "nextAtMs": 10488,
+   "recoveryMs": 3613,
+   "completed": true,
+   "result": {
+    "read": 4,
+    "helped": 1,
+    "skipped": 0,
+    "durationMs": 10834.426025390625
+   },
+   "activity": {
+    "chunks": 272,
+    "speechChunks": 54,
+    "floorRms": 10,
+    "maxRms": 5448
+   }
+  },
+  {
+   "id": "busy-ants-5-1",
+   "lang": "en-IN",
+   "config": "before",
+   "pause": 600,
+   "words": "Do not go there.”",
+   "stuck": 1,
+   "helps": [
+    0,
+    1
+   ],
+   "helpAfterHesitationMs": 8650,
+   "helpEmitMs": 10600,
+   "helpDoneMs": 11607,
+   "segBStartMs": 12107,
+   "nextOutcome": "read",
+   "nextAtMs": 14565,
+   "recoveryMs": 2958,
+   "completed": true,
+   "result": {
+    "read": 2,
+    "helped": 2,
+    "skipped": 0,
+    "durationMs": 14675.337890625
+   },
+   "activity": {
+    "chunks": 368,
+    "speechChunks": 52,
+    "floorRms": 10,
+    "maxRms": 5482
+   }
+  },
+  {
+   "id": "busy-ants-5-1",
+   "lang": "en-IN",
+   "config": "after",
+   "pause": 600,
+   "words": "Do not go there.”",
+   "stuck": 1,
+   "helps": [
+    0,
+    1
+   ],
+   "helpAfterHesitationMs": 9570,
+   "helpEmitMs": 11520,
+   "helpDoneMs": 12527,
+   "segBStartMs": 13029,
+   "nextOutcome": "read",
+   "nextAtMs": 15324,
+   "recoveryMs": 2797,
+   "completed": true,
+   "result": {
+    "read": 2,
+    "helped": 2,
+    "skipped": 0,
+    "durationMs": 15315.036376953125
+   },
+   "activity": {
+    "chunks": 384,
+    "speechChunks": 52,
+    "floorRms": 10,
+    "maxRms": 5482
+   }
+  },
+  {
+   "id": "busy-ants-5-1",
+   "lang": "en-IN",
+   "config": "before",
+   "pause": 1500,
+   "words": "Do not go there.”",
+   "stuck": 1,
+   "helps": [
+    0,
+    1
+   ],
+   "helpAfterHesitationMs": 8650,
+   "helpEmitMs": 10600,
+   "helpDoneMs": 11607,
+   "segBStartMs": 12108,
+   "nextOutcome": "read",
+   "nextAtMs": 15283,
+   "recoveryMs": 3676,
+   "completed": true,
+   "result": {
+    "read": 2,
+    "helped": 2,
+    "skipped": 0,
+    "durationMs": 15274.99072265625
+   },
+   "activity": {
+    "chunks": 383,
+    "speechChunks": 51,
+    "floorRms": 10,
+    "maxRms": 5482
+   }
+  },
+  {
+   "id": "busy-ants-5-1",
+   "lang": "en-IN",
+   "config": "after",
+   "pause": 1500,
+   "words": "Do not go there.”",
+   "stuck": 1,
+   "helps": [
+    0,
+    1
+   ],
+   "helpAfterHesitationMs": 9650,
+   "helpEmitMs": 11600,
+   "helpDoneMs": 12607,
+   "segBStartMs": 13108,
+   "nextOutcome": "read",
+   "nextAtMs": 16245,
+   "recoveryMs": 3638,
+   "completed": true,
+   "result": {
+    "read": 2,
+    "helped": 2,
+    "skipped": 0,
+    "durationMs": 16554.74365234375
+   },
+   "activity": {
+    "chunks": 415,
+    "speechChunks": 51,
+    "floorRms": 10,
+    "maxRms": 5482
+   }
+  },
+  {
+   "id": "busy-ants-7-0",
+   "lang": "en-IN",
+   "config": "before",
+   "pause": 600,
+   "words": "Want to see my muscles at work?",
+   "stuck": 3,
+   "helps": [
+    3
+   ],
+   "helpAfterHesitationMs": 3556,
+   "helpEmitMs": 5881,
+   "helpDoneMs": 6823,
+   "segBStartMs": 7323,
+   "nextOutcome": "read",
+   "nextAtMs": 10008,
+   "recoveryMs": 3186,
+   "completed": true,
+   "result": {
+    "read": 6,
+    "helped": 1,
+    "skipped": 0,
+    "durationMs": 10001.1552734375
+   },
+   "activity": {
+    "chunks": 251,
+    "speechChunks": 63,
+    "floorRms": 10,
+    "maxRms": 5860
+   }
+  },
+  {
+   "id": "busy-ants-7-0",
+   "lang": "en-IN",
+   "config": "after",
+   "pause": 600,
+   "words": "Want to see my muscles at work?",
+   "stuck": 3,
+   "helps": [
+    3
+   ],
+   "helpAfterHesitationMs": 3956,
+   "helpEmitMs": 6281,
+   "helpDoneMs": 7222,
+   "segBStartMs": 7721,
+   "nextOutcome": "read",
+   "nextAtMs": 10895,
+   "recoveryMs": 3673,
+   "completed": true,
+   "result": {
+    "read": 6,
+    "helped": 1,
+    "skipped": 0,
+    "durationMs": 10886.1201171875
+   },
+   "activity": {
+    "chunks": 273,
+    "speechChunks": 63,
+    "floorRms": 10,
+    "maxRms": 5860
+   }
+  },
+  {
+   "id": "busy-ants-7-0",
+   "lang": "en-IN",
+   "config": "before",
+   "pause": 1500,
+   "words": "Want to see my muscles at work?",
+   "stuck": 3,
+   "helps": [
+    3
+   ],
+   "helpAfterHesitationMs": 3556,
+   "helpEmitMs": 5881,
+   "helpDoneMs": 6822,
+   "segBStartMs": 7322,
+   "nextOutcome": "read",
+   "nextAtMs": 10885,
+   "recoveryMs": 4063,
+   "completed": true,
+   "result": {
+    "read": 6,
+    "helped": 1,
+    "skipped": 0,
+    "durationMs": 10873.5908203125
+   },
+   "activity": {
+    "chunks": 273,
+    "speechChunks": 63,
+    "floorRms": 10,
+    "maxRms": 5860
+   }
+  },
+  {
+   "id": "busy-ants-7-0",
+   "lang": "en-IN",
+   "config": "after",
+   "pause": 1500,
+   "words": "Want to see my muscles at work?",
+   "stuck": 3,
+   "helps": [
+    3
+   ],
+   "helpAfterHesitationMs": 3555,
+   "helpEmitMs": 5880,
+   "helpDoneMs": 6822,
+   "segBStartMs": 7323,
+   "nextOutcome": "read",
+   "nextAtMs": 10889,
+   "recoveryMs": 4067,
+   "completed": true,
+   "result": {
+    "read": 6,
+    "helped": 1,
+    "skipped": 0,
+    "durationMs": 10877.605224609375
+   },
+   "activity": {
+    "chunks": 273,
+    "speechChunks": 63,
+    "floorRms": 10,
+    "maxRms": 5860
+   }
+  },
+  {
+   "id": "busy-ants-hi-0-1",
+   "lang": "hi-IN",
+   "config": "before",
+   "pause": 600,
+   "words": "क्या तुम मुझे देख सकते हो?",
+   "stuck": 2,
+   "helps": [
+    2
+   ],
+   "helpAfterHesitationMs": 3568,
+   "helpEmitMs": 5680,
+   "helpDoneMs": 6790,
+   "segBStartMs": 7291,
+   "nextOutcome": "read",
+   "nextAtMs": 9570,
+   "recoveryMs": 2780,
+   "completed": true,
+   "result": {
+    "read": 4,
+    "helped": 1,
+    "skipped": 1,
+    "durationMs": 10153.7607421875
+   },
+   "activity": {
+    "chunks": 255,
+    "speechChunks": 63,
+    "floorRms": 10,
+    "maxRms": 5213
+   }
+  },
+  {
+   "id": "busy-ants-hi-0-1",
+   "lang": "hi-IN",
+   "config": "after",
+   "pause": 600,
+   "words": "क्या तुम मुझे देख सकते हो?",
+   "stuck": 2,
+   "helps": [
+    2
+   ],
+   "helpAfterHesitationMs": 3568,
+   "helpEmitMs": 5681,
+   "helpDoneMs": 6791,
+   "segBStartMs": 7292,
+   "nextOutcome": "read",
+   "nextAtMs": 9593,
+   "recoveryMs": 2802,
+   "completed": true,
+   "result": {
+    "read": 4,
+    "helped": 1,
+    "skipped": 1,
+    "durationMs": 10115.61328125
+   },
+   "activity": {
+    "chunks": 254,
+    "speechChunks": 63,
+    "floorRms": 10,
+    "maxRms": 5213
+   }
+  },
+  {
+   "id": "busy-ants-hi-0-1",
+   "lang": "hi-IN",
+   "config": "before",
+   "pause": 1500,
+   "words": "क्या तुम मुझे देख सकते हो?",
+   "stuck": 2,
+   "helps": [
+    2
+   ],
+   "helpAfterHesitationMs": 3849,
+   "helpEmitMs": 5961,
+   "helpDoneMs": 7071,
+   "segBStartMs": 7572,
+   "nextOutcome": "read",
+   "nextAtMs": 10887,
+   "recoveryMs": 3816,
+   "completed": true,
+   "result": {
+    "read": 5,
+    "helped": 1,
+    "skipped": 0,
+    "durationMs": 11285.550048828125
+   },
+   "activity": {
+    "chunks": 283,
+    "speechChunks": 66,
+    "floorRms": 10,
+    "maxRms": 5213
+   }
+  },
+  {
+   "id": "busy-ants-hi-0-1",
+   "lang": "hi-IN",
+   "config": "after",
+   "pause": 1500,
+   "words": "क्या तुम मुझे देख सकते हो?",
+   "stuck": 2,
+   "helps": [
+    2
+   ],
+   "helpAfterHesitationMs": 3768,
+   "helpEmitMs": 5881,
+   "helpDoneMs": 6991,
+   "segBStartMs": 7491,
+   "nextOutcome": "read",
+   "nextAtMs": 10531,
+   "recoveryMs": 3540,
+   "completed": true,
+   "result": {
+    "read": 5,
+    "helped": 1,
+    "skipped": 0,
+    "durationMs": 11176.438232421875
+   },
+   "activity": {
+    "chunks": 280,
+    "speechChunks": 66,
+    "floorRms": 10,
+    "maxRms": 5213
+   }
+  },
+  {
+   "id": "busy-ants-hi-3-1",
+   "lang": "hi-IN",
+   "config": "before",
+   "pause": 600,
+   "words": "हमारी भाषा गंध की भाषा है।",
+   "stuck": 2,
+   "helps": [
+    2
+   ],
+   "helpAfterHesitationMs": 4675,
+   "helpEmitMs": 7200,
+   "helpDoneMs": 8260,
+   "segBStartMs": 8762,
+   "nextOutcome": "read",
+   "nextAtMs": 11007,
+   "recoveryMs": 2747,
+   "completed": true,
+   "result": {
+    "read": 5,
+    "helped": 1,
+    "skipped": 0,
+    "durationMs": 11471.791015625
+   },
+   "activity": {
+    "chunks": 288,
+    "speechChunks": 74,
+    "floorRms": 10,
+    "maxRms": 4236
+   }
+  },
+  {
+   "id": "busy-ants-hi-3-1",
+   "lang": "hi-IN",
+   "config": "after",
+   "pause": 600,
+   "words": "हमारी भाषा गंध की भाषा है।",
+   "stuck": 2,
+   "helps": [
+    2
+   ],
+   "helpAfterHesitationMs": 3634,
+   "helpEmitMs": 6159,
+   "helpDoneMs": 7219,
+   "segBStartMs": 7722,
+   "nextOutcome": "read",
+   "nextAtMs": 9965,
+   "recoveryMs": 2746,
+   "completed": true,
+   "result": {
+    "read": 5,
+    "helped": 1,
+    "skipped": 0,
+    "durationMs": 10440.29052734375
+   },
+   "activity": {
+    "chunks": 262,
+    "speechChunks": 74,
+    "floorRms": 10,
+    "maxRms": 4236
+   }
+  },
+  {
+   "id": "busy-ants-hi-3-1",
+   "lang": "hi-IN",
+   "config": "before",
+   "pause": 1500,
+   "words": "हमारी भाषा गंध की भाषा है।",
+   "stuck": 2,
+   "helps": [
+    2
+   ],
+   "helpAfterHesitationMs": 3555,
+   "helpEmitMs": 6080,
+   "helpDoneMs": 7141,
+   "segBStartMs": 7642,
+   "nextOutcome": "read",
+   "nextAtMs": 10876,
+   "recoveryMs": 3735,
+   "completed": true,
+   "result": {
+    "read": 5,
+    "helped": 1,
+    "skipped": 0,
+    "durationMs": 11314.837890625
+   },
+   "activity": {
+    "chunks": 284,
+    "speechChunks": 74,
+    "floorRms": 10,
+    "maxRms": 4236
+   }
+  },
+  {
+   "id": "busy-ants-hi-3-1",
+   "lang": "hi-IN",
+   "config": "after",
+   "pause": 1500,
+   "words": "हमारी भाषा गंध की भाषा है।",
+   "stuck": 2,
+   "helps": [
+    2
+   ],
+   "helpAfterHesitationMs": 3834,
+   "helpEmitMs": 6359,
+   "helpDoneMs": 7419,
+   "segBStartMs": 7920,
+   "nextOutcome": "skipped",
+   "nextAtMs": 11254,
+   "recoveryMs": null,
+   "completed": true,
+   "result": {
+    "read": 4,
+    "helped": 1,
+    "skipped": 1,
+    "durationMs": 11582.88720703125
+   },
+   "activity": {
+    "chunks": 290,
+    "speechChunks": 74,
+    "floorRms": 10,
+    "maxRms": 4236
+   }
+  },
+  {
+   "id": "busy-ants-hi-5-1",
+   "lang": "hi-IN",
+   "config": "before",
+   "pause": 600,
+   "words": "उधर मत जाना।”",
+   "stuck": 1,
+   "helps": [
+    1
+   ],
+   "helpAfterHesitationMs": 3588,
+   "helpEmitMs": 5600,
+   "helpDoneMs": 6570,
+   "segBStartMs": 7070,
+   "nextOutcome": "read",
+   "nextAtMs": 9314,
+   "recoveryMs": 2744,
+   "completed": true,
+   "result": {
+    "read": 2,
+    "helped": 1,
+    "skipped": 0,
+    "durationMs": 9302.761962890625
+   },
+   "activity": {
+    "chunks": 233,
+    "speechChunks": 50,
+    "floorRms": 10,
+    "maxRms": 6067
+   }
+  },
+  {
+   "id": "busy-ants-hi-5-1",
+   "lang": "hi-IN",
+   "config": "after",
+   "pause": 600,
+   "words": "उधर मत जाना।”",
+   "stuck": 1,
+   "helps": [
+    1
+   ],
+   "helpAfterHesitationMs": 3547,
+   "helpEmitMs": 5559,
+   "helpDoneMs": 6528,
+   "segBStartMs": 7029,
+   "nextOutcome": "read",
+   "nextAtMs": 9246,
+   "recoveryMs": 2718,
+   "completed": true,
+   "result": {
+    "read": 2,
+    "helped": 1,
+    "skipped": 0,
+    "durationMs": 9235.710205078125
+   },
+   "activity": {
+    "chunks": 232,
+    "speechChunks": 50,
+    "floorRms": 10,
+    "maxRms": 6067
+   }
+  },
+  {
+   "id": "busy-ants-hi-5-1",
+   "lang": "hi-IN",
+   "config": "before",
+   "pause": 1500,
+   "words": "उधर मत जाना।”",
+   "stuck": 1,
+   "helps": [
+    1,
+    2
+   ],
+   "helpAfterHesitationMs": 3748,
+   "helpEmitMs": 5760,
+   "helpDoneMs": 6729,
+   "segBStartMs": 7231,
+   "nextOutcome": "helped",
+   "nextAtMs": 8789,
+   "recoveryMs": null,
+   "completed": true,
+   "result": {
+    "read": 1,
+    "helped": 2,
+    "skipped": 0,
+    "durationMs": 8778.472900390625
+   },
+   "activity": {
+    "chunks": 220,
+    "speechChunks": 37,
+    "floorRms": 10,
+    "maxRms": 6067
+   }
+  },
+  {
+   "id": "busy-ants-hi-5-1",
+   "lang": "hi-IN",
+   "config": "after",
+   "pause": 1500,
+   "words": "उधर मत जाना।”",
+   "stuck": 1,
+   "helps": [
+    1
+   ],
+   "helpAfterHesitationMs": 3548,
+   "helpEmitMs": 5561,
+   "helpDoneMs": 6529,
+   "segBStartMs": 7030,
+   "nextOutcome": "read",
+   "nextAtMs": 10125,
+   "recoveryMs": 3596,
+   "completed": true,
+   "result": {
+    "read": 2,
+    "helped": 1,
+    "skipped": 0,
+    "durationMs": 10116.087158203125
+   },
+   "activity": {
+    "chunks": 254,
+    "speechChunks": 50,
+    "floorRms": 10,
+    "maxRms": 6067
+   }
+  },
+  {
+   "id": "busy-ants-hi-8-0",
+   "lang": "hi-IN",
+   "config": "before",
+   "pause": 600,
+   "words": "दरवाज़ा बंद है तो क्या हुआ?",
+   "stuck": 2,
+   "helps": [
+    2
+   ],
+   "helpAfterHesitationMs": 3538,
+   "helpEmitMs": 6001,
+   "helpDoneMs": 6917,
+   "segBStartMs": 7417,
+   "nextOutcome": "read",
+   "nextAtMs": 9568,
+   "recoveryMs": 2651,
+   "completed": true,
+   "result": {
+    "read": 5,
+    "helped": 1,
+    "skipped": 0,
+    "durationMs": 9882.93701171875
+   },
+   "activity": {
+    "chunks": 248,
+    "speechChunks": 60,
+    "floorRms": 10,
+    "maxRms": 4014
+   }
+  },
+  {
+   "id": "busy-ants-hi-8-0",
+   "lang": "hi-IN",
+   "config": "after",
+   "pause": 600,
+   "words": "दरवाज़ा बंद है तो क्या हुआ?",
+   "stuck": 2,
+   "helps": [
+    2
+   ],
+   "helpAfterHesitationMs": 3618,
+   "helpEmitMs": 6080,
+   "helpDoneMs": 6996,
+   "segBStartMs": 7498,
+   "nextOutcome": "read",
+   "nextAtMs": 9692,
+   "recoveryMs": 2696,
+   "completed": true,
+   "result": {
+    "read": 5,
+    "helped": 1,
+    "skipped": 0,
+    "durationMs": 9969.709716796875
+   },
+   "activity": {
+    "chunks": 250,
+    "speechChunks": 60,
+    "floorRms": 10,
+    "maxRms": 4014
+   }
+  },
+  {
+   "id": "busy-ants-hi-8-0",
+   "lang": "hi-IN",
+   "config": "before",
+   "pause": 1500,
+   "words": "दरवाज़ा बंद है तो क्या हुआ?",
+   "stuck": 2,
+   "helps": [
+    2
+   ],
+   "helpAfterHesitationMs": 3618,
+   "helpEmitMs": 6081,
+   "helpDoneMs": 6996,
+   "segBStartMs": 7497,
+   "nextOutcome": "read",
+   "nextAtMs": 10559,
+   "recoveryMs": 3563,
+   "completed": true,
+   "result": {
+    "read": 5,
+    "helped": 1,
+    "skipped": 0,
+    "durationMs": 10915.5947265625
+   },
+   "activity": {
+    "chunks": 274,
+    "speechChunks": 60,
+    "floorRms": 10,
+    "maxRms": 4014
+   }
+  },
+  {
+   "id": "busy-ants-hi-8-0",
+   "lang": "hi-IN",
+   "config": "after",
+   "pause": 1500,
+   "words": "दरवाज़ा बंद है तो क्या हुआ?",
+   "stuck": 2,
+   "helps": [
+    2
+   ],
+   "helpAfterHesitationMs": 4017,
+   "helpEmitMs": 6480,
+   "helpDoneMs": 7395,
+   "segBStartMs": 7896,
+   "nextOutcome": "read",
+   "nextAtMs": 10770,
+   "recoveryMs": 3374,
+   "completed": true,
+   "result": {
+    "read": 5,
+    "helped": 1,
+    "skipped": 0,
+    "durationMs": 11106.941650390625
+   },
+   "activity": {
+    "chunks": 278,
+    "speechChunks": 60,
+    "floorRms": 10,
+    "maxRms": 4014
+   }
+  },
+  {
+   "id": "wl-test-kite-1-1",
+   "lang": "en-IN",
+   "config": "before",
+   "pause": 600,
+   "words": "Her kite goes up and up.",
+   "stuck": 2,
+   "helps": [
+    2
+   ],
+   "helpAfterHesitationMs": 3499,
+   "helpEmitMs": 5761,
+   "helpDoneMs": 6858,
+   "segBStartMs": 7359,
+   "nextOutcome": "read",
+   "nextAtMs": 9685,
+   "recoveryMs": 2827,
+   "completed": true,
+   "result": {
+    "read": 5,
+    "helped": 1,
+    "skipped": 0,
+    "durationMs": 9674.012451171875
+   },
+   "activity": {
+    "chunks": 243,
+    "speechChunks": 54,
+    "floorRms": 10,
+    "maxRms": 5158
+   }
+  },
+  {
+   "id": "wl-test-kite-1-1",
+   "lang": "en-IN",
+   "config": "after",
+   "pause": 600,
+   "words": "Her kite goes up and up.",
+   "stuck": 2,
+   "helps": [
+    2
+   ],
+   "helpAfterHesitationMs": 3618,
+   "helpEmitMs": 5880,
+   "helpDoneMs": 6977,
+   "segBStartMs": 7477,
+   "nextOutcome": "read",
+   "nextAtMs": 9770,
+   "recoveryMs": 2793,
+   "completed": true,
+   "result": {
+    "read": 5,
+    "helped": 1,
+    "skipped": 0,
+    "durationMs": 9993.739990234375
+   },
+   "activity": {
+    "chunks": 251,
+    "speechChunks": 54,
+    "floorRms": 10,
+    "maxRms": 5158
+   }
+  },
+  {
+   "id": "wl-test-kite-1-1",
+   "lang": "en-IN",
+   "config": "before",
+   "pause": 1500,
+   "words": "Her kite goes up and up.",
+   "stuck": 2,
+   "helps": [
+    2
+   ],
+   "helpAfterHesitationMs": 3698,
+   "helpEmitMs": 5960,
+   "helpDoneMs": 7057,
+   "segBStartMs": 7559,
+   "nextOutcome": "read",
+   "nextAtMs": 10726,
+   "recoveryMs": 3669,
+   "completed": true,
+   "result": {
+    "read": 5,
+    "helped": 1,
+    "skipped": 0,
+    "durationMs": 10968.4189453125
+   },
+   "activity": {
+    "chunks": 275,
+    "speechChunks": 53,
+    "floorRms": 10,
+    "maxRms": 5158
+   }
+  },
+  {
+   "id": "wl-test-kite-1-1",
+   "lang": "en-IN",
+   "config": "after",
+   "pause": 1500,
+   "words": "Her kite goes up and up.",
+   "stuck": 2,
+   "helps": [
+    2
+   ],
+   "helpAfterHesitationMs": 4218,
+   "helpEmitMs": 6480,
+   "helpDoneMs": 7577,
+   "segBStartMs": 8078,
+   "nextOutcome": "read",
+   "nextAtMs": 11339,
+   "recoveryMs": 3762,
+   "completed": true,
+   "result": {
+    "read": 5,
+    "helped": 1,
+    "skipped": 0,
+    "durationMs": 11328.3232421875
+   },
+   "activity": {
+    "chunks": 284,
+    "speechChunks": 53,
+    "floorRms": 10,
+    "maxRms": 5158
+   }
+  },
+  {
+   "id": "wl-test-kite-2-1",
+   "lang": "en-IN",
+   "config": "before",
+   "pause": 600,
+   "words": "Look at the bird!",
+   "stuck": 1,
+   "helps": [
+    1
+   ],
+   "helpAfterHesitationMs": 3535,
+   "helpEmitMs": 5560,
+   "helpDoneMs": 6530,
+   "segBStartMs": 7030,
+   "nextOutcome": "read",
+   "nextAtMs": 9284,
+   "recoveryMs": 2754,
+   "completed": true,
+   "result": {
+    "read": 3,
+    "helped": 1,
+    "skipped": 0,
+    "durationMs": 9274.0703125
+   },
+   "activity": {
+    "chunks": 233,
+    "speechChunks": 46,
+    "floorRms": 10,
+    "maxRms": 6595
+   }
+  },
+  {
+   "id": "wl-test-kite-2-1",
+   "lang": "en-IN",
+   "config": "after",
+   "pause": 600,
+   "words": "Look at the bird!",
+   "stuck": 1,
+   "helps": [
+    1
+   ],
+   "helpAfterHesitationMs": 3535,
+   "helpEmitMs": 5560,
+   "helpDoneMs": 6528,
+   "segBStartMs": 7029,
+   "nextOutcome": "read",
+   "nextAtMs": 9290,
+   "recoveryMs": 2762,
+   "completed": true,
+   "result": {
+    "read": 3,
+    "helped": 1,
+    "skipped": 0,
+    "durationMs": 9282.030029296875
+   },
+   "activity": {
+    "chunks": 233,
+    "speechChunks": 46,
+    "floorRms": 10,
+    "maxRms": 6595
+   }
+  },
+  {
+   "id": "wl-test-kite-2-1",
+   "lang": "en-IN",
+   "config": "before",
+   "pause": 1500,
+   "words": "Look at the bird!",
+   "stuck": 1,
+   "helps": [
+    1
+   ],
+   "helpAfterHesitationMs": 3576,
+   "helpEmitMs": 5601,
+   "helpDoneMs": 6570,
+   "segBStartMs": 7071,
+   "nextOutcome": "read",
+   "nextAtMs": 10287,
+   "recoveryMs": 3717,
+   "completed": true,
+   "result": {
+    "read": 3,
+    "helped": 1,
+    "skipped": 0,
+    "durationMs": 10276.429443359375
+   },
+   "activity": {
+    "chunks": 258,
+    "speechChunks": 47,
+    "floorRms": 10,
+    "maxRms": 6595
+   }
+  },
+  {
+   "id": "wl-test-kite-2-1",
+   "lang": "en-IN",
+   "config": "after",
+   "pause": 1500,
+   "words": "Look at the bird!",
+   "stuck": 1,
+   "helps": [
+    1
+   ],
+   "helpAfterHesitationMs": 3535,
+   "helpEmitMs": 5560,
+   "helpDoneMs": 6529,
+   "segBStartMs": 7029,
+   "nextOutcome": "read",
+   "nextAtMs": 10167,
+   "recoveryMs": 3638,
+   "completed": true,
+   "result": {
+    "read": 3,
+    "helped": 1,
+    "skipped": 0,
+    "durationMs": 10156.1181640625
+   },
+   "activity": {
+    "chunks": 255,
+    "speechChunks": 47,
+    "floorRms": 10,
+    "maxRms": 6595
+   }
+  }
+ ]
+}

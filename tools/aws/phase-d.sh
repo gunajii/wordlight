@@ -13,8 +13,12 @@ exec > >(tee -a "$LOG") 2>&1
 fail() { echo; echo "PHASE D STOPPED: $*"; echo "log: $LOG — tell Claude \"phase D stopped\""; exit 1; }
 aws sts get-caller-identity --query Account --output text >/dev/null || fail "no AWS credentials in this terminal (aws login)"
 node tools/aws/cost-report.ts
-echo "== 1. help recovery on the real recogniser (~8 min)"
-node tools/s2/help-recovery.ts || fail "help-recovery failed"
+if ls -d docs/results/help/recovery-* >/dev/null 2>&1 && [ "${1:-}" != --remeasure ]; then
+  echo "== 1. help recovery: already measured ($(ls -d docs/results/help/recovery-* | tail -1)) — pass --remeasure to run again"
+else
+  echo "== 1. help recovery on the real recogniser (~8 min)"
+  node tools/s2/help-recovery.ts || fail "help-recovery failed"
+fi
 echo "== 2. deploy"
 IP=$(aws cloudformation describe-stacks --stack-name wordlight-dev --query "Stacks[0].Outputs[?OutputKey=='PublicIp'].OutputValue" --output text)
 HOST="$(echo "$IP" | tr . -).sslip.io"
@@ -22,7 +26,7 @@ cert() { echo | openssl s_client -connect "$HOST:443" -servername "$HOST" 2>/dev
 ID=$(aws cloudformation describe-stacks --stack-name wordlight-dev --query "Stacks[0].Outputs[?OutputKey=='InstanceId'].OutputValue" --output text)
 STATE=$(aws ec2 describe-instances --instance-ids "$ID" --query 'Reservations[0].Instances[0].State.Name' --output text)
 echo "instance state before: $STATE"
-if [ "$STATE" != running ]; then aws ec2 start-instances --instance-ids "$ID" >/dev/null; aws ec2 wait instance-running --instance-ids "$ID"; sleep 60; fi
+if [ "$STATE" != running ]; then bash tools/aws/start-server.sh || fail "could not start the server instance"; sleep 60; fi
 BEFORE=$(cert); echo "certificate before: $BEFORE"
 bash infra/aws/deploy.sh || fail "deploy failed"
 sleep 5; AFTER=$(cert); echo "certificate after:  $AFTER"

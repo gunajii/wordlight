@@ -31,7 +31,7 @@ gzip -9 "$TMP/app.tar" && aws s3 cp "$TMP/app.tar.gz" "s3://$BUCKET/wordlight/ap
 echo "uploaded code to s3://$BUCKET/wordlight/app.tgz"
 if aws cloudformation describe-stacks --region "$REGION" --stack-name $STACK >/dev/null 2>&1; then
   ID=$(aws cloudformation describe-stacks --region "$REGION" --stack-name $STACK --query "Stacks[0].Outputs[?OutputKey=='InstanceId'].OutputValue" --output text)
-  aws ec2 start-instances --region "$REGION" --instance-ids "$ID" >/dev/null; aws ec2 wait instance-running --region "$REGION" --instance-ids "$ID"
+  bash tools/aws/start-server.sh || { echo "could not start the server instance"; exit 1; }
   CMD=$(aws ssm send-command --region "$REGION" --instance-ids "$ID" --document-name AWS-RunShellScript --parameters 'commands=["/usr/local/bin/wordlight-update","bash /opt/wordlight/app/infra/aws/on-update.sh"]' --query Command.CommandId --output text)
   echo "update sent ($CMD); waiting…"; aws ssm wait command-executed --region "$REGION" --command-id "$CMD" --instance-id "$ID" || true
   aws ssm get-command-invocation --region "$REGION" --command-id "$CMD" --instance-id "$ID" --query StandardOutputContent --output text 2>/dev/null | grep -E 'served key|s:|i:|requesting' || true
