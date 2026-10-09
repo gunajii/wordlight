@@ -93,6 +93,13 @@ export interface WordSkipped extends Envelope {
   turnId: string;
   index: number;
 }
+/** After a help: the child said the helped word back (said: true), or the line moved on without it (false). */
+export interface WordRepeated extends Envelope {
+  type: 'word.repeated';
+  turnId: string;
+  index: number;
+  said: boolean;
+}
 export interface LineDone extends Envelope {
   type: 'line.done';
   turnId: string;
@@ -121,7 +128,7 @@ export interface SessionSummary extends Envelope {
 export type WordLightEvent =
   | TurnStart | TurnHelp | TurnHelpDone | TurnCancel
   | ReaderSave | MicState
-  | WordRead | WordHelped | WordSkipped | LineDone | ReaderStatus | SessionSummary;
+  | WordRead | WordHelped | WordSkipped | WordRepeated | LineDone | ReaderStatus | SessionSummary;
 
 export type EventType = WordLightEvent['type'];
 
@@ -136,6 +143,7 @@ export const SENDERS: Record<EventType, Role | 'server'> = {
   'word.read': 'server',
   'word.helped': 'server',
   'word.skipped': 'server',
+  'word.repeated': 'server',
   'line.done': 'server',
   'reader.status': 'server',
   'session.summary': 'server',

@@ -14,6 +14,10 @@ export interface TurnState {
   words: string[];
   marks: WordMark[];
   helpIndex: number | null;
+  /** after a help: the helped word the child may now say back (null when not waiting) */
+  repeatIndex: number | null;
+  /** helped words the child said back */
+  repeated: boolean[];
   result: { read: number; helped: number; skipped: number; durationMs: number } | null;
   cancelReason: string | null;
 }
@@ -25,11 +29,12 @@ export type TurnEvent =
   | { type: 'word-helped'; index: number }
   | { type: 'word-skipped'; index: number }
   | { type: 'help-done' }
+  | { type: 'word-repeated'; index: number; said: boolean }
   | { type: 'line-done'; read: number; helped: number; skipped: number; durationMs: number }
   | { type: 'cancel'; reason: string }
   | { type: 'finish' };
 
-export const idle = (): TurnState => ({ phase: 'LISTEN', turnId: null, readerName: null, words: [], marks: [], helpIndex: null, result: null, cancelReason: null });
+export const idle = (): TurnState => ({ phase: 'LISTEN', turnId: null, readerName: null, words: [], marks: [], helpIndex: null, repeatIndex: null, repeated: [], result: null, cancelReason: null });
 
 const ACTIVE: TurnPhase[] = ['TURN_START', 'LISTENING', 'READING', 'HELP'];
 const ALLOWED: Record<TurnEvent['type'], TurnPhase[]> = {
@@ -39,6 +44,7 @@ const ALLOWED: Record<TurnEvent['type'], TurnPhase[]> = {
   'word-helped': ['TURN_START', 'LISTENING', 'READING', 'HELP'],
   'word-skipped': ['TURN_START', 'LISTENING', 'READING', 'HELP'],
   'help-done': ['HELP', 'READING', 'LISTENING'],
+  'word-repeated': ['HELP', 'READING', 'LISTENING'],
   'line-done': ACTIVE,
   cancel: ACTIVE,
   finish: ['DONE', 'CANCEL'],
@@ -46,17 +52,18 @@ const ALLOWED: Record<TurnEvent['type'], TurnPhase[]> = {
 
 export function turnReduce(s: TurnState, e: TurnEvent): { state: TurnState; rejected: string | null } {
   if (!ALLOWED[e.type].includes(s.phase)) return { state: s, rejected: `${e.type} not allowed in ${s.phase}` };
-  const n: TurnState = { ...s, marks: s.marks.slice() };
+  const n: TurnState = { ...s, marks: s.marks.slice(), repeated: s.repeated.slice() };
   const mark = (i: number, m: WordMark) => { if (i >= 0 && i < n.marks.length && n.marks[i] === 'pending') n.marks[i] = m; };
   switch (e.type) {
-    case 'begin': return { state: { ...idle(), phase: 'TURN_START', turnId: e.turnId, readerName: e.readerName, words: e.words.slice(), marks: e.words.map(() => 'pending') }, rejected: null };
+    case 'begin': return { state: { ...idle(), phase: 'TURN_START', turnId: e.turnId, readerName: e.readerName, words: e.words.slice(), marks: e.words.map(() => 'pending'), repeated: e.words.map(() => false) }, rejected: null };
     case 'mic-open': n.phase = 'LISTENING'; break;
-    case 'word-read': mark(e.index, 'read'); if (n.phase !== 'HELP') n.phase = 'READING'; break;
+    case 'word-read': mark(e.index, 'read'); if (n.phase !== 'HELP') n.phase = 'READING'; if (n.repeatIndex !== null && e.index > n.repeatIndex) n.repeatIndex = null; break;
     case 'word-skipped': mark(e.index, 'skipped'); if (n.phase !== 'HELP') n.phase = 'READING'; break;
-    case 'word-helped': mark(e.index, 'helped'); n.phase = 'HELP'; n.helpIndex = e.index; break;
+    case 'word-helped': mark(e.index, 'helped'); n.phase = 'HELP'; n.helpIndex = e.index; n.repeatIndex = e.index; break;
+    case 'word-repeated': if (e.said && e.index >= 0 && e.index < n.repeated.length) n.repeated[e.index] = true; if (n.repeatIndex === e.index) n.repeatIndex = null; break;
     case 'help-done': n.phase = 'READING'; n.helpIndex = null; break;
-    case 'line-done': n.phase = 'DONE'; n.helpIndex = null; n.result = { read: e.read, helped: e.helped, skipped: e.skipped, durationMs: e.durationMs }; break;
-    case 'cancel': n.phase = 'CANCEL'; n.helpIndex = null; n.cancelReason = e.reason; break;
+    case 'line-done': n.phase = 'DONE'; n.helpIndex = null; n.repeatIndex = null; n.result = { read: e.read, helped: e.helped, skipped: e.skipped, durationMs: e.durationMs }; break;
+    case 'cancel': n.phase = 'CANCEL'; n.helpIndex = null; n.repeatIndex = null; n.cancelReason = e.reason; break;
     case 'finish': return { state: idle(), rejected: null };
   }
   return { state: n, rejected: null };

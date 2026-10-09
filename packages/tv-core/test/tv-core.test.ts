@@ -108,3 +108,18 @@ test('child-facing text: Hindi for Hindi stories, English otherwise, same keys, 
   for (const s of [...all(en), ...all(hi)]) assert.ok(!/wrong|incorrect|ग़लत|गलत/i.test(s), s);
   for (const s of all(hi)) assert.equal(s, s.normalize('NFC'));
 });
+
+test('turn state: after a help the TV waits for the child to say the word back (shown ✓ when said)', () => {
+  let s = turnReduce(idle(), { type: 'begin', turnId: 't', readerName: 'Riya', words: ['Can', 'you', 'see', 'me?'] }).state;
+  for (const e of [{ type: 'mic-open' }, { type: 'word-read', index: 0 }, { type: 'word-helped', index: 1 }] as TurnEvent[]) s = turnReduce(s, e).state;
+  assert.equal(s.repeatIndex, 1); assert.equal(s.phase, 'HELP');
+  s = turnReduce(s, { type: 'help-done' }).state;
+  assert.equal(s.repeatIndex, 1, 'still waiting after the help word');
+  s = turnReduce(s, { type: 'word-repeated', index: 1, said: true }).state;
+  assert.equal(s.repeatIndex, null); assert.deepEqual(s.repeated, [false, true, false, false]);
+  assert.equal(s.marks[1], 'helped', 'the count stays honest: helped');
+  s = turnReduce(s, { type: 'word-helped', index: 2 }).state; s = turnReduce(s, { type: 'help-done' }).state;
+  s = turnReduce(s, { type: 'word-read', index: 3 }).state;
+  assert.equal(s.repeatIndex, null, 'going on to a later word ends the wait');
+  assert.equal(s.repeated[2], false);
+});

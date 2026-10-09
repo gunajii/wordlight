@@ -5,6 +5,7 @@ export interface ChildText {
   yourTurn(name: string, mode: 'free' | 'echo'): string;
   wellRead: string; listenTogether: string; listenThisOne: string; pairPhoneLine: string;
   help(word: string): string;
+  sayIt(word: string): string;
   lineDone(read: number, helped: number): string;
   progress(done: number, total: number): string;
   micStarting: string; micOn: string; micOff: string; hint: string;
@@ -16,6 +17,7 @@ const en: ChildText = {
   yourTurn: (n, m) => (m === 'echo' ? `${n}, now you say it` : `${n}, your turn`),
   wellRead: 'Well read!', listenTogether: 'Let’s listen together', listenThisOne: 'Let’s listen to this one', pairPhoneLine: 'Pair a phone to read this line yourself next time',
   help: (w) => `Here’s a little help: “${w}”`,
+  sayIt: (w) => `Now you say it: “${w}”`,
   lineDone: (r, h) => `${r} on your own${h ? ` · ${h} with a little help` : ''}`,
   progress: (d, t) => `${d} of ${t} words`,
   micStarting: '○ microphone starting…', micOn: '● listening', micOff: '○ microphone off',
@@ -28,6 +30,7 @@ const hi: ChildText = {
   yourTurn: (n, m) => (m === 'echo' ? `${n}, अब तुम बोलो` : `${n}, अब तुम्हारी बारी`),
   wellRead: 'बहुत बढ़िया पढ़ा!', listenTogether: 'चलो, साथ में सुनते हैं', listenThisOne: 'चलो, इसे सुनते हैं', pairPhoneLine: 'अगली बार फ़ोन जोड़कर यह पंक्ति ख़ुद पढ़ना',
   help: (w) => `थोड़ी मदद: “${w}”`,
+  sayIt: (w) => `अब तुम बोलो: “${w}”`,
   lineDone: (r, h) => `${r} ख़ुद पढ़े${h ? ` · ${h} थोड़ी मदद से` : ''}`,
   progress: (d, t) => `${t} में से ${d} शब्द`,
   micStarting: '○ माइक चालू हो रहा है…', micOn: '● सुन रहे हैं', micOff: '○ माइक बंद',

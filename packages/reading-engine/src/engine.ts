@@ -11,6 +11,10 @@
 //                  playing (helpDone); only then does the child's time start again. If the TV never reports,
 //                  the clock restarts after `helpPendingMaxMs`. (Real loop 2026-10-08: the next word was helped
 //                  while the child was still repeating the helped one.)
+// Say it back      (awaitRepeat) after a help the child gets the chance to say the helped word themselves before
+//                  the line moves on: hearing it → word.repeated {said: true}; moving on to the next word, or
+//                  quiet for stallMs → word.repeated {said: false}. The word stays "helped" in the counts either
+//                  way. (Adult tester 2026-10-09: "it says the word and moves to the next one".)
 // Skip rule        a heard word that matches the word AFTER the cursor skips at most one word,
 //                  and at most `maxSkipsPerLine` per line (omissions). A SUBSTITUTION — a different word was
 //                  already heard in the cursor word's place, then the next word — skips without using that
@@ -31,6 +35,7 @@ export type EngineEvent =
   | { type: 'word.read'; index: number; confidence: number; atMs: number; heard: string }
   | { type: 'word.helped'; index: number; reason: 'stall' | 'asked'; atMs: number }
   | { type: 'word.skipped'; index: number; atMs: number }
+  | { type: 'word.repeated'; index: number; said: boolean; atMs: number }
   | { type: 'line.done'; read: number; helped: number; skipped: number; durationMs: number };
 
 export interface HeardWord {
@@ -62,6 +67,8 @@ export interface TurnOptions {
   awaitHelpDone?: boolean;
   /** Longest wait for helpDone(). Default 4000. */
   helpPendingMaxMs?: number;
+  /** After a help, wait for the child to say the helped word back before moving on. Default false. */
+  awaitRepeat?: boolean;
 }
 
 export class ReadingTurn {
@@ -85,6 +92,9 @@ export class ReadingTurn {
   lastActivityMs: number;
   /** a help word is playing on the TV since this time (awaitHelpDone), else null */
   helpPendingSince: number | null = null;
+  /** the helped word the child may now say back (awaitRepeat), else null */
+  repeatIndex: number | null = null;
+  private readonly awaitRepeat: boolean;
   /** stable non-matching words heard at the current cursor since the last progress (substitutions) */
   private missCount = 0;
   /** Heard words consumed per segment (accepted or confirmed extra); never decreases. */
@@ -99,7 +109,8 @@ export class ReadingTurn {
     this.lastProgressMs = o.startMs;
     this.lastActivityMs = o.startMs;
     this.stallMs = o.stallMs ?? 3000;
-    this.maxStallMs = o.maxStallMs ?? 8000;
+    this.maxStallMs = o.maxStallMs ?? 6000;
+    this.awaitRepeat = o.awaitRepeat ?? false;
     this.awaitHelpDone = o.awaitHelpDone ?? false;
     this.helpPendingMaxMs = o.helpPendingMaxMs ?? 4000;
     this.firstStallMs = o.firstStallMs ?? this.stallMs;
@@ -119,6 +130,14 @@ export class ReadingTurn {
     let h = this.consumed.get(u.segmentId) ?? 0;
     while (h < heard.length && !this.done) {
       const { t, stable, conf } = heard[h];
+      if (this.repeatIndex !== null) {
+        const k = this.repeatIndex;
+        if (wordScore(this.expected[k], t, this.lang, this.policy) > 0) { out.push(this.endRepeat(true, nowMs)); h++; continue; }
+        const next = this.cursor < this.expected.length ? wordScore(this.expected[this.cursor], t, this.lang, this.policy) : 0;
+        if (next > 0) { out.push(this.endRepeat(false, nowMs)); continue; } // the child went on: match it normally
+        if (!stable) break; // may still become the helped word
+        h++; continue; // something else while we wait (a stutter, "um"): ignore
+      }
       const s0 = wordScore(this.expected[this.cursor], t, this.lang, this.policy);
       if (s0 > 0) {
         out.push(this.accept(this.cursor, s0 * (conf ?? 1), t, nowMs));
@@ -162,6 +181,14 @@ export class ReadingTurn {
     return out;
   }
 
+  private endRepeat(said: boolean, nowMs: number): EngineEvent {
+    const index = this.repeatIndex!;
+    this.repeatIndex = null;
+    this.lastProgressMs = nowMs;
+    this.lastActivityMs = nowMs; // the next word gets the full time
+    return { type: 'word.repeated', index, said, atMs: nowMs - this.startMs };
+  }
+
   /** Speech activity now (voice detector on the phone audio). Ignored while a help word plays (the TV's own voice). */
   activity(nowMs: number) {
     if (this.helpPendingSince === null && nowMs > this.lastActivityMs) this.lastActivityMs = nowMs;
@@ -186,6 +213,11 @@ export class ReadingTurn {
     const limit = this.cursor === 0 && this.states.every((s) => s === 'pending' || s === 'skipped') ? this.firstStallMs : this.stallMs;
     const quietMs = nowMs - Math.max(this.lastProgressMs, this.lastActivityMs);
     if (quietMs < limit && nowMs - this.lastProgressMs < Math.max(limit, this.maxStallMs)) return [];
+    if (this.repeatIndex !== null) { // the child did not say the helped word back: move on, no second help
+      const out = [this.endRepeat(false, nowMs)];
+      this.finishIfDone(out, nowMs);
+      return out;
+    }
     return this.helpNext('stall', nowMs);
   }
 
@@ -211,6 +243,7 @@ export class ReadingTurn {
     this.cursor++;
     this.lastProgressMs = nowMs;
     if (this.awaitHelpDone) this.helpPendingSince = nowMs;
+    if (this.awaitRepeat) this.repeatIndex = this.cursor - 1;
     this.advancePastEmpty();
     this.finishIfDone(out, nowMs);
     return out;
@@ -235,7 +268,7 @@ export class ReadingTurn {
   }
 
   private finishIfDone(out: EngineEvent[], nowMs: number) {
-    if (this.done || this.cursor < this.expected.length) return;
+    if (this.done || this.cursor < this.expected.length || this.repeatIndex !== null) return;
     this.done = true;
     const c = this.counts();
     out.push({ type: 'line.done', ...c, durationMs: nowMs - this.startMs });

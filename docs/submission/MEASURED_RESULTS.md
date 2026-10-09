@@ -99,3 +99,17 @@ Nothing on this page comes from a child: no child has used WordLight.
 | Method | `tools/s2/help-recovery.ts`: 10 turn lines from the shipped stories (en 6, hi 4) × reading pace after the helped word (600 / 1500 ms) × driver before / after the 2026-10-09 fix. Reader = Polly Kajal (adult synthetic) → Amazon Transcribe Streaming (ap-south-1) → production hub/driver/engine. The reader reacts to the TV: hesitates (“um… um…” / “अ… अ…”), goes quiet, waits for the help word (start latency 300 ms, leaking into the mic at 30 % — INFERRED constants), repeats it 500 ms later, then reads on. `docs/results/help/recovery-2026-10-09T11-47/` |
 | Result | **Next word helped too early: before 1 / 20, after 0 / 20** (the early help was a Hindi line at the slow pace: जाना helped while the reader was still repeating मत). Next word read: 19 / 20 in both (the other “after” case: की was skipped by recognition, not by the timer). Lines completed 20 / 20 in both. Recovery median 3.56 s before, 3.37 s after; help came ≈ 3.6 s after the hesitation ended in both |
 | Status | **MEASURED, small sample, adult synthetic voice.** The synthetic reader reproduces the reported problem only at the slow pace; the fix removed it there and changed nothing else. A child's timing is UNKNOWN. The real-device check (phase B) is still to run |
+
+## Second real loop on AWS (2026-10-09, after the help-timing fix)
+| | |
+|---|---|
+| Path / reader | Same as the first loop (phone → EC2 → Transcribe → Vega Virtual Device, Echo Mode). ONE ADULT, English, Busy Ants, 4 turns, deliberate stutters |
+| Word lit after spoken | **13 words: e2e median 1 186 ms, p95 1 578 ms; 2 of 13 within 1 s.** Recognition median 1 060 ms; server → TV median 60 ms. `docs/results/e2e/real-20261009T120230Z.json` |
+| Help word on the TV | From the help event to the TV reporting the help clip finished: **1.24–1.50 s (n = 7, median 1.37 s)** — clip start on the VVD + the slow (80 %) word. The child's time now starts after this |
+| Stutter handling | While the tester stuttered, help waited for the sound to stop (or for the 8 s cap — since lowered to 6 s at the tester's request) |
+| Privacy audit | **175 microphone status reports, 0 violations**; mic off 44–83 ms after each turn end. `docs/results/privacy/` |
+| Status | **MEASURED, one adult, n small.** Tester feedback from this run: after a help the line moved straight on, without a chance to say the helped word → “say it back” added (below) |
+
+## Deployment checks (2026-10-09)
+- **Certificate reuse:** a redeploy kept the same certificate (serial `…5F309FAAF5`, issued 2026-10-08) — no new Let's Encrypt issuance. `docs/results/deploy/cert-reuse-20261009T115329Z.txt`
+- **Start-up:** EC2 refused to start the stopped t4g.micro (`InsufficientInstanceCapacity`, W15); the start script switched it to **t4g.small** (same image), which started.

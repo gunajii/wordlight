@@ -1,0 +1,8 @@
+date: 2026-10-09T11:58:24Z
+host: 3-110-13-229.sslip.io
+instance state before deploy: stopped
+before: serial=065A671AC6C4539C9B972CB8C25F309FAAF5
+notBefore=Oct  8 17:21:05 2026 GMT
+after:  serial=065A671AC6C4539C9B972CB8C25F309FAAF5
+notBefore=Oct  8 17:21:05 2026 GMT
+same certificate (no new issuance): yes

@@ -180,3 +180,37 @@ test('help pending without a report from the TV restarts the clock after helpPen
   assert.deepEqual(kinds(t.tick(10999)), []);
   assert.deepEqual(kinds(t.tick(11000)), ['word.helped:2']);
 });
+
+test('say it back: after a help the child can say the helped word; the line waits for it', () => {
+  const t = en('Can you see me?', 0, { stallMs: 3000, awaitHelpDone: true, awaitRepeat: true });
+  say(t, 'can', 1000);
+  assert.deepEqual(kinds(t.tick(4000)), ['word.helped:1']);
+  t.helpDone(5300);
+  assert.equal(t.repeatIndex, 1);
+  const ev = say(t, 'you', 6000, 's2'); // the child says the helped word back
+  assert.deepEqual(ev.map((e) => (e.type === 'word.repeated' ? `repeated:${e.index}:${e.said}` : e.type)), ['repeated:1:true']);
+  assert.equal(t.states[1], 'helped', 'still counted as helped');
+  assert.deepEqual(kinds(say(t, 'see me', 7000, 's3')), ['word.read:2', 'word.read:3', 'line.done']);
+});
+
+test('say it back: going straight on to the next word ends the wait; quiet ends it without a second help', () => {
+  const a = en('Can you see me?', 0, { stallMs: 3000, awaitRepeat: true });
+  say(a, 'can', 1000); a.tick(4000); // helped "you"
+  const ev = say(a, 'see', 5000, 's2');
+  assert.deepEqual(ev.map((e) => (e.type === 'word.repeated' ? `repeated:${e.index}:${e.said}` : `${e.type}:${'index' in e ? e.index : ''}`)), ['repeated:1:false', 'word.read:2']);
+  const b = en('Can you see me?', 0, { stallMs: 3000, awaitRepeat: true });
+  say(b, 'can', 1000); b.tick(4000);
+  assert.deepEqual(b.tick(6999), []);
+  const q = b.tick(7000);
+  assert.deepEqual(q.map((e) => e.type), ['word.repeated'], 'quiet: the wait ends, no help for the next word yet');
+  assert.deepEqual(b.tick(9999), [], 'the next word gets its full time from the end of the wait');
+  assert.deepEqual(kinds(b.tick(10000)), ['word.helped:2']);
+});
+
+test('say it back on the last word: the line finishes after the child says it (or after the wait)', () => {
+  const t = en('Look at the bird!', 0, { stallMs: 3000, awaitRepeat: true });
+  say(t, 'look at the', 1000);
+  assert.deepEqual(kinds(t.tick(4000)), ['word.helped:3'], 'no line.done yet: the child may say "bird"');
+  const ev = say(t, 'bird', 5000, 's2');
+  assert.deepEqual(ev.map((e) => e.type), ['word.repeated', 'line.done']);
+});

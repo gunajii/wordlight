@@ -191,6 +191,7 @@ export function StoryPlayer({ story, mediaBase, session, leadMs, mode, simulated
         session.send({ t: 'telemetry', kind: 'word-lit', turnId: t.turnId, index: m.index, tvServerMs: session.serverNow() }); // end-to-end latency
         break;
       case 'word.skipped': dispatch({ type: 'word-skipped', index: m.index }); break;
+      case 'word.repeated': dispatch({ type: 'word-repeated', index: m.index, said: !!m.said }); break;
       case 'word.helped': dispatch({ type: 'word-helped', index: m.index }); playHelp(m.index); break;
       case 'line.done': {
         dispatch({ type: 'line-done', read: m.read, helped: m.helped, skipped: m.skipped, durationMs: m.durationMs });
@@ -231,6 +232,7 @@ export function StoryPlayer({ story, mediaBase, session, leadMs, mode, simulated
   const prog = turnProgress(turn.marks);
   const micOn = MIC_ON.includes(turn.phase);
   const helpWord = turn.helpIndex !== null ? turn.words[turn.helpIndex] : null;
+  const sayWord = turn.phase !== 'HELP' && turn.repeatIndex !== null ? turn.words[turn.repeatIndex] : null; // the child's chance to say it back
   const title = turn.phase === 'DONE' ? T.wellRead : turn.phase === 'CANCEL' ? T.listenTogether : T.yourTurn(turn.readerName ?? '', mode);
   const latSorted = lat.current.slice().sort((a, b) => a - b);
   return (
@@ -250,13 +252,15 @@ export function StoryPlayer({ story, mediaBase, session, leadMs, mode, simulated
           </View>
           <View style={st.chips}>
             {turn.words.map((w, i) => {
-              const m = turn.marks[i]; const isNext = m === 'pending' && i === turn.marks.indexOf('pending') && micOn;
-              const box = m === 'read' ? st.chipRead : m === 'helped' ? st.chipHelped : m === 'skipped' ? st.chipSkipped : isNext ? st.chipNext : st.chipPending;
+              const m = turn.marks[i];
+              const isNext = micOn && (turn.repeatIndex !== null ? i === turn.repeatIndex : m === 'pending' && i === turn.marks.indexOf('pending'));
+              const box = isNext && m === 'helped' ? [st.chipHelped, st.chipSayIt] : m === 'read' ? st.chipRead : m === 'helped' ? st.chipHelped : m === 'skipped' ? st.chipSkipped : isNext ? st.chipNext : st.chipPending;
               const txt = m === 'read' ? st.chipTextRead : m === 'helped' ? st.chipTextHelped : m === 'skipped' ? st.chipTextSkipped : isNext ? st.chipTextNext : st.chipTextPending;
-              return <View key={i} style={[st.chip, box]}><Text style={[st.chipText, txt, hf]}>{w}</Text></View>;
+              return <View key={i} style={[st.chip, box]}><Text style={[st.chipText, txt, hf]}>{w}{turn.repeated[i] ? ' ✓' : ''}</Text></View>;
             })}
           </View>
           {turn.phase === 'HELP' && helpWord ? <Text style={[st.helpText, hf]}>{T.help(helpWord)}</Text> : null}
+          {sayWord ? <Text style={[st.helpText, hf]}>{T.sayIt(sayWord)}</Text> : null}
           <Text style={[st.turnSub, hf]}>
             {turn.phase === 'DONE' && turn.result ? T.lineDone(turn.result.read, turn.result.helped) : T.progress(prog.done, prog.total)}
           </Text>
@@ -311,6 +315,7 @@ const st = StyleSheet.create({
   chipNext: { borderColor: '#ffffff', backgroundColor: 'rgba(255,255,255,0.08)' }, chipTextNext: { color: '#ffffff' },
   chipRead: { borderColor: '#5dd39e', backgroundColor: '#1f7a52' }, chipTextRead: { color: '#ffffff' },
   chipHelped: { borderColor: '#ffb347', backgroundColor: '#ffb347' }, chipTextHelped: { color: '#101820' },
+  chipSayIt: { borderWidth: 4, borderColor: '#ffd166' },
   chipSkipped: { borderColor: '#2a3542' }, chipTextSkipped: { color: '#6b7a89' },
   pending: { color: '#c9d6e3' },
   next: { color: '#ffffff', textDecorationLine: 'underline' },

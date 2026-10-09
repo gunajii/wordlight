@@ -58,6 +58,9 @@ export function validateEvent(msg: unknown): Result {
     case 'word.skipped':
       if (!isStr(m.turnId, 64) || !isInt(m.index, 0, 40)) return fail('fields');
       break;
+    case 'word.repeated':
+      if (!isStr(m.turnId, 64) || !isInt(m.index, 0, 40) || typeof m.said !== 'boolean') return fail('fields');
+      break;
     case 'line.done':
       if (!isStr(m.turnId, 64) || !isInt(m.read, 0, 40) || !isInt(m.helped, 0, 40) || !isInt(m.skipped, 0, 40) || !isNum(m.durationMs)) return fail('fields');
       break;

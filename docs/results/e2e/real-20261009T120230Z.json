@@ -1,0 +1,120 @@
+{
+ "measuredAt": "2026-10-09T12:05:36.679Z",
+ "base": "https://3-110-13-229.sslip.io",
+ "session": "XM2T",
+ "rows": [
+  {
+   "turnId": "busy-ants-0-1-mv031p9z",
+   "index": 0,
+   "recognitionMs": 765,
+   "serverToTvMs": 89,
+   "e2eMs": 854
+  },
+  {
+   "turnId": "busy-ants-0-1-mv031p9z",
+   "index": 3,
+   "recognitionMs": 978,
+   "serverToTvMs": 46,
+   "e2eMs": 1024
+  },
+  {
+   "turnId": "busy-ants-2-0-mv032f05",
+   "index": 0,
+   "recognitionMs": 1534,
+   "serverToTvMs": 44,
+   "e2eMs": 1578
+  },
+  {
+   "turnId": "busy-ants-2-0-mv032f05",
+   "index": 1,
+   "recognitionMs": 881,
+   "serverToTvMs": 100,
+   "e2eMs": 982
+  },
+  {
+   "turnId": "busy-ants-2-0-mv032f05",
+   "index": 4,
+   "recognitionMs": 1060,
+   "serverToTvMs": 157,
+   "e2eMs": 1216
+  },
+  {
+   "turnId": "busy-ants-5-1-mv033don",
+   "index": 0,
+   "recognitionMs": 1045,
+   "serverToTvMs": 140,
+   "e2eMs": 1186
+  },
+  {
+   "turnId": "busy-ants-5-1-mv033don",
+   "index": 1,
+   "recognitionMs": 963,
+   "serverToTvMs": 66,
+   "e2eMs": 1029
+  },
+  {
+   "turnId": "busy-ants-5-1-mv033don",
+   "index": 3,
+   "recognitionMs": 1182,
+   "serverToTvMs": 62,
+   "e2eMs": 1244
+  },
+  {
+   "turnId": "busy-ants-7-0-mv033v8s",
+   "index": 0,
+   "recognitionMs": 1154,
+   "serverToTvMs": 45,
+   "e2eMs": 1199
+  },
+  {
+   "turnId": "busy-ants-7-0-mv033v8s",
+   "index": 1,
+   "recognitionMs": 1154,
+   "serverToTvMs": 60,
+   "e2eMs": 1214
+  },
+  {
+   "turnId": "busy-ants-7-0-mv033v8s",
+   "index": 3,
+   "recognitionMs": 1018,
+   "serverToTvMs": 32,
+   "e2eMs": 1050
+  },
+  {
+   "turnId": "busy-ants-7-0-mv033v8s",
+   "index": 4,
+   "recognitionMs": 1089,
+   "serverToTvMs": 60,
+   "e2eMs": 1149
+  },
+  {
+   "turnId": "busy-ants-7-0-mv033v8s",
+   "index": 6,
+   "recognitionMs": 1531,
+   "serverToTvMs": 0,
+   "e2eMs": 1531
+  }
+ ],
+ "summary": {
+  "words": 13,
+  "spokenToEmit": {
+   "n": 13,
+   "median": 1060,
+   "p95": 1534,
+   "max": 1534
+  },
+  "serverToTv": {
+   "n": 13,
+   "median": 60,
+   "p95": 157,
+   "max": 157
+  },
+  "e2e": {
+   "n": 13,
+   "median": 1186,
+   "p95": 1578,
+   "max": 1578
+  },
+  "within1s": 2
+ }
+}

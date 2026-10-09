@@ -13,7 +13,7 @@ import type { SpeechSource, SpeechSession, SpeechUpdate } from './speech.ts';
 import { VoiceActivity } from './vad.ts';
 
 export interface WordTrace {
-  index: number; kind: 'read' | 'helped' | 'skipped'; emitServerMs: number;
+  index: number; kind: 'read' | 'helped' | 'skipped' | 'repeated'; emitServerMs: number; said?: boolean;
   /** server-clock time the word was spoken (Transcribe word start → phone capture clock → server); null if unknown */
   spokenServerMs: number | null; updateReceivedMs: number | null; confidence: number | null; heard?: string; reason?: string;
   /** helped words: when the TV reported the help word finished playing (server clock) */
@@ -35,11 +35,11 @@ interface Live {
 export class ReadingDriver implements TurnDriver {
   private live = new Map<string, Live>();
   readonly traces: TurnTrace[] = [];
-  private readonly o: { hub: SessionHub; source: SpeechSource; now: () => number; stallMs: number; firstStallMs: number; maxStallMs: number; awaitHelpDone: boolean; helpPendingMaxMs: number; voiceActivity: boolean; devTranscripts: boolean; log: (m: string) => void; onTrace?: (t: TurnTrace) => void };
-  constructor(o: { hub: SessionHub; source: SpeechSource; now: () => number; stallMs?: number; firstStallMs?: number; maxStallMs?: number; awaitHelpDone?: boolean; helpPendingMaxMs?: number; voiceActivity?: boolean; devTranscripts?: boolean; log?: (m: string) => void; onTrace?: (t: TurnTrace) => void }) {
+  private readonly o: { hub: SessionHub; source: SpeechSource; now: () => number; stallMs: number; firstStallMs: number; maxStallMs: number; awaitHelpDone: boolean; awaitRepeat: boolean; helpPendingMaxMs: number; voiceActivity: boolean; devTranscripts: boolean; log: (m: string) => void; onTrace?: (t: TurnTrace) => void };
+  constructor(o: { hub: SessionHub; source: SpeechSource; now: () => number; stallMs?: number; firstStallMs?: number; maxStallMs?: number; awaitHelpDone?: boolean; awaitRepeat?: boolean; helpPendingMaxMs?: number; voiceActivity?: boolean; devTranscripts?: boolean; log?: (m: string) => void; onTrace?: (t: TurnTrace) => void }) {
     // awaitHelpDone: the TV reports when the help word has finished (turn.help.done); older TV builds don't, and the
     // engine then restarts the clock after helpPendingMaxMs
-    this.o = { stallMs: 3000, firstStallMs: 5000, maxStallMs: 8000, awaitHelpDone: true, helpPendingMaxMs: 4000, voiceActivity: true, devTranscripts: false, log: () => {}, ...o };
+    this.o = { stallMs: 3000, firstStallMs: 5000, maxStallMs: 6000, awaitHelpDone: true, awaitRepeat: true, helpPendingMaxMs: 4000, voiceActivity: true, devTranscripts: false, log: () => {}, ...o };
   }
 
   start(s: Session, t: ActiveTurn) {
@@ -104,7 +104,7 @@ export class ReadingDriver implements TurnDriver {
 
   private ensureEngine(s: Session, L: Live) {
     if (L.engine) return;
-    L.engine = new ReadingTurn({ words: L.t.turn.words, lang: L.t.turn.lang, startMs: this.o.now(), stallMs: this.o.stallMs, firstStallMs: this.o.firstStallMs, maxStallMs: this.o.maxStallMs, awaitHelpDone: this.o.awaitHelpDone, helpPendingMaxMs: this.o.helpPendingMaxMs });
+    L.engine = new ReadingTurn({ words: L.t.turn.words, lang: L.t.turn.lang, startMs: this.o.now(), stallMs: this.o.stallMs, firstStallMs: this.o.firstStallMs, maxStallMs: this.o.maxStallMs, awaitHelpDone: this.o.awaitHelpDone, awaitRepeat: this.o.awaitRepeat, helpPendingMaxMs: this.o.helpPendingMaxMs });
     L.ticker = setInterval(() => { if (L.engine) this.emitAll(s, L, L.engine.tick(this.o.now()), null); }, 100);
     (L.ticker as any).unref?.();
   }
@@ -137,6 +137,9 @@ export class ReadingDriver implements TurnDriver {
       } else if (e.type === 'word.skipped') {
         L.trace.events.push({ index: e.index, kind: 'skipped', emitServerMs: now, spokenServerMs: null, updateReceivedMs: null, confidence: null });
         this.o.hub.emit(s, { type: 'word.skipped', sessionId: s.id, turnId, index: e.index }, true);
+      } else if (e.type === 'word.repeated') {
+        L.trace.events.push({ index: e.index, kind: 'repeated', said: e.said, emitServerMs: now, spokenServerMs: null, updateReceivedMs: u?.receivedAtMs ?? null, confidence: null });
+        this.o.hub.emit(s, { type: 'word.repeated', sessionId: s.id, turnId, index: e.index, said: e.said }, true);
       } else if (e.type === 'line.done') {
         L.trace.result = { read: e.read, helped: e.helped, skipped: e.skipped, durationMs: e.durationMs };
         this.o.hub.recordLine(s, L.t, { ...e, helpedWords: L.engine ? L.engine.display.filter((_, i) => L.engine!.states[i] === 'helped') : [] });
