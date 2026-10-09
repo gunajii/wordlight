@@ -315,7 +315,8 @@ const st = StyleSheet.create({
   chipNext: { borderColor: '#ffffff', backgroundColor: 'rgba(255,255,255,0.08)' }, chipTextNext: { color: '#ffffff' },
   chipRead: { borderColor: '#5dd39e', backgroundColor: '#1f7a52' }, chipTextRead: { color: '#ffffff' },
   chipHelped: { borderColor: '#ffb347', backgroundColor: '#ffb347' }, chipTextHelped: { color: '#101820' },
-  chipSayIt: { borderWidth: 4, borderColor: '#ffd166' },
+  // the helped word stays the "current" word (same white frame as chipNext) until the child has had their go at it
+  chipSayIt: { borderColor: '#ffffff' },
   chipSkipped: { borderColor: '#2a3542' }, chipTextSkipped: { color: '#6b7a89' },
   pending: { color: '#c9d6e3' },
   next: { color: '#ffffff', textDecorationLine: 'underline' },

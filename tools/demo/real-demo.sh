@@ -8,6 +8,9 @@
 # 4. the server is STOPPED again (answer n to keep it running)
 set -uo pipefail
 cd "$(dirname "$0")/../.."
+# The Virtual Device's clock drifts (seen 7–14 h behind after the Mac slept, W14); a restart resyncs it.
+read -r -p "Restart the Vega Virtual Device first (recommended before recording)? [Y/n] " r
+if [ "${r:-Y}" != n ]; then [ -f "$HOME/vega/env" ] && source "$HOME/vega/env"; vega virtual-device stop || true; vega virtual-device start; fi
 bash tools/aws/phase-b.sh
 read -r -p "Stop the AWS server now? [Y/n] " a
 [ "${a:-Y}" = n ] || bash infra/aws/deploy.sh --stop

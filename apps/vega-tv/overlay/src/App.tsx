@@ -33,6 +33,7 @@ export const App = () => {
   const [error2, setError2] = useState<string | null>(null); // a story that could not be opened (home stays usable)
   const session = useRef<TvSession | null>(null);
   const fontReady = useDevanagariFont();
+  useEffect(() => { log(`device clock ${new Date().toISOString()} (a clock behind the server certificate's start breaks HTTPS)`); }, []);
   const baselineRunId = useRef<string | undefined | null>(null);
 
   useEffect(() => {
