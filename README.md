@@ -77,7 +77,7 @@ Measurement scripts: `tools/aws/phase-*.sh`. Everything simulated is labelled SI
 | `oss/karaoke-vega` | **Open source:** `@wordlight/karaoke-vega` — word-timed subtitles for Vega (MIT), also at github.com/gunajii/karaoke-vega |
 | `tools/` | Content pipeline (StoryWeaver → Polly → story package), measurement harnesses (S1–S4, help recovery, e2e) |
 | `infra/aws/` | CloudFormation, deploy, start/stop, cost guard, least-privilege policy |
-| `docs/` | Architecture, privacy, security, measured results, friction log (W1–W15), Hindi review, submission texts |
+| `docs/` | Architecture, privacy, security, measured results, friction log (W1–W17), Hindi review, submission texts |
 | `content/stories/` | The two demo stories with their built media (see THIRD_PARTY_NOTICES.md) |
 
 ## Privacy

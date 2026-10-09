@@ -1,7 +1,7 @@
 # Product feedback
 
 Every tool, API and SDK we used. This is first-hand only. "Not used yet" means exactly that. Dated entries with
-reproduction details are in [docs/FRICTION_LOG.md](../FRICTION_LOG.md) (W1–W14).
+reproduction details are in [docs/FRICTION_LOG.md](../FRICTION_LOG.md) (W1–W17).
 
 ## Vega OS / Vega SDK (0.24.12112, CLI 1.4.2) and the Vega Virtual Device
 
