@@ -117,6 +117,13 @@ Nothing on this page comes from a child: no child has used WordLight.
 ## Third real loop (2026-10-09, “say it back”)
 - ONE ADULT, English, Busy Ants, 4 turns, Echo Mode, real Transcribe. 3 words helped; the tester **said 2 of them back**
   (`word.repeated said: true`) and went straight on after the third; every line completed.
+- Word lit after spoken: **17 words, e2e median 1 137 ms, p95 2 244 ms (one slow server → TV delivery, 907 ms); 6 of 17 within 1 s.** `docs/results/e2e/real-20261009T121612Z.json`
 - Privacy audit: **137 reports, 0 violations**; mic off 32–107 ms after each turn end.
 - English and Hindi stories both played end to end (tester report).
 - Privacy across the three AWS sessions: **561 microphone status reports, 0 violations.**
+
+## End to end, all real AWS sessions together (one adult tester, 2026-10-08/09)
+**38 words lit: median 1 125 ms, p95 1 578 ms, 9 of 38 (24 %) within 1 s** from the word being spoken to it lighting
+on the TV (Vega Virtual Device). Against the original ≤ 1 s median target: **not met**; ≈ 1.07 s of it is speech
+recognition. In Echo Mode the child has just heard the line, so the highlight confirms what was said rather than
+leading it — which is why Echo Mode is the product's interaction (S2 decision above). MEASURED; one adult; child UNKNOWN.
