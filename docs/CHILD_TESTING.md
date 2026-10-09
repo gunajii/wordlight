@@ -36,3 +36,24 @@ agrees. The software does not need a child; every automated test uses scripts, s
 >
 > Parent/guardian name: ____________  Signature: ____________  Date: ________
 > ☐ I agree to a session without recording   ☐ I also agree to an audio recording, deleted after scoring
+
+## A child in the demo video (separate permission)
+The note above promises *not* to publish a child's name, voice or picture. A demo video publishes them, so it needs
+its own, specific permission — ask only after explaining that the video will be **public on YouTube/Vimeo** and seen
+by hackathon judges and anyone with the link.
+
+> **Video permission.** The demo video for WordLight (a student hackathon project) will be public online.
+> ☐ My child's **voice** may appear   ☐ my child's **hands/back** may appear (no face)   ☐ my child's **face** may appear
+> Name shown/spoken: ☐ first name ________  ☐ a made-up name (e.g. “Riya”)  ☐ no name
+> I may ask for the video to be taken down or re-cut, and it will be done as soon as possible (copies made by others
+> cannot be recalled). Parent/guardian name: ____________ Signature: ____________ Date: ________
+
+Before recording:
+1. `bash tools/aws/final-checks.sh` shows the **AI services opt-out = optOut** (our rule before any child audio).
+2. The phone's address bar shows the AWS host (`…sslip.io`), not a tunnel.
+3. The parent is in the room for the whole session; the child agrees too and can stop any time; short (≈ 5 min).
+4. Fill the paper sheet for every turn — the session doubles as the first child test (score it with
+   `tools/s2/score-observed.ts`; report it as ONE child, with age, honestly).
+
+In the edit: show the takes as they happened (cutting for length is fine; staging recognition results is not), label
+the clip “a child reading with WordLight (shown with a parent's permission)”, and claim nothing about learning.
