@@ -8,7 +8,7 @@ Parameters:
   ArtifactBucket: { Type: String, Description: S3 bucket holding the code tarball (created by deploy.sh) }
   ArtifactKey: { Type: String, Default: wordlight/app.tgz }
   InstanceType: { Type: String, Default: t4g.micro, AllowedValues: [t4g.micro, t4g.small, t4g.medium], Description: 'micro (1 GiB) is enough for one family session; small if memory runs short' }
-  ReadingMode: { Type: String, Default: free, AllowedValues: [free, echo], Description: 'free = child reads first; echo = TV reads, child repeats (S2 fallback)' }
+  ReadingMode: { Type: String, Default: echo, AllowedValues: [echo, free], Description: 'echo = TV reads, child repeats (the product, chosen from S2); free = child reads first (explicit opt-in only)' }
   Summary: { Type: String, Default: template, AllowedValues: [template, bedrock], Description: 'bedrock also needs BedrockModelId; always falls back to the template' }
   BedrockModelId: { Type: String, Default: '' }
   IdleStopMinutes: { Type: Number, Default: 90, Description: 'stop the instance after this long with no WebSocket activity (cost guard); 0 = never' }

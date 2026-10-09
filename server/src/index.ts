@@ -96,7 +96,8 @@ export function createServer({ hub = new SessionHub({ now: serverNow }), publicU
   let reading: ReadingDriver | null = null;
   let lastActivity = Date.now(); // any WebSocket message: used by the EC2 idle auto-stop
   // Reading strategy (config, not code): 'free' = the child reads the line first; 'echo' = the TV reads it, the child repeats.
-  const readingMode: 'free' | 'echo' = (readingModeOpt ?? process.env.READING_MODE) === 'echo' ? 'echo' : 'free';
+  // Echo Mode is the product (decided from S2); free reading only when explicitly asked for, never by accident
+  const readingMode: 'free' | 'echo' = (readingModeOpt ?? process.env.READING_MODE) === 'free' ? 'free' : 'echo';
   let speechName = 'unknown', speechSimulated = false;
   // Phones need https (microphone). The join link/QR uses the https base when one exists (AWS hostname or the
   // dev tunnel), else the LAN URL (which can pair, but cannot open the microphone).

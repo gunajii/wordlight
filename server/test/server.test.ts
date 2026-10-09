@@ -22,7 +22,7 @@ test('http: session create, QR png, content with Range, TypeScript packages serv
   assert.ok(!/: Lang\)/.test(js), 'type annotations stripped');
   assert.equal((await fetch(`${base}/content/../package.json`)).status, 404);
   assert.equal((await fetch(`${base}/api/sessions/ZZZZ`)).status, 404);
-  assert.deepEqual(await (await fetch(`${base}/api/config`)).json(), { mediaUrl: 'https://media.example', run: { runId: 'r1', leadMs: -339 }, readingMode: 'free', speech: { source: 'transcribe', simulated: false } });
+  assert.deepEqual(await (await fetch(`${base}/api/config`)).json(), { mediaUrl: 'https://media.example', run: { runId: 'r1', leadMs: -339 }, readingMode: 'echo' /* default: Echo Mode unless READING_MODE=free */, speech: { source: 'transcribe', simulated: false } });
 });
 
 test('ws: phone joins, saves a reader; binary audio reaches the driver only during a turn', async () => {

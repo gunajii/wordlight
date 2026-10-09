@@ -49,9 +49,18 @@ Credits are shown in the app and in [docs/CONTENT.md](docs/CONTENT.md).
 ## Run it
 Needs Node ≥ 22.18; the TV app needs the Vega SDK (macOS).
 ```bash
-npm install && npm test        # 197 tests
+git clone https://github.com/gunajii/wordlight && cd wordlight
+npm install && npm test        # 197 tests, no AWS needed
 npm run demo:check             # headless loop with a LOCAL SIMULATION of speech (labelled SIMULATED)
-bash tools/demo/real-demo.sh   # the real path: AWS server + Transcribe + Vega Virtual Device + your phone, then stops the server
+
+# TV app (macOS + Vega SDK 0.24): generate the Vega project once, then build + launch on the Virtual Device
+bash apps/vega-tv/setup.sh
+npm run demo:local             # local server + scripted reader (SIMULATED speech), then in a second terminal:
+bash tools/vvd/run-tv.sh
+
+# the real path (needs your AWS account): deploy once, then each demo starts the server, runs, and stops it
+bash infra/aws/deploy.sh
+bash tools/demo/real-demo.sh   # AWS server + Amazon Transcribe + Vega Virtual Device + your phone
 ```
 AWS: `bash infra/aws/deploy.sh` (CloudFormation + SSM), checks with `node tools/ops/healthcheck.ts https://<host>`.
 Measurement scripts: `tools/aws/phase-*.sh`. Everything simulated is labelled SIMULATED on screen and in reports.
@@ -69,6 +78,7 @@ Measurement scripts: `tools/aws/phase-*.sh`. Everything simulated is labelled SI
 | `tools/` | Content pipeline (StoryWeaver → Polly → story package), measurement harnesses (S1–S4, help recovery, e2e) |
 | `infra/aws/` | CloudFormation, deploy, start/stop, cost guard, least-privilege policy |
 | `docs/` | Architecture, privacy, security, measured results, friction log (W1–W15), Hindi review, submission texts |
+| `content/stories/` | The two demo stories with their built media (see THIRD_PARTY_NOTICES.md) |
 
 ## Privacy
 The phone microphone is on **only during a reading turn**, after a parent agrees, and the phone always shows it.
@@ -76,5 +86,6 @@ Audio goes only to the WordLight server on AWS (HTTPS) and on to Amazon Transcri
 transcript text — only counts. [docs/PRIVACY.md](docs/PRIVACY.md) · [docs/SECURITY.md](docs/SECURITY.md)
 
 ## Licence and attribution
-MIT. Stories CC BY 4.0 (Pratham Books / StoryWeaver; Hindi translation ours). Noto Sans Devanagari: SIL OFL.
+Code: MIT (`LICENSE`). Stories CC BY 4.0 (Pratham Books / StoryWeaver; Hindi translation ours), narration generated
+with Amazon Polly, Noto Sans Devanagari under SIL OFL — details in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
 Code reused from the author's Earshot project: [docs/REUSED.md](docs/REUSED.md).

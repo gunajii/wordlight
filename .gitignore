@@ -13,6 +13,7 @@ recordings/
 bench/runs/
 .env
 .env.*
+!.env.example
 content/stories/s1-timing/
 .dev/
 __pycache__/
@@ -24,3 +25,10 @@ content/stories/*/*.png
 content/sources/*.zip
 content/sources/*.pdf
 content/sources/*.epub
+
+# the two demo stories ship with their built media (StoryWeaver CC BY 4.0 images; narration generated with Amazon
+# Polly) so a fresh clone can run the demo without rebuilding — see THIRD_PARTY_NOTICES.md
+!content/stories/busy-ants/*.mp3
+!content/stories/busy-ants/*.jpg
+!content/stories/busy-ants-hi/*.mp3
+!content/stories/busy-ants-hi/*.jpg
