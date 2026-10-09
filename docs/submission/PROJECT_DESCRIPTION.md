@@ -1,64 +1,70 @@
-# WordLight — Devpost draft
+# WordLight — Devpost text
 
-> Fill the bracketed [MEASURE] slots only from docs/submission/MEASURED_RESULTS.md. If a number isn't measured, remove
-> the sentence; don't round up.
+Every number below is in docs/submission/MEASURED_RESULTS.md with its device, sample and method.
+
+## Tagline
+The TV already has the words. WordLight teaches your child to read them.
 
 ## Inspiration
-Children already see words on the TV: titles, subtitles, songs. But watching is passive. Same-language subtitling
-(highlighting words as they are spoken) has been used in Indian literacy programmes. We wanted to take that idea one
-step further: the TV stops, and the child reads.
+Children already see words on the TV — titles, subtitles, songs — but watching is passive. Same-language subtitling
+(lighting words as they are spoken) has been used in Indian literacy programmes. We wanted the next step: the TV
+stops, and the child reads.
 
 ## What it does
-**WordLight turns a narrated picture-book story on Fire TV into reading practice.**
-- Each word lights up as the narrator says it.
-- At a marked line, the TV says **"Riya, your turn."** Riya reads the line aloud into a phone paired by QR code. As
-  she says each word, it lights up on the TV.
-- If she stalls for about 3 seconds, the TV says the next word and marks it amber, then the story carries on.
-  Nothing is ever marked "wrong".
-- At the end, the parent's phone shows a plain summary: words read independently, and words that needed help.
-- Stories come from Pratham Books' StoryWeaver (CC BY 4.0) in English and Hindi.
+WordLight turns a family Fire TV into an interactive reading stage: the TV narrates and shows the words, while a phone
+lets the child read back and get immediate, encouraging feedback.
+- **Listen:** an illustrated story plays; each word lights up as the narrator says it.
+- **Your turn:** at a marked line the TV says **“Riya, now you say it.”** Riya repeats the line into a phone paired by
+  QR code (a web page, no app). Each word turns green on the TV as she says it.
+- **Help, never “wrong”:** if she is stuck, the TV waits while she is still trying (a stutter counts as trying), then
+  says the word slowly from its own clip and marks it amber — and gives her the chance to say it herself (✓).
+- **Well read!** The TV and the parent's phone show what happened: words read on her own, words that needed help.
+- **Two languages:** *Busy Ants* (Pratham Books, StoryWeaver, CC BY 4.0) in English, and our own Hindi translation.
 
 ## How we built it
-- **Fire TV / Vega OS.** The app is built with React Native for Vega and plays narration through the W3C
-  `AudioPlayer`. Word timing uses our open-source `@wordlight/karaoke-vega`, which turns a coarse `currentTime` into
-  an accurate playhead and corrects for measured audio latency. It is fully usable with the remote.
-- **AI.**
-  - Amazon Transcribe Streaming recognises what the child reads, with partial results streamed as the child speaks.
-  - A **strict, deterministic reading engine** decides what lights. AI never judges the child. A misread word does
-    not light. Spelling noise on long words is tolerated; vowel changes (big/bag, कल/काल) are not.
-  - Amazon Polly (neural, Kajal) narrates each story. Its word speech marks, mapped by UTF-8 byte offset so
-    Devanagari works, drive the highlight.
-- **Multimodal.** TV, remote, phone microphone (no app install, a web page) and cloud speech services.
-- **Family.** The parent consents on the phone. The parent summary is computed from real counts. Optionally,
-  Bedrock rewords it, but the result is rejected if it changes a number or makes a claim.
-- **Privacy by design.**
-  - The microphone is on only during a reading turn, and the phone always shows ON/OFF.
-  - Automated tests check this in every state.
-  - WordLight stores no audio and no transcript text, only counts.
-  - Child audio goes only to our AWS HTTPS endpoint.
+- **Fire TV / Vega OS:** React Native for Vega, the W3C `AudioPlayer`, remote-only navigation, a diagnostics overlay.
+  Word timing uses our open-source `@wordlight/karaoke-vega`, which turns a coarse `currentTime` into an accurate
+  playhead and cancels the measured audio latency.
+- **AI that responds to the child (not a chatbot):**
+  - **Amazon Transcribe Streaming** hears the child (en-IN, hi-IN) through our AWS server.
+  - A **strict, deterministic reading engine** decides what lights: a misread does not light; spelling noise on long
+    words is tolerated, vowel changes (big/bag, कल/काल) are not; the cursor never goes backwards.
+  - A **voice-activity detector** on the phone audio tells “still trying” from silence, so help never interrupts.
+- **Narration with Amazon Polly:** the expressive generative Kajal voice for English and neural Kajal for Hindi (SSML
+  pace, volume, pauses), plus a slow single-word clip for every word in a reading line. Polly's generative voice has
+  no word timings, so Amazon Transcribe listens to the narration and our aligner maps its words onto the known text.
+- **AWS:** one Graviton EC2 instance behind Caddy TLS (CloudFormation, SSM, instance role, private S3), DynamoDB for
+  per-session counts, AWS Budgets with a USD 100 ceiling, and the AWS AI-services opt-out for a children's app.
+- **Privacy by design:** the microphone is on only during a reading turn and the phone always shows it; no audio or
+  transcript text is stored; audio goes only to our AWS endpoint.
 
-## Evidence (only what we measured)
-- **Narration and highlight in sync on the Vega Virtual Device:** median offset −1.0 ms, SD 11 ms, drift < 1 ms/min,
-  over 242 words, after a one-time latency calibration. Physical Fire TV: not yet tested.
-- **Phone microphone (iPhone Safari, Android Chrome):** about 52,000 audio chunks with 0 lost; capture → server
-  median 50–90 ms. The microphone switched off at every interruption we tested (Wi-Fi loss, lock, app switch, reload).
-- **Speech recognition in the loop:** [MEASURE: S2 — % of correctly read words lit within 1 s; % of misreads accepted;
-  per language; speaker = adult/synthetic].
-- **Polly word timing:** [MEASURE: S4 — % of words within 50 ms].
-- **End to end** (word spoken → lit on TV): [MEASURE].
-- We have **not** measured any effect on children's reading, and we don't claim one.
+## What we measured (and what we decided because of it)
+- **Highlight sync on the Vega Virtual Device:** median −1.0 ms, SD 11 ms over 242 words after a one-time latency
+  calibration. Physical Fire TV: not tested.
+- **Phone microphone:** ≈ 52 000 audio chunks, 0 lost; capture → server 50–90 ms (iPhone Safari, Android Chrome).
+- **Speech recognition (169 test lines, synthetic adult voice):** ≈ 95 % of words recognised, but only 51 % within
+  1 s. So we chose **Echo Mode** — hear the line, then say it — instead of asking the child to read first.
+- **Real loop (phone → AWS → Transcribe → TV, adult tester):** a word lights a median 1.13 s after it is spoken
+  (38 words); the network and TV add ≈ 60 ms.
+- **Narration timing:** Polly's speech marks were within 50 ms for 53 % of words; our generative-voice alignment
+  measured a 40 ms median error vs 52 ms on the same pages.
+- **Help timing:** the next word was helped too early in 1 of 20 synthetic runs before our fix, 0 of 20 after.
+- **Privacy on AWS:** 561 microphone status reports from the phone, 0 violations.
+- We have **not** tested with children and do **not** claim any effect on reading.
 
 ## Challenges
-- Vega's media player silently refuses `http://` media (MediaError 4). The only clue was in the native log.
-- Polly speech marks are byte offsets: Devanagari is 3 bytes per character.
-- Phone microphones must stop on lock, app switch and network loss, and must never resume on their own.
-- New-account AWS onboarding: our friction log has the details.
+- Recognition latency (~1 s) made “read first” feel late: measured, then redesigned around Echo Mode.
+- Polly speech marks are UTF-8 byte offsets (3 bytes per Devanagari character); SSML shifts them again.
+- The Vega media player silently refuses `http://` media; the virtual device's drifting clock broke HTTPS.
+- A new AWS account: staggered service activation, Bedrock blocked at account level, EC2 capacity on restart — all in
+  our friction log.
 
-## What we learned / What's next
-[after measurement]: free reading vs Echo Mode decision; physical Fire TV; a second story/language; consented
-child testing following our protocol.
+## What's next
+Testing with children (only with written guardian permission, protocol ready), a physical Fire TV, more StoryWeaver
+stories, and Amazon Bedrock for the parent summary once our account is authorised (built, guarded, falling back to a
+template today).
 
 ## Built with
-Vega OS (React Native for Vega), Amazon Transcribe Streaming, Amazon Polly, Amazon EC2, AWS CloudFormation, AWS IAM,
-AWS Systems Manager, Amazon S3, AWS Organizations (AI services opt-out), AWS Budgets, Amazon Bedrock (optional),
-Node.js, TypeScript, WebSockets, Caddy, StoryWeaver (CC BY 4.0).
+Vega OS (React Native for Vega), Amazon Transcribe Streaming, Amazon Polly (neural + generative), Amazon EC2, AWS
+CloudFormation, AWS IAM, AWS Systems Manager, Amazon S3, Amazon DynamoDB, AWS Organizations (AI services opt-out), AWS
+Budgets, Node.js, TypeScript, WebSockets, Caddy, StoryWeaver (CC BY 4.0).

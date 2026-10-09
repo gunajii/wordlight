@@ -13,10 +13,7 @@
 the TV subtitle is `<KaraokeLine>`, and the server and content pipeline import its Polly mapping.
 
 **Standalone repository:** https://github.com/gunajii/karaoke-vega. **Published 2026-10-08** (commit `4ad482b`, branch `main`, 11 tests, MIT). The CI workflow runs `npm test` on Node 22.18.
-1. On github.com, create an empty **public** repo named `karaoke-vega`. Don't add a README, licence or .gitignore.
-2. Then run `bash tools/oss/publish.sh`. It splits `oss/karaoke-vega` out with its history and pushes it to `main`.
-Optional: `cd oss/karaoke-vega && npm install && npm run build && npm publish --access public`. Publishing needs an
-npm account and the `@wordlight` scope; otherwise rename the package to an unscoped or personal scope.
+Further changes are published with `bash tools/oss/publish.sh` (subtree split, tests first).
 
 **Devpost fields**
 - Repository URL: `https://github.com/gunajii/karaoke-vega`
