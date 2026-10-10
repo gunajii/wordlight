@@ -28,6 +28,8 @@ falls back to a deterministic template that uses only the session counters.
 | `GetFoundationModelAvailability` | Nova Micro and Nova Lite: region, entitlement, agreement AVAILABLE · **authorization NOT_AUTHORIZED** |
 | `Converse` (one call, synthetic numbers) | `ValidationException: Operation not allowed`, HTTP 400 → classified **account-not-authorized**; no further models tried (same cause) |
 | Support case | opened 2026-10-08 by the developer; **no reply as of 2026-10-10 00:31 IST** |
+| Re-check 2026-10-10 07:14 UTC | unchanged: authorization NOT_AUTHORIZED for Nova Micro and Lite; `Converse` → `ValidationException: Operation not allowed`, HTTP 400, request `8391c65f-899e-41a1-903b-8cfb01bff495`. The console now opens a new Bedrock home page (“Bedrock-mantle” endpoint, projects, API keys) — reachable, but it does not change authorization |
+| Budget at that time | `wordlight-credits` actual spend USD 0.90 of 100 (AWS Budgets; lags, gross before credits) |
 
 Not the cause, from the same run: the region (models and profiles are listed and active there), the model identifier
 (the APAC profile is listed), IAM (the caller is the root user), throttling (first call of the day), credentials (every
