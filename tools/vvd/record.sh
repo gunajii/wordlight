@@ -10,8 +10,9 @@ cd "$(dirname "$0")/../.."
 SECS=${1:-180}; EVERY=${2:-3}
 OUT=.dev/rec/$(date +%Y%m%d-%H%M%S); mkdir -p "$OUT"
 screencapture -x "$OUT/still-000.png" || { echo "screencapture failed (Screen Recording permission for Terminal?)"; exit 1; }
-screencapture -x -V "$SECS" "$OUT/screen.mov" & VPID=$!
-trap 'kill -INT $VPID 2>/dev/null; STOP=1' INT
+# job control on: otherwise a script's background child ignores SIGINT, and SIGINT is how screencapture stops and saves
+set -m; screencapture -x -V "$SECS" "$OUT/screen.mov" & VPID=$!; set +m
+trap 'kill -INT $VPID 2>/dev/null; STOP=1' INT TERM
 STOP=0; i=1
 echo "Recording up to ${SECS}s to $OUT (still every ${EVERY}s). Ctrl-C stops early."
 while [ $STOP = 0 ] && kill -0 $VPID 2>/dev/null; do
