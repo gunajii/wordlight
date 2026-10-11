@@ -17,8 +17,13 @@ exec > >(tee -a "$LOG") 2>&1
 fail() { echo; echo "ADD-STORY STOPPED: $*"; echo "log: $LOG — tell Claude \"story stopped\""; exit 1; }
 [ -f "$ZIP" ] || fail "no file $ZIP"
 aws sts get-caller-identity --query Account --output text >/dev/null || fail "no AWS credentials in this terminal (aws login)"
-echo "== 1. import"
-python3 tools/content/import-storyweaver-pdf.py "$ZIP" "$ID" --lang en-IN --level 1 --url "$URL" "$@" || fail "import failed"
+if [ -f "content/sources/$ID/source.json" ] && [ "${REIMPORT:-0}" != 1 ]; then
+  echo "== 1. import: already imported (content/sources/$ID/source.json) — REIMPORT=1 to import again"
+else
+  echo "== 1. import"
+  command -v pdfinfo >/dev/null || fail "the PDF tools are missing: brew install poppler (or let Claude import it)"
+  python3 tools/content/import-storyweaver-pdf.py "$ZIP" "$ID" --lang en-IN --level 1 --url "$URL" "$@" || fail "import failed"
+fi
 echo "== 2. build (expressive English voice, as Busy Ants)"
 node tools/content/build-story.ts "$ID" --narration generative || fail "build failed"
 echo "== 3. validate all stories"

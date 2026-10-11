@@ -1,0 +1,58 @@
+{
+ "id": "naughty-dog",
+ "lang": "en-IN",
+ "level": 1,
+ "title": "Naughty Dog",
+ "credits": {
+  "source": "StoryWeaver",
+  "license": "CC BY 4.0",
+  "title": "Naughty Dog",
+  "author": "Kanchan Bannerjee",
+  "illustrator": "Deepa Balsavar",
+  "publisher": "Pratham Books",
+  "url": "https://storyweaver.org.in/en/stories/1067-naughty-dog",
+  "attribution": "Naughty Dog (English), written by Kanchan Bannerjee, illustrated by Deepa Balsavar, published by Pratham Books (© Pratham Books, 2015) under a CC BY 4.0 license on StoryWeaver. Read, create and translate stories for free on www.storyweaver.org.in"
+ },
+ "pages": [
+  {
+   "image": "p1.jpg",
+   "text": "We are a family of four. I follow Chinku everywhere."
+  },
+  {
+   "image": "p2.jpg",
+   "text": "I have to look after Chinku. You see, I am older than him."
+  },
+  {
+   "image": "p3.jpg",
+   "text": "Sometimes Chinku is careless. It is my duty to guard the house."
+  },
+  {
+   "image": "p4.jpg",
+   "text": "We do everything together. We work together."
+  },
+  {
+   "image": "p5.jpg",
+   "text": "We play together."
+  },
+  {
+   "image": "p6.jpg",
+   "text": "We even share Ma’s scolding."
+  },
+  {
+   "image": "p7.jpg",
+   "text": "When Chinku is at school I help Ma. I keep the crows away from the papads."
+  },
+  {
+   "image": "p8.jpg",
+   "text": "Today Chinku will be my teacher. At last, I will learn something new."
+  },
+  {
+   "image": "p9.jpg",
+   "text": "I am a good doggy. I do not scare away cats."
+  },
+  {
+   "image": "p10.jpg",
+   "text": "Are you Chinku’s friend? Then you are my friend too."
+  }
+ ]
+}
