@@ -25,6 +25,10 @@ content/stories/*/*.png
 content/sources/*.zip
 content/sources/*.pdf
 content/sources/*.epub
+# videos and recordings never go to Git (they may show or contain a child)
+*.mp4
+*.mov
+*.m4v
 
 # the two demo stories ship with their built media (StoryWeaver CC BY 4.0 images; narration generated with Amazon
 # Polly) so a fresh clone can run the demo without rebuilding — see THIRD_PARTY_NOTICES.md

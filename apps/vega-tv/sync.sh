@@ -19,4 +19,13 @@ rm -rf src/vendor/karaoke-core && mkdir -p src/vendor/karaoke-core
 for f in "$ROOT"/oss/karaoke-vega/src/*.ts "$ROOT"/oss/karaoke-vega/src/*.tsx; do sed -E "s#(from '\./[A-Za-z-]+)\.tsx?'#\1'#g" "$f" > "src/vendor/karaoke-core/$(basename "$f")"; done
 vendor_ts tv-core
 rm -rf src/vendor/session-client && mkdir -p src/vendor/session-client && for f in "$ROOT"/packages/session-client/src/*.js; do sed '/@ts-check/d' "$f" > "src/vendor/session-client/$(basename "$f")"; done  # JS; not type-checked in the app
+# app icon (Vega: 512x512 8-bit RGBA PNG in assets/image, named in [package] icon). NO_ICON=1 builds without it.
+python3 - "$APP/manifest.toml" "${NO_ICON:-0}" <<'PY2'
+import re, sys
+p, off = sys.argv[1], sys.argv[2] == '1'
+s = open(p).read(); s = re.sub(r'(?m)^icon = "@image/[^"]*"\n', '', s)
+if not off: s = re.sub(r'(?m)^(title = .*\n)', r'\1icon = "@image/wordlight-icon.png"\n', s, count=1)
+open(p, 'w').write(s)
+PY2
+if [ "${NO_ICON:-0}" != 1 ]; then mkdir -p "$APP/assets/image" && cp "$HERE"/overlay/assets/image/*.png "$APP/assets/image/"; fi
 echo "synced overlay + vendor (karaoke-vega as karaoke-core, tv-core, session-client) into $APP/src"
