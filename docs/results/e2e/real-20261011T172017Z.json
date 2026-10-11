@@ -1,0 +1,148 @@
+{
+ "measuredAt": "2026-10-11T17:22:02.831Z",
+ "base": "https://3-110-13-229.sslip.io",
+ "session": "RRXN",
+ "rows": [
+  {
+   "turnId": "naughty-dog-1-1-mv43afz1",
+   "index": 0,
+   "recognitionMs": 1123,
+   "serverToTvMs": 4,
+   "e2eMs": 1127
+  },
+  {
+   "turnId": "naughty-dog-1-1-mv43afz1",
+   "index": 1,
+   "recognitionMs": 723,
+   "serverToTvMs": 4,
+   "e2eMs": 727
+  },
+  {
+   "turnId": "naughty-dog-1-1-mv43afz1",
+   "index": 2,
+   "recognitionMs": 965,
+   "serverToTvMs": 110,
+   "e2eMs": 1074
+  },
+  {
+   "turnId": "naughty-dog-1-1-mv43afz1",
+   "index": 3,
+   "recognitionMs": 765,
+   "serverToTvMs": 115,
+   "e2eMs": 879
+  },
+  {
+   "turnId": "naughty-dog-1-1-mv43afz1",
+   "index": 5,
+   "recognitionMs": 985,
+   "serverToTvMs": 4,
+   "e2eMs": 989
+  },
+  {
+   "turnId": "naughty-dog-1-1-mv43afz1",
+   "index": 6,
+   "recognitionMs": 785,
+   "serverToTvMs": 4,
+   "e2eMs": 789
+  },
+  {
+   "turnId": "naughty-dog-8-0-mv43bcvt",
+   "index": 0,
+   "recognitionMs": 1116,
+   "serverToTvMs": 5,
+   "e2eMs": 1121
+  },
+  {
+   "turnId": "naughty-dog-8-0-mv43bcvt",
+   "index": 1,
+   "recognitionMs": 906,
+   "serverToTvMs": 6,
+   "e2eMs": 912
+  },
+  {
+   "turnId": "naughty-dog-8-0-mv43bcvt",
+   "index": 2,
+   "recognitionMs": 797,
+   "serverToTvMs": 10,
+   "e2eMs": 807
+  },
+  {
+   "turnId": "naughty-dog-8-0-mv43bcvt",
+   "index": 3,
+   "recognitionMs": 1121,
+   "serverToTvMs": 8,
+   "e2eMs": 1128
+  },
+  {
+   "turnId": "naughty-dog-8-0-mv43bcvt",
+   "index": 4,
+   "recognitionMs": 881,
+   "serverToTvMs": 8,
+   "e2eMs": 889
+  },
+  {
+   "turnId": "naughty-dog-9-1-mv43bkkh",
+   "index": 0,
+   "recognitionMs": 1122,
+   "serverToTvMs": 116,
+   "e2eMs": 1238
+  },
+  {
+   "turnId": "naughty-dog-9-1-mv43bkkh",
+   "index": 1,
+   "recognitionMs": 842,
+   "serverToTvMs": 117,
+   "e2eMs": 959
+  },
+  {
+   "turnId": "naughty-dog-9-1-mv43bkkh",
+   "index": 2,
+   "recognitionMs": 1204,
+   "serverToTvMs": 4,
+   "e2eMs": 1208
+  },
+  {
+   "turnId": "naughty-dog-9-1-mv43bkkh",
+   "index": 3,
+   "recognitionMs": 1084,
+   "serverToTvMs": 4,
+   "e2eMs": 1088
+  },
+  {
+   "turnId": "naughty-dog-9-1-mv43bkkh",
+   "index": 4,
+   "recognitionMs": 844,
+   "serverToTvMs": 5,
+   "e2eMs": 848
+  },
+  {
+   "turnId": "naughty-dog-9-1-mv43bkkh",
+   "index": 5,
+   "recognitionMs": 963,
+   "serverToTvMs": 4,
+   "e2eMs": 967
+  }
+ ],
+ "summary": {
+  "words": 17,
+  "spokenToEmit": {
+   "n": 17,
+   "median": 963,
+   "p95": 1204,
+   "max": 1204
+  },
+  "serverToTv": {
+   "n": 17,
+   "median": 5,
+   "p95": 117,
+   "max": 117
+  },
+  "e2e": {
+   "n": 17,
+   "median": 967,
+   "p95": 1238,
+   "max": 1238
+  },
+  "within1s": 10
+ }
+}

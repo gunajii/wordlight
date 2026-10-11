@@ -120,7 +120,7 @@ Nothing on this page comes from a child: no child has used WordLight.
 - Word lit after spoken: **17 words, e2e median 1 137 ms, p95 2 244 ms (one slow server → TV delivery, 907 ms); 6 of 17 within 1 s.** `docs/results/e2e/real-20261009T121612Z.json`
 - Privacy audit: **137 reports, 0 violations**; mic off 32–107 ms after each turn end.
 - English and Hindi stories both played end to end (tester report).
-- Privacy across the three AWS sessions: **561 microphone status reports, 0 violations** (790 over four sessions, after rehearsal 1).
+- Privacy across the three AWS sessions: **561 microphone status reports, 0 violations** (790 over four sessions after rehearsal 1; 891 over five after rehearsal 3).
 
 ## Rehearsal 1 of 3 on the final build (2026-10-09 19:19 UTC, session BEZ9)
 Deployed server (Echo Mode, template summary, Bedrock off) + Vega Virtual Device + phone. ONE ADULT, English *Busy Ants*
@@ -148,8 +148,20 @@ Deployed server + Vega Virtual Device + phone, ONE ADULT. Reviewed from 92 windo
   at the icon) before Enter, so the script found no session. Fixed: it now falls back to the newest session.
 - The launcher shows the square icon as a wide tile (centre crop); the icon was redrawn for that (option B).
 
-## End to end, all real AWS sessions together (one adult tester, 2026-10-08/09)
-**76 words lit over 4 sessions: median 1 077 ms, p95 1 531 ms, 29 of 76 (38 %) within 1 s** from the word being spoken to it lighting
+## Rehearsal 3 of 3 on the final build (2026-10-11 17:20 UTC, session RRXN)
+Deployed server + Vega Virtual Device + phone, ONE ADULT, *Naughty Dog* (3 hand-chosen turns). Reviewed from 58
+window-only stills and the server traces (`.dev/aws/phase-b-20261011T172017Z.log`).
+| Check | Result |
+|---|---|
+| Shelf / launcher | three stories, no test story; the new launcher icon shown |
+| Turns | 3 / 3 completed: “older” helped after a stall (help clip done 1.39 s later), said back (`said back: true`), the line read on; the other two turns read on their own |
+| Word lit after spoken | **17 words: e2e median 967 ms, p95 1 238 ms, 10 of 17 within 1 s**; recognition median 963 ms; server → TV median 5 ms. `docs/results/e2e/real-20261011T172017Z.json` |
+| Microphone | **101 status reports, 0 violations**; off 11–15 ms after each turn end |
+| End card / phone | 17 on own · 1 helped · 3 turns · story finished 1:11; summary from the template (Bedrock still not authorised) |
+| Status | **PASS, MEASURED, one adult** |
+
+## End to end, all real AWS sessions together (one adult tester, 2026-10-08 to 11)
+**93 words lit over 5 sessions: median 1 050 ms, p95 1 461 ms, 39 of 93 (42 %) within 1 s** from the word being spoken to it lighting
 on the TV (Vega Virtual Device). Against the original ≤ 1 s median target: **not met** (just over); almost all of it is speech
 recognition. In Echo Mode the child has just heard the line, so the highlight confirms what was said rather than
 leading it — which is why Echo Mode is the product's interaction (S2 decision above). MEASURED; one adult; child UNKNOWN.

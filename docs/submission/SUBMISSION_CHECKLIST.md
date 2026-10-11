@@ -7,11 +7,12 @@ Official deadline: **2026-10-23, 12:00 PM PDT**. Submit as soon as everything be
 - ✅ Latest build runs on the Vega Virtual Device on the real AWS path (English and Hindi, 2026-10-09)
 - ⬜ Physical Vega Fire TV — only if available; otherwise say “Vega Virtual Device” everywhere (it is said)
 - ✅ Demo path uses real Transcribe (no SIMULATED badge on this path)
-- ⬜ Repository public (developer) — README has setup and run instructions
+- ✅ Repository public (github.com/gunajii/wordlight, MIT) — README has setup and run instructions
+- ✅ Three clean rehearsals on the deployed path (2026-10-09 BEZ9, 2026-10-11 ×2; MEASURED_RESULTS.md)
 
 ## Video (< 3 minutes, public)
 - ⬜ Record with `tools/demo/real-demo.sh` following DEMO_SCRIPT.md (developer)
-- ⬜ Core loop before 2:00 · no child's face/voice/name without written permission (adult reader) · uploaded public
+- ⬜ Core loop before 2:00 · a child appears only with the guardian's written permission for a public video (docs/CHILD_TESTING.md), first name or nickname only · uploaded public
 
 ## Documentation
 - ✅ README · ARCHITECTURE · TEST_PLAN · PRIVACY · SECURITY · MEASURED_RESULTS (every number labelled)
@@ -34,7 +35,7 @@ Official deadline: **2026-10-23, 12:00 PM PDT**. Submit as soon as everything be
 - ✅ Our test story (Mina's Red Kite) is off the demo shelf
 
 ## Privacy and security
-- ✅ No audio or transcript text stored; mic audit 0/790 on AWS; child audio only via the AWS endpoint
+- ✅ No audio or transcript text stored; mic audit 0/891 on AWS; child audio only via the AWS endpoint
 - ✅ Repository secret scan clean (2026-10-09)
 - ⬜ Root password changed + MFA, no root access keys; daily work with the limited IAM user (developer, docs/SECURITY.md)
 
@@ -44,4 +45,4 @@ Official deadline: **2026-10-23, 12:00 PM PDT**. Submit as soon as everything be
 
 ## Devpost form
 - ⬜ Track: Fire TV · mini-challenges: AWS Builder, Open Source (+ friction log)
-- ⬜ Text from PROJECT_DESCRIPTION.md · screenshots: Your Turn (green + amber + ✓), end card, phone consent, shelf
+- ⬜ Text from PROJECT_DESCRIPTION.md · ✅ screenshots ready in docs/submission/screenshots/ (shelf, narration, turn with help + ✓, Hindi, end card, launcher icon, phone consent / turn / summary)
