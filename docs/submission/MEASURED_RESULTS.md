@@ -138,6 +138,16 @@ then Hindi *व्यस्त चींटियाँ*, 4 turns each, one deli
 | End-card counts | seen by the tester; not in the TV log (a log line for them was added after this run) |
 | Status | **PASS, MEASURED, one adult.** Two more rehearsals to go |
 
+## Rehearsal 2 of 3: third story and app icon (2026-10-11 16:20 UTC)
+Deployed server + Vega Virtual Device + phone, ONE ADULT. Reviewed from 92 window-only stills (`tools/vvd/record.sh`).
+- **Shelf:** *Busy Ants*, *व्यस्त चींटियाँ*, *Naughty Dog*; no test story. **Launcher:** the WordLight icon is shown.
+- **Naughty Dog**, all 3 hand-chosen turns: p2 two words helped and both said back (✓), p9 5/5 on own, p10 5 on own
+  and “are” skipped (not recognised). End card and phone summary: 15 on own · 2 helped · 1 skipped (TV log).
+- **Busy Ants** (first turn and a few pages): unchanged, 4/4 on own.
+- Server-side traces, latency and the mic audit were **not saved** for this run: the TV app was closed (Home, to look
+  at the icon) before Enter, so the script found no session. Fixed: it now falls back to the newest session.
+- The launcher shows the square icon as a wide tile (centre crop); the icon was redrawn for that (option B).
+
 ## End to end, all real AWS sessions together (one adult tester, 2026-10-08/09)
 **76 words lit over 4 sessions: median 1 077 ms, p95 1 531 ms, 29 of 76 (38 %) within 1 s** from the word being spoken to it lighting
 on the TV (Vega Virtual Device). Against the original ≤ 1 s median target: **not met** (just over); almost all of it is speech
