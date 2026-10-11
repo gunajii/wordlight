@@ -40,7 +40,7 @@ When the TV home screen shows the QR code:
 =======================================================================================
 TXT
 read -r -p "Press Enter here when the end card is showing… " _
-SID=$(curl -s -H "x-wordlight-admin: $ADMIN_TOKEN" "$URL/api/sessions" | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{const l=JSON.parse(s).filter(x=>x.tvConnected);console.log(l[0]?.sessionId??"")})')
+SID=$(curl -s -H "x-wordlight-admin: $ADMIN_TOKEN" "$URL/api/sessions" | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{const a=JSON.parse(s);const l=a.filter(x=>x.tvConnected);const r=l[0]??a.find(x=>x.readers>0)??a[0];if(!l.length&&r)console.error("(the TV has left the session — using the newest session with a reader: "+r.sessionId+")");console.log(r?.sessionId??"")})')
 [ -n "$SID" ] || { echo "no TV session found"; exit 1; }
 echo "== session $SID"
 node tools/e2e/word-lit-latency.ts "$URL" "$SID" --out "docs/results/e2e/real-$STAMP.json" || echo "(latency tool failed)"
