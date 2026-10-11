@@ -19,7 +19,7 @@ lets the child read back and get immediate, encouraging feedback.
 - **Help, never “wrong”:** if she is stuck, the TV waits while she is still trying (a stutter counts as trying), then
   says the word slowly from its own clip and marks it amber — and gives her the chance to say it herself (✓).
 - **Well read!** The TV and the parent's phone show what happened: words read on her own, words that needed help.
-- **Two languages:** *Busy Ants* (Pratham Books, StoryWeaver, CC BY 4.0) in English, and our own Hindi translation.
+- **Two languages, three stories:** *Busy Ants* and *Naughty Dog* (Pratham Books, StoryWeaver, CC BY 4.0) in English, and our own Hindi translation of *Busy Ants*.
 
 ## How we built it
 - **Fire TV / Vega OS:** React Native for Vega, the W3C `AudioPlayer`, remote-only navigation, a diagnostics overlay.

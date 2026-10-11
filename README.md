@@ -32,6 +32,8 @@ first and then saying it is a deliberate guided-reading design, not a hidden fal
 - **Busy Ants** (English) — Kanchan Bannerjee, illustrated by Deepa Balsavar, Pratham Books, CC BY 4.0, via
   StoryWeaver. Narrated by Amazon Polly's expressive (generative) Kajal voice.
 - **व्यस्त चींटियाँ** (Hindi) — our own unofficial translation of Busy Ants (CC BY 4.0), narrated by Polly neural Kajal.
+- **Naughty Dog** (English) — Kanchan Bannerjee, illustrated by Deepa Balsavar, Pratham Books, CC BY 4.0, via
+  StoryWeaver (same “Animals Around Us” series). Expressive Kajal voice; three reading turns chosen by hand (common words, no names).
 Credits are shown in the app and in [docs/CONTENT.md](docs/CONTENT.md).
 
 ## What is real and what was measured (2026-10-09)
@@ -78,7 +80,7 @@ Measurement scripts: `tools/aws/phase-*.sh`. Everything simulated is labelled SI
 | `tools/` | Content pipeline (StoryWeaver → Polly → story package), measurement harnesses (S1–S4, help recovery, e2e) |
 | `infra/aws/` | CloudFormation, deploy, start/stop, cost guard, least-privilege policy |
 | `docs/` | Architecture, privacy, security, measured results, friction log (W1–W19), Hindi review, submission texts |
-| `content/stories/` | The two demo stories with their built media (see THIRD_PARTY_NOTICES.md) |
+| `content/stories/` | The three demo stories with their built media (see THIRD_PARTY_NOTICES.md) |
 
 ## Privacy
 The phone microphone is on **only during a reading turn**, after a parent agrees, and the phone always shows it.

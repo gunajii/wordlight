@@ -12,6 +12,11 @@ it keeps its own terms.
 - **व्यस्त चींटियाँ** — an unofficial Hindi translation of Busy Ants made by the WordLight project (2026). Changes: the
   text was translated into Hindi; not an official Pratham Books translation. The same illustrations. This translation
   is offered under CC BY 4.0. Files: `content/stories/busy-ants-hi/`.
+- **Naughty Dog** (English), written by Kanchan Bannerjee, illustrated by Deepa Balsavar, published by Pratham Books
+  (© Pratham Books, 2015) under a CC BY 4.0 licence on StoryWeaver:
+  https://storyweaver.org.in/en/stories/1067-naughty-dog — attribution as given in StoryWeaver's own attribution file
+  (`content/sources/naughty-dog/source.json`). Changes: the two end-of-book activity pages are left out.
+  Files: `content/stories/naughty-dog/p*.jpg` (illustrations), the story text in `story.json` / `source.json`.
 - Licence text: https://creativecommons.org/licenses/by/4.0/
 
 ## Narration audio

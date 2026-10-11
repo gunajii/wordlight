@@ -30,7 +30,7 @@ Official deadline: **2026-10-23, 12:00 PM PDT**. Submit as soon as everything be
 - ✅ docs/FRICTION_LOG.md W1–W19, real entries only
 
 ## Content
-- ✅ Busy Ants credits verbatim from StoryWeaver's attribution file; shown on the end card and in docs/CONTENT.md
+- ✅ Busy Ants and Naughty Dog credits verbatim from StoryWeaver's attribution files; shown on the end card and in docs/CONTENT.md
 - ✅ Our test story (Mina's Red Kite) is off the demo shelf
 
 ## Privacy and security

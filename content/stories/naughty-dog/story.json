@@ -1,0 +1,732 @@
+{
+ "packageVersion": 1,
+ "id": "naughty-dog",
+ "lang": "en-IN",
+ "level": 1,
+ "title": "Naughty Dog",
+ "credits": {
+  "source": "StoryWeaver",
+  "license": "CC BY 4.0",
+  "title": "Naughty Dog",
+  "author": "Kanchan Bannerjee",
+  "illustrator": "Deepa Balsavar",
+  "publisher": "Pratham Books",
+  "url": "https://storyweaver.org.in/en/stories/1067-naughty-dog",
+  "attribution": "Naughty Dog (English), written by Kanchan Bannerjee, illustrated by Deepa Balsavar, published by Pratham Books (© Pratham Books, 2015) under a CC BY 4.0 license on StoryWeaver. Read, create and translate stories for free on www.storyweaver.org.in"
+ },
+ "voice": {
+  "engine": "polly-generative",
+  "id": "Kajal",
+  "style": {
+   "volume": "+6dB",
+   "lineBreakMs": 650
+  }
+ },
+ "timing": {
+  "source": "transcribe",
+  "verified": false
+ },
+ "pages": [
+  {
+   "image": "p1.jpg",
+   "audio": "p1.mp3",
+   "durationMs": 4437,
+   "lines": [
+    {
+     "text": "We are a family of four.",
+     "words": [
+      {
+       "w": "We",
+       "t0": 345,
+       "t1": 505
+      },
+      {
+       "w": "are",
+       "t0": 505,
+       "t1": 665
+      },
+      {
+       "w": "a",
+       "t0": 665,
+       "t1": 865
+      },
+      {
+       "w": "family",
+       "t0": 865,
+       "t1": 1145
+      },
+      {
+       "w": "of",
+       "t0": 1145,
+       "t1": 1305
+      },
+      {
+       "w": "four.",
+       "t0": 1305,
+       "t1": 1600
+      }
+     ],
+     "turn": false
+    },
+    {
+     "text": "I follow Chinku everywhere.",
+     "words": [
+      {
+       "w": "I",
+       "t0": 2745,
+       "t1": 2985
+      },
+      {
+       "w": "follow",
+       "t0": 2985,
+       "t1": 3325
+      },
+      {
+       "w": "Chinku",
+       "t0": 3325,
+       "t1": 3735
+      },
+      {
+       "w": "everywhere.",
+       "t0": 3735,
+       "t1": 4230
+      }
+     ],
+     "turn": false
+    }
+   ]
+  },
+  {
+   "image": "p2.jpg",
+   "audio": "p2.mp3",
+   "durationMs": 4821,
+   "lines": [
+    {
+     "text": "I have to look after Chinku.",
+     "words": [
+      {
+       "w": "I",
+       "t0": 345,
+       "t1": 465
+      },
+      {
+       "w": "have",
+       "t0": 465,
+       "t1": 625
+      },
+      {
+       "w": "to",
+       "t0": 625,
+       "t1": 745
+      },
+      {
+       "w": "look",
+       "t0": 745,
+       "t1": 895
+      },
+      {
+       "w": "after",
+       "t0": 895,
+       "t1": 1225
+      },
+      {
+       "w": "Chinku.",
+       "t0": 1225,
+       "t1": 1580
+      }
+     ],
+     "turn": false
+    },
+    {
+     "text": "You see, I am older than him.",
+     "words": [
+      {
+       "w": "You",
+       "t0": 2745,
+       "t1": 3025,
+       "clip": "h1.mp3"
+      },
+      {
+       "w": "see,",
+       "t0": 3025,
+       "t1": 3476,
+       "clip": "h2.mp3"
+      },
+      {
+       "w": "I",
+       "t0": 3476,
+       "t1": 3589,
+       "clip": "h3.mp3"
+      },
+      {
+       "w": "am",
+       "t0": 3589,
+       "t1": 3815,
+       "clip": "h4.mp3"
+      },
+      {
+       "w": "older",
+       "t0": 3815,
+       "t1": 4145,
+       "clip": "h5.mp3"
+      },
+      {
+       "w": "than",
+       "t0": 4145,
+       "t1": 4345,
+       "clip": "h6.mp3"
+      },
+      {
+       "w": "him.",
+       "t0": 4345,
+       "t1": 4560,
+       "clip": "h7.mp3"
+      }
+     ],
+     "turn": true
+    }
+   ]
+  },
+  {
+   "image": "p3.jpg",
+   "audio": "p3.mp3",
+   "durationMs": 4949,
+   "lines": [
+    {
+     "text": "Sometimes Chinku is careless.",
+     "words": [
+      {
+       "w": "Sometimes",
+       "t0": 575,
+       "t1": 885
+      },
+      {
+       "w": "Chinku",
+       "t0": 885,
+       "t1": 1185
+      },
+      {
+       "w": "is",
+       "t0": 1185,
+       "t1": 1385
+      },
+      {
+       "w": "careless.",
+       "t0": 1385,
+       "t1": 1850
+      }
+     ],
+     "turn": false
+    },
+    {
+     "text": "It is my duty to guard the house.",
+     "words": [
+      {
+       "w": "It",
+       "t0": 2995,
+       "t1": 3145
+      },
+      {
+       "w": "is",
+       "t0": 3145,
+       "t1": 3315
+      },
+      {
+       "w": "my",
+       "t0": 3315,
+       "t1": 3435
+      },
+      {
+       "w": "duty",
+       "t0": 3435,
+       "t1": 3795
+      },
+      {
+       "w": "to",
+       "t0": 3795,
+       "t1": 3875
+      },
+      {
+       "w": "guard",
+       "t0": 3875,
+       "t1": 4235
+      },
+      {
+       "w": "the",
+       "t0": 4235,
+       "t1": 4355
+      },
+      {
+       "w": "house.",
+       "t0": 4355,
+       "t1": 4720
+      }
+     ],
+     "turn": false
+    }
+   ]
+  },
+  {
+   "image": "p4.jpg",
+   "audio": "p4.mp3",
+   "durationMs": 3968,
+   "lines": [
+    {
+     "text": "We do everything together.",
+     "words": [
+      {
+       "w": "We",
+       "t0": 345,
+       "t1": 545
+      },
+      {
+       "w": "do",
+       "t0": 545,
+       "t1": 1055
+      },
+      {
+       "w": "everything",
+       "t0": 1055,
+       "t1": 1345
+      },
+      {
+       "w": "together.",
+       "t0": 1345,
+       "t1": 1670
+      }
+     ],
+     "turn": false
+    },
+    {
+     "text": "We work together.",
+     "words": [
+      {
+       "w": "We",
+       "t0": 2825,
+       "t1": 3025
+      },
+      {
+       "w": "work",
+       "t0": 3025,
+       "t1": 3425
+      },
+      {
+       "w": "together.",
+       "t0": 3425,
+       "t1": 3730
+      }
+     ],
+     "turn": false
+    }
+   ]
+  },
+  {
+   "image": "p5.jpg",
+   "audio": "p5.mp3",
+   "durationMs": 1536,
+   "lines": [
+    {
+     "text": "We play together.",
+     "words": [
+      {
+       "w": "We",
+       "t0": 345,
+       "t1": 625
+      },
+      {
+       "w": "play",
+       "t0": 625,
+       "t1": 945
+      },
+      {
+       "w": "together.",
+       "t0": 945,
+       "t1": 1320
+      }
+     ],
+     "turn": false
+    }
+   ]
+  },
+  {
+   "image": "p6.jpg",
+   "audio": "p6.mp3",
+   "durationMs": 2048,
+   "lines": [
+    {
+     "text": "We even share Ma’s scolding.",
+     "words": [
+      {
+       "w": "We",
+       "t0": 345,
+       "t1": 505
+      },
+      {
+       "w": "even",
+       "t0": 505,
+       "t1": 835
+      },
+      {
+       "w": "share",
+       "t0": 835,
+       "t1": 1113
+      },
+      {
+       "w": "Ma’s",
+       "t0": 1113,
+       "t1": 1335
+      },
+      {
+       "w": "scolding.",
+       "t0": 1335,
+       "t1": 1840
+      }
+     ],
+     "turn": false
+    }
+   ]
+  },
+  {
+   "image": "p7.jpg",
+   "audio": "p7.mp3",
+   "durationMs": 5760,
+   "lines": [
+    {
+     "text": "When Chinku is at school I help Ma.",
+     "words": [
+      {
+       "w": "When",
+       "t0": 296,
+       "t1": 556
+      },
+      {
+       "w": "Chinku",
+       "t0": 556,
+       "t1": 945
+      },
+      {
+       "w": "is",
+       "t0": 945,
+       "t1": 1105
+      },
+      {
+       "w": "at",
+       "t0": 1105,
+       "t1": 1385
+      },
+      {
+       "w": "school",
+       "t0": 1385,
+       "t1": 1665
+      },
+      {
+       "w": "I",
+       "t0": 1665,
+       "t1": 1825
+      },
+      {
+       "w": "help",
+       "t0": 1825,
+       "t1": 2105
+      },
+      {
+       "w": "Ma.",
+       "t0": 2105,
+       "t1": 2270
+      }
+     ],
+     "turn": false
+    },
+    {
+     "text": "I keep the crows away from the papads.",
+     "words": [
+      {
+       "w": "I",
+       "t0": 3465,
+       "t1": 3665
+      },
+      {
+       "w": "keep",
+       "t0": 3665,
+       "t1": 3865
+      },
+      {
+       "w": "the",
+       "t0": 3865,
+       "t1": 3905
+      },
+      {
+       "w": "crows",
+       "t0": 3905,
+       "t1": 4425
+      },
+      {
+       "w": "away",
+       "t0": 4425,
+       "t1": 4625
+      },
+      {
+       "w": "from",
+       "t0": 4625,
+       "t1": 4745
+      },
+      {
+       "w": "the",
+       "t0": 4745,
+       "t1": 5020
+      },
+      {
+       "w": "papads.",
+       "t0": 5020,
+       "t1": 5490
+      }
+     ],
+     "turn": false
+    }
+   ]
+  },
+  {
+   "image": "p8.jpg",
+   "audio": "p8.mp3",
+   "durationMs": 4992,
+   "lines": [
+    {
+     "text": "Today Chinku will be my teacher.",
+     "words": [
+      {
+       "w": "Today",
+       "t0": 465,
+       "t1": 705
+      },
+      {
+       "w": "Chinku",
+       "t0": 705,
+       "t1": 1025
+      },
+      {
+       "w": "will",
+       "t0": 1025,
+       "t1": 1145
+      },
+      {
+       "w": "be",
+       "t0": 1145,
+       "t1": 1335
+      },
+      {
+       "w": "my",
+       "t0": 1335,
+       "t1": 1515
+      },
+      {
+       "w": "teacher.",
+       "t0": 1515,
+       "t1": 1910
+      }
+     ],
+     "turn": false
+    },
+    {
+     "text": "At last, I will learn something new.",
+     "words": [
+      {
+       "w": "At",
+       "t0": 3065,
+       "t1": 3265
+      },
+      {
+       "w": "last,",
+       "t0": 3265,
+       "t1": 3535
+      },
+      {
+       "w": "I",
+       "t0": 3535,
+       "t1": 3865
+      },
+      {
+       "w": "will",
+       "t0": 3865,
+       "t1": 4015
+      },
+      {
+       "w": "learn",
+       "t0": 4015,
+       "t1": 4265
+      },
+      {
+       "w": "something",
+       "t0": 4265,
+       "t1": 4615
+      },
+      {
+       "w": "new.",
+       "t0": 4615,
+       "t1": 4790
+      }
+     ],
+     "turn": false
+    }
+   ]
+  },
+  {
+   "image": "p9.jpg",
+   "audio": "p9.mp3",
+   "durationMs": 4096,
+   "lines": [
+    {
+     "text": "I am a good doggy.",
+     "words": [
+      {
+       "w": "I",
+       "t0": 296,
+       "t1": 366,
+       "clip": "h3.mp3"
+      },
+      {
+       "w": "am",
+       "t0": 366,
+       "t1": 505,
+       "clip": "h4.mp3"
+      },
+      {
+       "w": "a",
+       "t0": 505,
+       "t1": 855,
+       "clip": "h8.mp3"
+      },
+      {
+       "w": "good",
+       "t0": 855,
+       "t1": 865,
+       "clip": "h9.mp3"
+      },
+      {
+       "w": "doggy.",
+       "t0": 865,
+       "t1": 1210,
+       "clip": "h10.mp3"
+      }
+     ],
+     "turn": true
+    },
+    {
+     "text": "I do not scare away cats.",
+     "words": [
+      {
+       "w": "I",
+       "t0": 2425,
+       "t1": 2545
+      },
+      {
+       "w": "do",
+       "t0": 2545,
+       "t1": 2695
+      },
+      {
+       "w": "not",
+       "t0": 2695,
+       "t1": 2785
+      },
+      {
+       "w": "scare",
+       "t0": 2785,
+       "t1": 3225
+      },
+      {
+       "w": "away",
+       "t0": 3225,
+       "t1": 3465
+      },
+      {
+       "w": "cats.",
+       "t0": 3465,
+       "t1": 3620
+      }
+     ],
+     "turn": false
+    }
+   ]
+  },
+  {
+   "image": "p10.jpg",
+   "audio": "p10.mp3",
+   "durationMs": 3925,
+   "lines": [
+    {
+     "text": "Are you Chinku’s friend?",
+     "words": [
+      {
+       "w": "Are",
+       "t0": 345,
+       "t1": 505
+      },
+      {
+       "w": "you",
+       "t0": 505,
+       "t1": 705
+      },
+      {
+       "w": "Chinku’s",
+       "t0": 705,
+       "t1": 1185
+      },
+      {
+       "w": "friend?",
+       "t0": 1185,
+       "t1": 1450
+      }
+     ],
+     "turn": false
+    },
+    {
+     "text": "Then you are my friend too.",
+     "words": [
+      {
+       "w": "Then",
+       "t0": 2665,
+       "t1": 2825,
+       "clip": "h11.mp3"
+      },
+      {
+       "w": "you",
+       "t0": 2825,
+       "t1": 2945,
+       "clip": "h1.mp3"
+      },
+      {
+       "w": "are",
+       "t0": 2945,
+       "t1": 3145,
+       "clip": "h12.mp3"
+      },
+      {
+       "w": "my",
+       "t0": 3145,
+       "t1": 3385,
+       "clip": "h13.mp3"
+      },
+      {
+       "w": "friend",
+       "t0": 3385,
+       "t1": 3625,
+       "clip": "h14.mp3"
+      },
+      {
+       "w": "too.",
+       "t0": 3625,
+       "t1": 3760,
+       "clip": "h15.mp3"
+      }
+     ],
+     "turn": true
+    }
+   ]
+  }
+ ],
+ "turnSelection": {
+  "source": "editor",
+  "level": 1,
+  "reason": "Chosen by the editor: common words only. The automatic choice picked lines with the name 'Chinku' and two turns on the same page; a recogniser is likely to mishear the name."
+ }
+}
