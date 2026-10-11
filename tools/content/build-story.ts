@@ -11,10 +11,27 @@
 import { mkdirSync, readFileSync, writeFileSync, copyFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { parseSpeechMarks, timeTokens, markByteMismatches, validateStory, pauseStartMs, PACKAGE_VERSION, type StoryPackage, type Line, type Issue, type NarrationStyle } from '@wordlight/story-package';
+import { parseSpeechMarks, timeTokens, markByteMismatches, validateStory, pauseStartMs, PACKAGE_VERSION, eligibleTurnLines, type TurnCandidate, type StoryPackage, type Line, type Issue, type NarrationStyle } from '@wordlight/story-package';
 import { PollyNarration, FixtureNarration, GenerativeNarration, type NarrationService } from './narration.ts';
 import { existsSync } from 'node:fs';
-import { chooseTurnsWithModel, bedrockConverse } from './ai-turns.ts';
+import { chooseTurnsWithModel, bedrockConverse, type TurnChoice } from './ai-turns.ts';
+
+/** Turn lines chosen by the editor in source.json: "turns": [{ "page": 2, "line": 2 }, …] (1-based, as add-story.sh
+ *  prints them). Used when automatic choice would pick lines a recogniser is likely to mishear (names, rare words).
+ *  Each must be a line the rules allow as a turn (word count, word length, not the first line); else the build stops. */
+export function editorTurns(turns: unknown, flat: TurnCandidate[], reason?: string): TurnChoice | null {
+  if (!Array.isArray(turns)) return null;
+  const ok = new Set(eligibleTurnLines(flat));
+  const indexes = turns.map((t: any) => {
+    const i = flat.findIndex((f) => f.page === Number(t?.page) - 1 && f.line === Number(t?.line) - 1);
+    if (i < 0) throw new Error(`source.json turns: no line ${t?.line} on page ${t?.page}`);
+    if (!ok.has(i)) throw new Error(`source.json turns: page ${t.page} line ${t.line} (“${flat[i].words.join(' ')}”) is not allowed as a turn (word count / word length / first line)`);
+    return i;
+  });
+  if (!indexes.length || new Set(indexes).size !== indexes.length) throw new Error('source.json turns: empty or duplicated');
+  return { indexes: [...indexes].sort((a, b) => a - b), source: 'editor', reason: reason ?? 'chosen by the editor' };
+}
+
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 /** Storyteller defaults (chosen by listening, tools/content/audition.ts); a story may override in source.json "narration". */
@@ -69,7 +86,7 @@ export async function buildStory(o: { src: any; srcDir: string; outDir: string; 
     log(`page ${pi + 1}: ${outLines.length} lines, ${toks.length} words, ${n.durationMs} ms`);
   }
   const flat = pages.flatMap((p, pi) => p.lines.map((l, li) => ({ page: pi, line: li, words: l.words.map((w) => w.w) })));
-  const choice = await chooseTurnsWithModel(flat, src.level ?? 1, o.converse ?? null, o.turnModel);
+  const choice = editorTurns(src.turns, flat, src.turnsReason) ?? await chooseTurnsWithModel(flat, src.level ?? 1, o.converse ?? null, o.turnModel);
   if (choice.fallback) log(`turn lines: rules (model not used: ${choice.fallback})`);
   for (const i of choice.indexes) pages[flat[i].page].lines[flat[i].line].turn = true;
   // Help clips: every word of a turn line, spoken alone and slowly by the neural voice. The TV plays the clip when

@@ -101,3 +101,16 @@ test('package check on disk: missing narration/image files and id mismatch fail 
   writeFileSync(path.join(other, 'story.json'), '{ not json');
   assert.equal((await checkStoryDir(other)).ok, false);
 });
+
+test('editor-chosen turn lines (source.json "turns", 1-based): used as given, and refused when the rules would not allow them', async () => {
+  const { editorTurns } = await import('../../tools/content/build-story.ts');
+  const flat = [['We', 'are', 'a', 'family', 'of', 'four.'], ['I', 'follow', 'Chinku', 'everywhere.'], ['I', 'have', 'to', 'look', 'after', 'Chinku.'], ['You', 'see,', 'I', 'am', 'older', 'than', 'him.'], ['I', 'am', 'a', 'good', 'doggy.']]
+    .map((words, i) => ({ page: i < 2 ? 0 : i < 4 ? 1 : 8, line: i < 2 ? i : i < 4 ? i - 2 : 0, words }));
+  assert.equal(editorTurns(undefined, flat), null, 'no "turns" → automatic choice');
+  const c = editorTurns([{ page: 9, line: 1 }, { page: 2, line: 2 }], flat, 'common words, no names')!;
+  assert.deepEqual(c.indexes, [3, 4]); assert.equal(c.source, 'editor'); assert.equal(c.reason, 'common words, no names');
+  assert.throws(() => editorTurns([{ page: 1, line: 1 }], flat), /not allowed as a turn/, 'the story\'s first line stays narration');
+  assert.throws(() => editorTurns([{ page: 1, line: 2 }], flat), /not allowed as a turn/, '"everywhere." is longer than the word-length rule');
+  assert.throws(() => editorTurns([{ page: 5, line: 1 }], flat), /no line 1 on page 5/);
+  assert.throws(() => editorTurns([{ page: 2, line: 2 }, { page: 2, line: 2 }], flat), /duplicated/);
+});

@@ -5,7 +5,7 @@
 import { chooseTurns, eligibleTurnLines, turnCount, DEFAULT_TURN_RULES, type TurnCandidate } from '@wordlight/story-package';
 import { usage } from '../../server/src/usage.ts';
 
-export interface TurnChoice { indexes: number[]; source: 'rules' | 'bedrock'; model?: string; reason?: string; fallback?: string }
+export interface TurnChoice { indexes: number[]; source: 'rules' | 'bedrock' | 'editor'; model?: string; reason?: string; fallback?: string }
 type Converse = (prompt: string) => Promise<string>;
 
 export function validateAiTurns(raw: string, lines: TurnCandidate[], level: number): { indexes: number[]; reason: string } | string {

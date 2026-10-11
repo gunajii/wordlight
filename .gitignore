@@ -36,3 +36,5 @@ content/sources/*.epub
 !content/stories/busy-ants/*.jpg
 !content/stories/busy-ants-hi/*.mp3
 !content/stories/busy-ants-hi/*.jpg
+!content/stories/naughty-dog/*.mp3
+!content/stories/naughty-dog/*.jpg
