@@ -166,3 +166,27 @@ window-only stills and the server traces (`.dev/aws/phase-b-20261011T172017Z.log
 on the TV (Vega Virtual Device). Against the original ≤ 1 s median target: **not met** (just over); almost all of it is speech
 recognition. In Echo Mode the child has just heard the line, so the highlight confirms what was said rather than
 leading it — which is why Echo Mode is the product's interaction (S2 decision above). MEASURED; one adult; child UNKNOWN.
+
+## Cost per reading session (real AWS runs, 2026-10-09 to 12)
+The server counts the seconds it streams to Amazon Transcribe (`.dev/aws/usage-server-*.json`, cumulative per day,
+saved at the end of each run). Seven real runs (3–8 reading turns, one or two stories each):
+
+| Run | Turns | Transcribe | At USD 0.024/min |
+|---|---|---|---|
+| 2026-10-09 12:02 UTC | 4 | 84 s | USD 0.034 |
+| 2026-10-09 12:16 UTC | 4 | 82 s | USD 0.033 |
+| 2026-10-09 19:19 UTC (two stories) | 8 | 217 s | USD 0.087 |
+| 2026-10-11 17:20 UTC | 3 | 41 s | USD 0.016 |
+| 2026-10-12 12:58 UTC | 4+ | 84 s | USD 0.034 |
+| 2026-10-12 13:20 UTC | — (traces not saved) | 25 s | USD 0.010 |
+| 2026-10-12 14:45 UTC (age-based turns) | 6 | 48 s | USD 0.019 |
+
+- **Per run: median 82 s of Transcribe ≈ USD 0.03, range USD 0.01–0.09** (8–27 s per turn). The microphone streams only
+  during a turn, so cost follows the number of turns, not the length of the story. MEASURED seconds; USD at the list price in
+  `server/src/usage.ts` (INFERRED; the AWS bill is authoritative).
+- **Narration costs nothing at play time:** Polly runs once, when a story is built (0 Polly characters in every run above).
+- **Server:** one Graviton instance, ≈ USD 0.015/h while running (instance + public IPv4, list price, INFERRED), shared by
+  all sessions; it stops itself after 90 idle minutes. How many households one instance can serve at once was **not
+  measured**.
+- **DynamoDB:** one on-demand write of counts per reader per session (negligible).
+
