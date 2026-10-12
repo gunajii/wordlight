@@ -49,3 +49,16 @@ export function chooseTurns(lines: TurnCandidate[], r: TurnRules = DEFAULT_TURN_
   }
   return chosen;
 }
+
+/** Lines a reader MAY get as a turn when the number of turns follows the reader's age (5 at age 5, one more per year).
+ *  Wider than the default rules so older readers also get longer lines; up to the validator's 12 words. */
+export const POOL_RULES: TurnRules = { minWords: 3, maxWords: 12, maxWordLength: 10, linesPerTurn: 1, skipFirstLine: true };
+
+const plain = (w: string) => w.normalize('NFC').toLowerCase().replace(/['’]s$/u, '').replace(/[\p{P}\p{S}]/gu, '');
+
+/** Indexes (into `lines`) of the age-turn pool: POOL_RULES, minus lines with a word from `avoid` (source.json
+ *  "turnAvoid": names and rare words a recogniser is likely to mishear; "Chinku" also covers "Chinku’s"). */
+export function turnPoolLines(lines: TurnCandidate[], avoid: readonly string[] = []): number[] {
+  const bad = new Set(avoid.map(plain).filter(Boolean));
+  return eligibleTurnLines(lines, POOL_RULES).filter((i) => !lines[i].words.some((w) => bad.has(plain(w))));
+}

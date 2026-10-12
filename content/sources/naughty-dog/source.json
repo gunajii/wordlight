@@ -69,5 +69,10 @@
    "line": 2
   }
  ],
- "turnsReason": "Chosen by the editor: common words only. The automatic choice picked lines with the name 'Chinku' and two turns on the same page; a recogniser is likely to mishear the name."
+ "turnsReason": "Chosen by the editor: common words only. The automatic choice picked lines with the name 'Chinku' and two turns on the same page; a recogniser is likely to mishear the name.",
+ "turnAvoid": [
+  "Chinku",
+  "Ma",
+  "papads"
+ ]
 }

@@ -99,3 +99,45 @@ export function playableStoryProblem(st: any): string | null {
   if (typeof st.credits?.attribution !== 'string') return 'no attribution';
   return null;
 }
+
+// ---- reading turns by the reader's age ----
+/** How many lines a reader of this age reads: 5 at age 5 and one more per year (12 at 12). Set on 2026-10-12 after
+ *  a 6-year-old read the earlier 3–4 turns easily. Never more than the story's pool offers. */
+export function turnsForAge(age: number, available: number): number {
+  if (!Number.isFinite(age)) return 0;
+  return Math.max(0, Math.min(available, Math.round(age)));
+}
+
+/** Longest line (in words) for this age: 7 at age 5, one more per year, 12 from age 10 (the package maximum). */
+export function maxWordsForAge(age: number): number { return Math.min(12, Math.max(4, Math.round(age) + 2)); }
+
+export interface PoolLine { page: number; line: number; words: string[] }
+const bareLen = (w: string) => [...w.replace(/[\p{P}\p{S}]/gu, '')].length;
+
+/** `n` pool lines spread through the story: the pool (story order) is cut into n equal windows and the simplest line
+ *  of each window is taken (shortest words on average, then fewest words, then earliest). Deterministic. */
+export function chooseAgeTurns(pool: PoolLine[], n: number): PoolLine[] {
+  const k = Math.min(n, pool.length);
+  const out: PoolLine[] = [];
+  for (let j = 0; j < k; j++) {
+    const win = pool.slice(Math.floor((j * pool.length) / k), Math.floor(((j + 1) * pool.length) / k));
+    const score = (l: PoolLine) => l.words.reduce((s, w) => s + bareLen(w), 0) / Math.max(1, l.words.length);
+    out.push(win.slice().sort((a, b) => score(a) - score(b) || a.words.length - b.words.length || a.page - b.page || a.line - b.line)[0]);
+  }
+  return out.sort((a, b) => a.page - b.page || a.line - b.line);
+}
+
+type AgeStory = { turnPool?: { page: number; line: number }[]; pages: { lines: { turn: boolean; words: { w: string }[] }[] }[] };
+/** The story with its turn lines chosen for this reader's age. Unchanged (the story's own turns) when there is no
+ *  reader age or the story has no pool (older packages). The story object itself is not modified. */
+export function applyAgeTurns<S extends AgeStory>(story: S, age: number | null | undefined): { story: S; count: number; ageBased: boolean } {
+  const own = story.pages.reduce((n, p) => n + p.lines.filter((l) => l.turn).length, 0);
+  const pool: PoolLine[] = (story.turnPool ?? [])
+    .map((r) => ({ ...r, words: story.pages[r.page]?.lines[r.line]?.words.map((w) => w.w) ?? [] }))
+    .filter((l) => l.words.length > 0);
+  const fit = age == null ? [] : pool.filter((l) => l.words.length <= maxWordsForAge(age));
+  if (age == null || !fit.length) return { story, count: own, ageBased: false };
+  const chosen = new Set(chooseAgeTurns(fit, turnsForAge(age, fit.length)).map((l) => `${l.page}.${l.line}`));
+  const pages = story.pages.map((p, pi) => ({ ...p, lines: p.lines.map((l, li) => ({ ...l, turn: chosen.has(`${pi}.${li}`) })) }));
+  return { story: { ...story, pages } as S, count: chosen.size, ageBased: true };
+}

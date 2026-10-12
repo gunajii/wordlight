@@ -171,7 +171,7 @@ export function createServer({ hub = new SessionHub({ now: serverNow }), publicU
           if (c.test && !showTest) continue;
           if (c.id === 's1-timing' && url.searchParams.get('all') !== '1') continue; // the S1 timing tool is not a story
           const st = c.story!;
-          out.push({ id: st.id, title: st.title, lang: st.lang, level: st.level, cover: st.pages[0]?.image ?? null, attribution: st.credits?.attribution ?? '', turns: st.pages.reduce((n, pg) => n + pg.lines.filter((l) => l.turn).length, 0), test: c.test });
+          out.push({ id: st.id, title: st.title, lang: st.lang, level: st.level, cover: st.pages[0]?.image ?? null, attribution: st.credits?.attribution ?? '', turns: st.pages.reduce((n, pg) => n + pg.lines.filter((l) => l.turn).length, 0), poolWords: (st.turnPool ?? []).map((r) => st.pages[r.page]?.lines[r.line]?.words.length ?? 0), test: c.test });
         }
         return json(res, 200, out);
       }

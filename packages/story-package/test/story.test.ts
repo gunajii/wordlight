@@ -160,3 +160,11 @@ test('pauseStartMs: end of a line = first real pause after the last word, not th
   assert.equal(pauseStartMs(pcm, 1960, 3385), 2180);
   assert.equal(pauseStartMs(pcm, 3400, 3600), 3600, 'no pause → window end');
 });
+
+test('age-turn pool: wider rules, never the first line, avoid-words (with possessive) kept out', async () => {
+  const { turnPoolLines } = await import('../src/index.ts');
+  const L = (t: string) => ({ page: 0, line: 0, words: t.split(' ') });
+  const lines = [L('We are a family of four.'), L('I follow Chinku everywhere.'), L('Are you Chinku’s friend?'), L('We do everything together.'), L('Go.'), L('I keep the crows away from the papads.'), L('One two three four five six seven eight nine ten eleven twelve thirteen.'), L('It is extraordinarily nice.')];
+  assert.deepEqual(turnPoolLines(lines), [1, 2, 3, 5], 'first line, 1-word, 13-word and an 18-letter word are out');
+  assert.deepEqual(turnPoolLines(lines, ['Chinku', 'papads']), [3], '"Chinku" also removes "Chinku’s"');
+});

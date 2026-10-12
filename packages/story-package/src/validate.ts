@@ -71,6 +71,12 @@ export function validateStory(s: StoryPackage): Issue[] {
     });
   });
   if (turns === 0) warn('pages', 'no "your turn" lines');
+  for (const [k, r] of (s.turnPool ?? []).entries()) {
+    const l = s.pages?.[r?.page]?.lines?.[r?.line];
+    if (!l) { err(`turnPool[${k}]`, `no line ${r?.line} on page ${r?.page}`); continue; }
+    if (l.words.length < TURN_WORDS_HARD.min || l.words.length > TURN_WORDS_HARD.max) err(`turnPool[${k}]`, `pool line has ${l.words.length} words (${TURN_WORDS_HARD.min}–${TURN_WORDS_HARD.max} allowed)`);
+    if (l.words.some((w) => !w.clip)) warn(`turnPool[${k}]`, 'a pool line word has no help clip (help falls back to a short pause)');
+  }
   if (s.voice?.engine === 'synthetic-clicks' || s.timing?.source === 'synthetic') warn('voice', 'test narration (synthetic tones), not a voice: hidden from the shelf unless test content is shown');
   if (!s.timing?.verified && s.timing?.source !== 'synthetic') warn('timing.verified', 'word timings not yet verified against the audio (spike S4)');
   return out;

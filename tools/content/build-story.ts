@@ -11,10 +11,11 @@
 import { mkdirSync, readFileSync, writeFileSync, copyFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { parseSpeechMarks, timeTokens, markByteMismatches, validateStory, pauseStartMs, PACKAGE_VERSION, eligibleTurnLines, type TurnCandidate, type StoryPackage, type Line, type Issue, type NarrationStyle } from '@wordlight/story-package';
+import { parseSpeechMarks, timeTokens, markByteMismatches, validateStory, pauseStartMs, PACKAGE_VERSION, eligibleTurnLines, turnPoolLines, type TurnCandidate, type StoryPackage, type Line, type Issue, type NarrationStyle } from '@wordlight/story-package';
 import { PollyNarration, FixtureNarration, GenerativeNarration, type NarrationService } from './narration.ts';
 import { existsSync } from 'node:fs';
 import { chooseTurnsWithModel, bedrockConverse, type TurnChoice } from './ai-turns.ts';
+import { addHelpClips } from './help-clips.ts';
 
 /** Turn lines chosen by the editor in source.json: "turns": [{ "page": 2, "line": 2 }, …] (1-based, as add-story.sh
  *  prints them). Used when automatic choice would pick lines a recogniser is likely to mishear (names, rare words).
@@ -89,26 +90,15 @@ export async function buildStory(o: { src: any; srcDir: string; outDir: string; 
   const choice = editorTurns(src.turns, flat, src.turnsReason) ?? await chooseTurnsWithModel(flat, src.level ?? 1, o.converse ?? null, o.turnModel);
   if (choice.fallback) log(`turn lines: rules (model not used: ${choice.fallback})`);
   for (const i of choice.indexes) pages[flat[i].page].lines[flat[i].line].turn = true;
-  // Help clips: every word of a turn line, spoken alone and slowly by the neural voice. The TV plays the clip when
-  // it helps with a word, instead of seeking in the page audio (which on the VVD let the rest of the line play).
-  if (o.helpVoice) {
-    const done = new Map<string, string>();
-    for (const pg of pages) for (const l of pg.lines) if (l.turn) for (const w of l.words) {
-      const key = w.w.normalize('NFC').replace(/^[^\p{L}\p{M}\p{N}]+|[^\p{L}\p{M}\p{N}]+$/gu, '').toLowerCase();
-      if (!key) continue;
-      if (!done.has(key)) {
-        const file = `h${done.size + 1}.mp3`;
-        writeFileSync(path.join(o.outDir, file), await o.helpVoice.wordClip(w.w, src.lang));
-        done.set(key, file);
-      }
-      w.clip = done.get(key);
-    }
-    log(`help clips: ${done.size}`);
-  }
+  // Age-turn pool: the lines the TV may make turns for a reader of any age (5 at age 5, one more per year); the
+  // chosen turns above stay the default when no reader age is known. Every pool word gets a help clip.
+  const avoid: string[] = Array.isArray(src.turnAvoid) ? src.turnAvoid : [];
+  const turnPool = [...new Set([...turnPoolLines(flat, avoid), ...choice.indexes])].sort((a, b) => a - b).map((i) => ({ page: flat[i].page, line: flat[i].line }));
+  if (o.helpVoice) log(`help clips: ${await addHelpClips(pages, turnPool, o.helpVoice, o.outDir, src.lang)} · turn pool: ${turnPool.length} lines`);
   const story: StoryPackage = {
     packageVersion: PACKAGE_VERSION, id: src.id, lang: src.lang, level: src.level ?? 1, title: src.title, credits: src.credits,
     voice: narration.voice as StoryPackage['voice'], timing: { source: narration.timingSource, verified: !!o.verified }, pages,
-    turnSelection: { source: choice.source, ...(choice.model ? { model: choice.model } : {}), level: src.level ?? 1, ...(choice.reason ? { reason: choice.reason } : {}) },
+    turnPool, turnSelection: { source: choice.source, ...(choice.model ? { model: choice.model } : {}), level: src.level ?? 1, ...(choice.reason ? { reason: choice.reason } : {}) },
   };
   const issues = validateStory(story);
   if (!issues.some((i) => i.level === 'error')) writeFileSync(path.join(o.outDir, 'story.json'), JSON.stringify(story, null, 1));

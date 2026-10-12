@@ -55,6 +55,8 @@ export interface StoryPackage {
   /** how word timings were produced, and whether they were measured against the audio (S4) */
   timing: { source: 'polly-speech-marks' | 'transcribe' | 'synthetic' | 'manual'; verified: boolean };
   /** how the Your Turn lines were chosen (rules = deterministic; bedrock = a model's choice, validated against the rules) */
+  /** Lines the TV may make turns, by the reader's age (0-based page/line, story order). Every word has a help clip. */
+  turnPool?: { page: number; line: number }[];
   turnSelection?: { source: 'rules' | 'bedrock' | 'editor'; model?: string; level?: number; reason?: string };
   pages: Page[];
 }

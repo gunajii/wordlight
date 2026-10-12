@@ -36,6 +36,11 @@ first and then saying it is a deliberate guided-reading design, not a hidden fal
   StoryWeaver (same “Animals Around Us” series). Expressive Kajal voice; three reading turns chosen by hand (common words, no names).
 Credits are shown in the app and in [docs/CONTENT.md](docs/CONTENT.md).
 
+**Reading turns follow the child's age** (set on the phone): 5 lines at age 5 and one more per year, up to 12 at
+age 12, with longer lines only for older readers (7 words at age 5, up to 12 words from age 10). A story offers what
+it has: *Naughty Dog* stops at 9, because lines with the names “Chinku”, “Ma” and “papads” are kept out (a recogniser
+is likely to mishear them). Set on 2026-10-12 after a 6-year-old tester read the earlier 3–4 turns easily.
+
 ## What is real and what was measured (2026-10-09)
 | | Result | Label |
 |---|---|---|

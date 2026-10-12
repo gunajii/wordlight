@@ -123,3 +123,48 @@ test('turn state: after a help the TV waits for the child to say the word back (
   assert.equal(s.repeatIndex, null, 'going on to a later word ends the wait');
   assert.equal(s.repeated[2], false);
 });
+
+test('turns by age: 5 at age 5, one more per year, never more than the pool; spread and simplest per window', async () => {
+  const { turnsForAge, chooseAgeTurns, applyAgeTurns } = await import('../src/index.ts');
+  assert.equal(turnsForAge(5, 16), 5); assert.equal(turnsForAge(6, 16), 6); assert.equal(turnsForAge(12, 16), 12);
+  assert.equal(turnsForAge(12, 9), 9, 'capped by the pool'); assert.equal(turnsForAge(NaN, 9), 0);
+  const pool = Array.from({ length: 16 }, (_, i) => ({ page: Math.floor(i / 2), line: i % 2, words: i % 3 === 0 ? ['Hippopotamus', 'wonderful', 'tremendously'] : ['I', 'can', 'see'] }));
+  for (const n of [5, 6, 9, 12, 16]) {
+    const c = chooseAgeTurns(pool, n);
+    assert.equal(c.length, n);
+    assert.equal(new Set(c.map((l) => `${l.page}.${l.line}`)).size, n, 'no line twice');
+    for (let j = 0; j < n; j++) { const lo = Math.floor((j * 16) / n), hi = Math.floor(((j + 1) * 16) / n); assert.ok(c.some((l) => { const i = l.page * 2 + l.line; return i >= lo && i < hi; }), `one line in window ${j} for n=${n}`); }
+  }
+  assert.ok(chooseAgeTurns(pool, 5).every((l) => l.words[0] === 'I'), 'simplest line of each window (short words) for the youngest');
+  // applyAgeTurns: flags exactly the chosen lines, leaves the story object untouched, falls back without age or pool
+  const line = (t: string, turn = false) => ({ text: t, turn, words: t.split(' ').map((w) => ({ w })) });
+  const story = { turnPool: [{ page: 0, line: 1 }, { page: 0, line: 2 }, { page: 1, line: 0 }], pages: [{ lines: [line('Once upon a time'), line('We walk in a line', true), line('We do not talk')] }, { lines: [line('Can you see me')] }] };
+  const a = applyAgeTurns(story, 5);
+  assert.equal(a.count, 3); assert.equal(a.ageBased, true);
+  assert.deepEqual(a.story.pages.map((p) => p.lines.map((l) => l.turn)), [[false, true, true], [true]]);
+  assert.deepEqual(story.pages[0].lines.map((l) => l.turn), [false, true, false], 'original story unchanged');
+  assert.equal(applyAgeTurns(story, undefined).story, story); assert.equal(applyAgeTurns(story, undefined).count, 1);
+  assert.equal(applyAgeTurns({ pages: story.pages }, 9).ageBased, false, 'older package without a pool: its own turns');
+});
+
+test('two turn lines back to back on one page: the second turn comes after the first is done (echo)', () => {
+  const w = (s: string, t0: number) => s.split(' ').map((x, i) => ({ w: x, t0: t0 + i * 300, t1: t0 + i * 300 + 250 }));
+  const page: PPage = { durationMs: 6000, lines: [{ text: 'a', turn: true, words: w('We walk in a line', 0) }, { text: 'b', turn: true, words: w('We do not talk', 3000) }] };
+  const done = new Set<number>();
+  const first = nextTurn(page, 0, done, 'echo')!; assert.equal(first.index, 0);
+  done.add(0);
+  const after = resumeAt(page, 0); assert.ok(after < page.lines[1].words[0].t0, 'resumes before the second line');
+  const second = nextTurn(page, after, done, 'echo')!; assert.equal(second.index, 1);
+  assert.ok(second.stopAtMs > page.lines[1].words[3].t1, 'echo: the narrator reads the second line before the turn');
+  assert.ok(echoStopAt(page, 0, 392) < page.lines[1].words[0].t0, 'the first stop never reaches the second line');
+});
+
+test('turns by age: line length grows with age (7 words at 5, 12 from 10)', async () => {
+  const { maxWordsForAge, applyAgeTurns } = await import('../src/index.ts');
+  assert.deepEqual([5, 6, 7, 8, 9, 10, 12].map(maxWordsForAge), [7, 8, 9, 10, 11, 12, 12]);
+  const line = (n: number) => ({ text: '', turn: false, words: Array.from({ length: n }, () => ({ w: 'cat' })) });
+  const story = { turnPool: [0, 1, 2, 3].map((i) => ({ page: i, line: 0 })), pages: [3, 12, 5, 9].map((n) => ({ lines: [line(n)] })) };
+  const five = applyAgeTurns(story, 5);
+  assert.equal(five.count, 2); assert.deepEqual(five.story.pages.map((p) => p.lines[0].turn), [true, false, true, false], 'a 5-year-old gets no 9- or 12-word line');
+  assert.equal(applyAgeTurns(story, 12).count, 4);
+});

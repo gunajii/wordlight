@@ -8,7 +8,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, Image, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
 import { useTVEventHandler } from '@amazon-devices/react-native-kepler';
-import { totals, formatDuration, playableStoryProblem, childText, type ReadingMode } from './vendor/tv-core/index';
+import { totals, formatDuration, playableStoryProblem, childText, applyAgeTurns, turnsForAge, maxWordsForAge, type ReadingMode } from './vendor/tv-core/index';
 import { SERVER_URL, SERVER_CANDIDATES, AUDIO_FILE, LEAD_MS } from './wordlight.config';
 import { log, logKey, findServer, fetchConfig, withTimeout, type Run } from './net';
 import { TvSession } from './session';
@@ -16,7 +16,9 @@ import { StoryPlayer, type LineResult, type EndInfo } from './StoryPlayer';
 import { Player as S1Player, FontCheck, type Story } from './S1Player';
 import { useDevanagariFont } from './fonts';
 
-type ShelfItem = { id: string; title: string; lang: string; cover: string | null; attribution: string; turns: number; test?: boolean };
+type ShelfItem = { id: string; title: string; lang: string; cover: string | null; attribution: string; turns: number; poolWords?: number[]; test?: boolean };
+/** Turns this story will have for a reader of this age (same rule as applyAgeTurns); the story's own count otherwise. */
+const turnsFor = (it: ShelfItem, age?: number) => (age == null || !it.poolWords?.length ? it.turns : turnsForAge(age, it.poolWords.filter((n) => n <= maxWordsForAge(age)).length) || it.turns);
 type Screen = { name: 'home' } | { name: 'story'; story: Story } | { name: 'end'; story: Story; results: LineResult[]; info: EndInfo } | { name: 's1'; run: Run; key: string } | { name: 'fonts' };
 
 export const App = () => {
@@ -81,7 +83,11 @@ export const App = () => {
       if (bad) { log(`refusing story ${id}: ${bad}`); setError2(`This story can’t be opened (${bad}). Choose another one.`); return; }
       setError2(null);
       setSummary(null);
-      setScreen({ name: 'story', story: st });
+      // reading turns follow the paired reader's age (5 at age 5, one more per year); no reader → the story's own turns
+      const reader = session.current?.onlineReader();
+      const aged = applyAgeTurns(st, reader?.age);
+      log(aged.ageBased ? `turns for ${reader!.firstName}, age ${reader!.age}: ${aged.count}` : `turns: the story's own ${aged.count}`);
+      setScreen({ name: 'story', story: aged.story });
     } catch (e: any) { log(`open ${id}: ${e?.message ?? e}`); setError2('This story didn’t load. Check the connection and try again.'); }
   }
 
@@ -139,7 +145,7 @@ export const App = () => {
             <TouchableOpacity key={it.id} hasTVPreferredFocus={i === 0} activeOpacity={1} style={[s.card, focused === it.id && s.cardFocus]} onFocus={() => setFocused(it.id)} onBlur={() => setFocused((f) => (f === it.id ? null : f))} onPress={() => openStory(it.id)}>
               {mediaBase && it.cover ? <Image source={{ uri: `${mediaBase}/content/stories/${it.id}/${it.cover}` }} style={s.cardImg} /> : <View style={s.cardImg} />}
               <Text style={s.cardTitle}>{it.title}</Text>
-              <Text style={s.cardMeta}>{it.lang === 'hi-IN' ? 'हिंदी' : 'English'} · {it.turns} reading turn{it.turns === 1 ? '' : 's'}{it.test ? ' · test story' : ''}</Text>
+              <Text style={s.cardMeta}>{it.lang === 'hi-IN' ? 'हिंदी' : 'English'} · {turnsFor(it, readers.find((r) => r.online)?.age)} reading turn{turnsFor(it, readers.find((r) => r.online)?.age) === 1 ? '' : 's'}{it.test ? ' · test story' : ''}</Text>
             </TouchableOpacity>
           ))}
         </View>

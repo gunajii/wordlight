@@ -10,7 +10,7 @@ import { log, logKey, resolveMediaBase } from './net';
 declare const performance: { now(): number };
 type Word = { w: string; t0: number; t1: number; /** help clip file (turn-line words) */ clip?: string };
 type Line = { text: string; words: Word[]; turn: boolean };
-export type Story = { id: string; title: string; lang?: string; credits: { attribution: string }; pages: { image: string; audio: string; durationMs: number; lines: Line[] }[] };
+export type Story = { id: string; title: string; lang?: string; credits: { attribution: string }; turnPool?: { page: number; line: number }[]; pages: { image: string; audio: string; durationMs: number; lines: Line[] }[] };
 const POLL_MS = 20;
 
 export function Player({ story, fontReady, mediaBase, audioFile, leadMs, autoplay, onExit }: {
