@@ -93,7 +93,8 @@ reproduction details are in [docs/FRICTION_LOG.md](../FRICTION_LOG.md) (W1–W19
   low-latency mode (or per-word "early" results) would open up real-time reading tutors.
 - **Accuracy notes (adult synthetic speech):** names are misheard (Tara → "Sarah", Anu → "A who"); in hi-IN
   "माँ ने" came back as "माने". Custom vocabularies per story would likely help (not tried).
-- **Child speech:** UNKNOWN — not tested without a guardian's permission.
+- **Child speech (2026-10-12, two children aged 4 and 6, a parent present):** 48 words lit a median 1.15 s after being
+  spoken (adults: 1.05 s); 14 of 14 reading turns completed. A small sample, MEASURED (MEASURED_RESULTS.md → Children).
 
 ## Amazon Bedrock
 - **Blocked on a new account:** `ValidationException: Operation not allowed` (CLI) / `AccessDeniedException` (SDK)
