@@ -28,7 +28,7 @@ WordLight turns the family Fire TV into a read-along partner for children of abo
   - No audio and no transcript text is stored.
   - **Amazon DynamoDB** keeps only counts.
   - Audio goes only to my AWS endpoint, and the AWS AI-services opt-out is on.
-  - AWS Budgets enforces a hard USD 100 ceiling.
+  - AWS Budgets watches a USD 100 spending ceiling.
 
 ## What I measured
 Every number has its device, sample and method in the repository's `MEASURED_RESULTS.md`.
