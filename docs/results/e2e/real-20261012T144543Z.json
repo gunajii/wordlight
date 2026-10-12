@@ -1,0 +1,232 @@
+{
+ "measuredAt": "2026-10-12T14:51:06.619Z",
+ "base": "https://3-110-13-229.sslip.io",
+ "session": "7F4M",
+ "rows": [
+  {
+   "turnId": "busy-ants-0-1-mv5d9l5d",
+   "index": 0,
+   "recognitionMs": 1098,
+   "serverToTvMs": 37,
+   "e2eMs": 1135
+  },
+  {
+   "turnId": "busy-ants-0-1-mv5d9l5d",
+   "index": 1,
+   "recognitionMs": 938,
+   "serverToTvMs": 37,
+   "e2eMs": 976
+  },
+  {
+   "turnId": "busy-ants-0-1-mv5d9l5d",
+   "index": 2,
+   "recognitionMs": 699,
+   "serverToTvMs": 37,
+   "e2eMs": 736
+  },
+  {
+   "turnId": "busy-ants-0-1-mv5d9l5d",
+   "index": 3,
+   "recognitionMs": 941,
+   "serverToTvMs": 66,
+   "e2eMs": 1007
+  },
+  {
+   "turnId": "busy-ants-1-1-mv5d9t4j",
+   "index": 0,
+   "recognitionMs": 1129,
+   "serverToTvMs": 20,
+   "e2eMs": 1149
+  },
+  {
+   "turnId": "busy-ants-1-1-mv5d9t4j",
+   "index": 1,
+   "recognitionMs": 889,
+   "serverToTvMs": 20,
+   "e2eMs": 909
+  },
+  {
+   "turnId": "busy-ants-1-1-mv5d9t4j",
+   "index": 2,
+   "recognitionMs": 1527,
+   "serverToTvMs": 36,
+   "e2eMs": 1563
+  },
+  {
+   "turnId": "busy-ants-1-1-mv5d9t4j",
+   "index": 3,
+   "recognitionMs": 1135,
+   "serverToTvMs": 33,
+   "e2eMs": 1169
+  },
+  {
+   "turnId": "busy-ants-1-1-mv5d9t4j",
+   "index": 5,
+   "recognitionMs": 1048,
+   "serverToTvMs": 7,
+   "e2eMs": 1055
+  },
+  {
+   "turnId": "busy-ants-2-0-mv5da4o7",
+   "index": 0,
+   "recognitionMs": 1461,
+   "serverToTvMs": 51,
+   "e2eMs": 1512
+  },
+  {
+   "turnId": "busy-ants-2-0-mv5da4o7",
+   "index": 1,
+   "recognitionMs": 1301,
+   "serverToTvMs": 52,
+   "e2eMs": 1353
+  },
+  {
+   "turnId": "busy-ants-2-0-mv5da4o7",
+   "index": 2,
+   "recognitionMs": 1586,
+   "serverToTvMs": 15,
+   "e2eMs": 1601
+  },
+  {
+   "turnId": "busy-ants-2-0-mv5da4o7",
+   "index": 3,
+   "recognitionMs": 1466,
+   "serverToTvMs": 15,
+   "e2eMs": 1481
+  },
+  {
+   "turnId": "busy-ants-2-0-mv5da4o7",
+   "index": 4,
+   "recognitionMs": 1168,
+   "serverToTvMs": 88,
+   "e2eMs": 1255
+  },
+  {
+   "turnId": "busy-ants-3-1-mv5daf0n",
+   "index": 1,
+   "recognitionMs": 3663,
+   "serverToTvMs": 4,
+   "e2eMs": 3666
+  },
+  {
+   "turnId": "busy-ants-3-1-mv5daf0n",
+   "index": 2,
+   "recognitionMs": 3167,
+   "serverToTvMs": 140,
+   "e2eMs": 3308
+  },
+  {
+   "turnId": "busy-ants-3-1-mv5daf0n",
+   "index": 4,
+   "recognitionMs": 1121,
+   "serverToTvMs": 87,
+   "e2eMs": 1208
+  },
+  {
+   "turnId": "busy-ants-3-1-mv5daf0n",
+   "index": 5,
+   "recognitionMs": 1514,
+   "serverToTvMs": 97,
+   "e2eMs": 1611
+  },
+  {
+   "turnId": "busy-ants-5-1-mv5db5pc",
+   "index": 0,
+   "recognitionMs": 1045,
+   "serverToTvMs": 77,
+   "e2eMs": 1122
+  },
+  {
+   "turnId": "busy-ants-5-1-mv5db5pc",
+   "index": 1,
+   "recognitionMs": 765,
+   "serverToTvMs": 77,
+   "e2eMs": 843
+  },
+  {
+   "turnId": "busy-ants-5-1-mv5db5pc",
+   "index": 2,
+   "recognitionMs": 996,
+   "serverToTvMs": 60,
+   "e2eMs": 1056
+  },
+  {
+   "turnId": "busy-ants-5-1-mv5db5pc",
+   "index": 3,
+   "recognitionMs": 756,
+   "serverToTvMs": 60,
+   "e2eMs": 817
+  },
+  {
+   "turnId": "busy-ants-8-0-mv5dbj3w",
+   "index": 0,
+   "recognitionMs": 691,
+   "serverToTvMs": 31,
+   "e2eMs": 722
+  },
+  {
+   "turnId": "busy-ants-8-0-mv5dbj3w",
+   "index": 1,
+   "recognitionMs": 671,
+   "serverToTvMs": 31,
+   "e2eMs": 702
+  },
+  {
+   "turnId": "busy-ants-8-0-mv5dbj3w",
+   "index": 2,
+   "recognitionMs": 1148,
+   "serverToTvMs": 34,
+   "e2eMs": 1182
+  },
+  {
+   "turnId": "busy-ants-8-0-mv5dbj3w",
+   "index": 3,
+   "recognitionMs": 1158,
+   "serverToTvMs": 46,
+   "e2eMs": 1204
+  },
+  {
+   "turnId": "busy-ants-8-0-mv5dbj3w",
+   "index": 4,
+   "recognitionMs": 1162,
+   "serverToTvMs": 52,
+   "e2eMs": 1214
+  },
+  {
+   "turnId": "busy-ants-8-0-mv5dbj3w",
+   "index": 5,
+   "recognitionMs": 732,
+   "serverToTvMs": 52,
+   "e2eMs": 784
+  },
+  {
+   "turnId": "busy-ants-8-0-mv5dbj3w",
+   "index": 6,
+   "recognitionMs": 1100,
+   "serverToTvMs": 64,
+   "e2eMs": 1163
+  }
+ ],
+ "summary": {
+  "words": 29,
+  "spokenToEmit": {
+   "n": 29,
+   "median": 1121,
+   "p95": 3167,
+   "max": 3663
+  },
+  "serverToTv": {
+   "n": 29,
+   "median": 46,
+   "p95": 97,
+   "max": 140
+  },
+  "e2e": {
+   "n": 29,
+   "median": 1163,
+   "p95": 3308,
+   "max": 3666
+  },
+  "within1s": 8
+ }
+}
