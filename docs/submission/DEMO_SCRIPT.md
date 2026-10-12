@@ -58,6 +58,8 @@ counts only: DynamoDB. Nothing else.
 child took part · “Fire TV device” for the footage (it's the Vega Virtual Device) · anything about Bedrock.
 
 ## Upload (YouTube)
+Published: https://youtu.be/-5x0W25ymOw (2:52).
+
 - Title: **WordLight: a Fire TV that listens to your child read (Amazon Developer Hackathon 2026)**
 - Audience: **No, it's not made for kids** (it is a demo for judges). Visibility: public (or unlisted if the rules allow).
 - English subtitles (YouTube's auto captions, then correct names and Hindi lines by hand).

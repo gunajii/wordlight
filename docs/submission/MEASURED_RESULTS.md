@@ -184,7 +184,8 @@ being shown (developer's report). As always, no audio and no transcript were sto
   about the adult tester's median (1 050 ms), with a longer tail in one session (p95 3.3 s).
 - **Found in the filmed session:** the phone auto-locked during the next story (*Naughty Dog*); after unlocking it
   showed “connected”, but the TV went on as if no phone was paired. Fixed on 2026-10-12 (the phone reconnects after
-  being hidden ≥ 3 s; the server re-sends the reader list). The fix has unit tests but no re-run with a phone yet.
+  being hidden ≥ 3 s; the server re-sends the reader list). Unit tests, and re-tested on the phone after deployment:
+  lock mid-story, unlock, the TV shows the reader again and the next turns start (developer's report, 2026-10-13).
 - Which child read in the first two sessions was not recorded; the filmed session is the 6-year-old. The 4-year-old is
   below the age WordLight is designed for (about 6–10); the phone's age setting starts at 5.
 - **MEASURED** (server records: `docs/results/e2e/real-20261012T125811Z.json`, `real-20261012T144543Z.json`,

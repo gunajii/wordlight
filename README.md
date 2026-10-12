@@ -2,6 +2,9 @@
 
 > **The TV already has the words. WordLight teaches your child to read them.**
 
+**▶ Demo video (2:52):** https://youtu.be/-5x0W25ymOw (a narrated intro, then a real session with a 6-year-old on the
+Vega Virtual Device)
+
 WordLight turns a family Fire TV into a reading stage for children aged about 6–10: the TV narrates an illustrated
 story and lights each word as it is spoken; at a marked line it says **“Riya, now you say it”**, and the child reads
 the line back into a paired phone. Amazon Transcribe hears the child, a strict reading engine lights the words she
@@ -19,7 +22,7 @@ WordLight on 2026-10-12 with a parent present: **14 of 14 reading turns complete
 | Criterion | What WordLight does | Evidence (labels: MEASURED / INFERRED / UNKNOWN) |
 |---|---|---|
 | **Technological implementation** | Vega OS app (React Native for Vega) · phone web page, no install · AWS server streaming the child's voice to **Amazon Transcribe** · deterministic reading engine for English and Hindi | Spoken word → lit on the TV: **median 1.05 s** (93 words, 5 real sessions, adult; target ≤ 1 s just missed) · narration ↔ highlight sync **median −1.0 ms** (Vega Virtual Device) · **207 tests** (`npm test`) — [MEASURED_RESULTS](docs/submission/MEASURED_RESULTS.md) |
-| **Design** | Scan a QR → consent → reader. The TV reads a line, the child says it back, words light green; after a stall the TV says just the next word (amber) and lets the child repeat it; nothing is marked wrong. Turns follow the child's age | Screenshots below · [privacy rules](docs/PRIVACY.md): microphone **only during a turn**, always shown on the phone — **0 violations in 891 status reports** (MEASURED) |
+| **Design** | Scan a QR → consent → reader. The TV reads a line, the child says it back, words light green; after a stall the TV says just the next word (amber) and lets the child repeat it; nothing is marked wrong. Turns follow the child's age | [Demo video](https://youtu.be/-5x0W25ymOw) · screenshots below · [privacy rules](docs/PRIVACY.md): microphone **only during a turn**, always shown on the phone — **0 violations in 891 status reports** (MEASURED) |
 | **Potential impact** | Children about 6–10 reading with a parent on the family TV; English and Hindi; open-licence picture books (StoryWeaver, CC BY) | **≈ USD 0.03 of Transcribe per reading session** (median of 7 real runs; narration costs nothing at play time) — [cost](docs/submission/MEASURED_RESULTS.md#cost-per-reading-session-real-aws-runs-2026-10-09-to-12) · two children (4 and 6) completed 14 of 14 turns, 0 microphone violations (MEASURED) · no learning effect claimed |
 | **Quality of the idea** | Same-language subtitling (word-by-word highlighting) + echo reading on the screen families already watch together | Why Echo Mode: Transcribe lit only ≈ 51 % of words within 1 s (169 lines), so the TV reads first — [S2](docs/submission/MEASURED_RESULTS.md) |
 | **AWS Builder** | Transcribe streaming · Polly (narration, help clips) · EC2 + CloudFormation · IAM role · S3 · DynamoDB (counts only). Bedrock integrated but **not in use** (account not authorised) | [AWS_BUILDER](docs/submission/AWS_BUILDER.md) |
