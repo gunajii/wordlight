@@ -1,6 +1,6 @@
 # Product feedback
 
-Every tool, API and SDK we used. This is first-hand only. "Not used yet" means exactly that. Dated entries with
+Every tool, API and SDK I used. This is first-hand only. "Not used yet" means exactly that. Dated entries with
 reproduction details are in [docs/FRICTION_LOG.md](../FRICTION_LOG.md) (W1–W19).
 
 ## Vega OS / Vega SDK (0.24.12112, CLI 1.4.2) and the Vega Virtual Device
@@ -13,7 +13,7 @@ reproduction details are in [docs/FRICTION_LOG.md](../FRICTION_LOG.md) (W1–W19
   first. A hint in that error would save a search.
 
 **Documentation**
-- The `AudioPlayer` class page lists lifecycle methods but has no usage example. We learned the pattern
+- The `AudioPlayer` class page lists lifecycle methods but has no usage example. I learned the pattern
   (`initialize` → `src` → `play`, `currentTime` in seconds) from the vega-audio-sample source (W1).
 - `@amazon-devices/expo-font` installed alone fails at bundle time. Its required companion packages are listed
   only on the API page (W4).
@@ -25,34 +25,34 @@ reproduction details are in [docs/FRICTION_LOG.md](../FRICTION_LOG.md) (W1–W19
 - **Biggest problem:** `http://` media sources are refused silently. JavaScript sees only `MediaError` 4, which reads
   like a codec issue; the real reason ("insecure scheme") appears only in the native log (W5). It cost about 40
   minutes and three rebuilds. Please put the reason in `MediaError.message` and document the https requirement.
-- The system Play/Pause key (Player Session) competes with an app that also handles media keys. We stopped handling
+- The system Play/Pause key (Player Session) competes with an app that also handles media keys. I stopped handling
   them and instead guard against playback starting during a reading turn.
 
 **UI rendering (found by recording the screen, not by reading code)**
 - A focused `TouchableOpacity` was drawn faded, so the selected story card looked disabled (W18). `activeOpacity={1}`
   fixed it.
-- `backgroundColor` on a nested `<Text>` is not drawn, so our "dark word on a yellow box" highlight showed the spoken
-  word as dark text on a dark panel (W19). We switched to yellow text, also in the open-source `<KaraokeLine>`.
+- `backgroundColor` on a nested `<Text>` is not drawn, so my "dark word on a yellow box" highlight showed the spoken
+  word as dark text on a dark panel (W19). I switched to yellow text, also in the open-source `<KaraokeLine>`.
 - The Virtual Device lays the app out on about 960×540 dp (measured from the recording: a 348 dp-wide image filled
-  36% of the screen width). Our 1920×1080-sized home and end screens overflowed
-  until we resized them. That one was our assumption, not a platform bug, but a note on the dp size of a 1080p TV
+  36% of the screen width). My 1920×1080-sized home and end screens overflowed
+  until I resized them. That one was my assumption, not a platform bug, but a note on the dp size of a 1080p TV
   in the layout docs would have saved a round trip.
 
 **Input**
-- OK on the remote arrives as `select` or `kpenter` depending on context. We found that by logging events. A table of
+- OK on the remote arrives as `select` or `kpenter` depending on context. I found that by logging events. A table of
   `useTVEventHandler` event types per remote button would help.
 
 **Debugging**
-- `vega device start-log-stream` was the most useful tool we had: it showed the media error cause and our app logs.
-  We pipe it to a file so test runs can be checked without screenshots.
+- `vega device start-log-stream` was the most useful tool I had: it showed the media error cause and my app logs.
+  I pipe it to a file so test runs can be checked without screenshots.
 
 **Simulator (VVD)**
 - Stable over a 3-minute timing run. Devanagari conjuncts and matras rendered correctly.
-- **Its clock drifted 7 h 22 min behind** (we suspect after the Mac slept; not verified). Every HTTPS request then failed as "Network request
+- **Its clock drifted 7 h 22 min behind** (I suspect after the Mac slept; not verified). Every HTTPS request then failed as "Network request
   failed" (native log: curl error 60) because the certificate looked "not yet valid" (W14). Restarting the VVD fixed
   it; a distinct "certificate not yet valid" error would have saved an hour.
 - Starting a page's `AudioPlayer` after a seek can take longer than a short word, so timer-based "play one word"
-  overran into the next words; we moved help words to separate clips in a second player.
+  overran into the next words; I moved help words to separate clips in a second player.
 - The audio output path has a large constant latency (−339 ms M4A / −392 ms MP3 relative to `currentTime`). That
   is fine for development once measured, but it is not representative of hardware: you need a per-device
   calibration.
@@ -61,7 +61,7 @@ reproduction details are in [docs/FRICTION_LOG.md](../FRICTION_LOG.md) (W1–W19
 - `TextEncoder` / `TextDecoder` are not in the app's type environment (W9). It's unclear which Web APIs the runtime
   provides.
 
-**What we'd ask for**
+**What I'd ask for**
 - An http/https note and the scheme reason in media errors.
 - CLI commands on the Hello World page.
 - An AudioPlayer usage snippet.
@@ -74,7 +74,7 @@ reproduction details are in [docs/FRICTION_LOG.md](../FRICTION_LOG.md) (W1–W19
 - **Bilingual voice discovery:** `DescribeVoices --language-code hi-IN` returns nothing for Kajal, the voice that
   speaks Hindi; she appears only with `--include-additional-language-codes` (W11).
 - **Speech marks:** word marks carry UTF-8 **byte** offsets — correct, but easy to misuse in JavaScript (UTF-16). In
-  Devanagari a naive mapping lands on the wrong word; our `markByteMismatches` check catches it. With SSML input, the
+  Devanagari a naive mapping lands on the wrong word; my `markByteMismatches` check catches it. With SSML input, the
   offsets point into the SSML, and for hi-IN Polly also returned a "word" mark for a `<break/>` tag. A JavaScript
   example and a note on SSML offsets would help.
 - **Timing accuracy (MEASURED, S4):** 53 % of word marks within 50 ms of the acoustic onset, median 40 ms — good
@@ -106,11 +106,11 @@ reproduction details are in [docs/FRICTION_LOG.md](../FRICTION_LOG.md) (W1–W19
   it forces the Paid plan, with no warning in the CLI (W7).
 - **AWS Budgets / Cost Explorer:** easy from the CLI; Cost Explorer returned nothing for the first day.
 - **CloudFormation / EC2 / SSM:** a one-stack deploy worked first time; SSM `send-command` made updates without SSH
-  simple. Our own bug: re-checking the TLS certificate before Caddy had restarted requested a new Let's Encrypt
+  simple. My own bug: re-checking the TLS certificate before Caddy had restarted requested a new Let's Encrypt
   certificate on every deploy (fixed; verified in docs/results/deploy/).
 
 ## Development tools
 - **Node.js type stripping (≥ 22.18):** running TypeScript directly, with no build step, kept server, tools and
   tests simple. The server even serves stripped TS to the phone browser.
 - **Cloudflare quick tunnel:** essential for https media during development. The tunnel died after the Mac slept,
-  and its URL changes on restart. We wrote a self-healing script that publishes the current URL to the TV at runtime.
+  and its URL changes on restart. I wrote a self-healing script that publishes the current URL to the TV at runtime.

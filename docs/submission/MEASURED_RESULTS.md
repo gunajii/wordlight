@@ -55,16 +55,16 @@ including those sessions.
 ### S2 follow-up (phase A2, 2026-10-08) — reported beside phase A, not replacing it
 | | |
 |---|---|
-| Question | Is the delay caused by our harness (speech started at t = 0, while a real phone streams silence first) or by a Transcribe setting? |
+| Question | Is the delay caused by my harness (speech started at t = 0, while a real phone streams silence first) or by a Transcribe setting? |
 | Method | The same 40-case sample, the same cached Polly audio and the same metric, in 5 configurations. Then the configuration picked by a rule fixed in advance was run on all 169 cases. Table: `docs/results/s2/experiment-20261008T125733Z.md` |
 | Result: harness repeat | Phase A setting on the sample: 54.4 % lit within 1 s (phase A, all 169 cases: 50.9 %). The two runs are consistent |
 | Result: lead silence | 600 ms of silence first: **no improvement** (46.1 % within 1 s, first word lit 84.6 % vs 89.7 % without it). The hypothesis is **rejected**: the first-word losses are not a harness artifact |
 | Result: stability | high 46.1 % · medium 47.1 % · low 44.6 % · **none 63.7 %** (median latency 708 ms vs 1 000 ms; from the word END 451 ms vs 740 ms, INFERRED) |
-| Pick rule | It excluded every configuration. The sample holds only 9 misread words, so one word is 11 points, and even the repeat of the phase A setting showed 22 %. Result: "keep high". This weakness is in our sample design and is recorded as found |
+| Pick rule | It excluded every configuration. The sample holds only 9 misread words, so one word is 11 points, and even the repeat of the phase A setting showed 22 %. Result: "keep high". This weakness is in my sample design and is recorded as found |
 | Result: 169 cases, high + 600 ms | **FAIL**: 49.2 % within 1 s (en 47.7 %, hi 50.7 %), misreads accepted 8.9 % (4/45), median 989 ms. Recognised eventually: 95 %. From the word END (INFERRED): median 720 ms, 85.6 % within 1 s |
 | Result: 169 cases, none + 600 ms (phase A3) | **FAIL**: 58.8 % within 1 s (en 60.6 %, hi 57 %), misreads accepted 11.1 % (5/45: en 4/25, hi 1/20), median 798 ms but p95 1 883 ms (high: 1 553). From the word END (INFERRED): median 524 ms |
 | Decision (rule committed before phase A3) | "none" only if more words lit within 1 s AND no more misreads accepted in either language. It accepted one more Hindi misread (काल heard as कल), so the server keeps **stability high**. **Echo Mode** stays. Redeployed 2026-10-08 with the latest code; health check OK |
-| What this means | With adult synthetic speech, Transcribe streaming recognises about 95 % of words eventually, but typically 0.7–1 s after the word starts. The 1-second-from-start target isn't met with any setting we tried. The highlight will trail the reader. Echo Mode keeps the turn understandable: the child has just heard the line, and the highlight confirms rather than leads. Child speech: **UNKNOWN** |
+| What this means | With adult synthetic speech, Transcribe streaming recognises about 95 % of words eventually, but typically 0.7–1 s after the word starts. The 1-second-from-start target isn't met with any setting I tried. The highlight will trail the reader. Echo Mode keeps the turn understandable: the child has just heard the line, and the highlight confirms rather than leads. Child speech: **UNKNOWN** |
 
 ## Bedrock — Personalized Reading Coach
 | | |

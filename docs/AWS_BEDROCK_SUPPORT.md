@@ -35,7 +35,7 @@ Not the cause, from the same run: the region (models and profiles are listed and
 (the APAC profile is listed), IAM (the caller is the root user), throttling (first call of the day), credentials (every
 control-plane call succeeded), network (an HTTP 400 answer came back in 517 ms).
 
-## What we want
+## What I want
 On-demand inference for one small text model (Amazon Nova Micro, via the APAC inference profile or directly) in
 ap-south-1, for a hackathon project (Amazon “Build, Ship, Shape” — Fire TV track, AWS Builder). Expected use:
 ≈ 300 short calls in total (two-sentence parent summaries from structured counts), well under USD 1.

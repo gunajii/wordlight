@@ -28,7 +28,7 @@
   second help. Counts stay honest: a helped word is “with help” either way.
 
 ## Narration and timing (`tools/content`, `packages/story-package`)
-- Story text → display lines → SSML (rate, volume, pauses) → Polly. Speech-mark byte offsets point into the SSML; we
+- Story text → display lines → SSML (rate, volume, pauses) → Polly. Speech-mark byte offsets point into the SSML; I
   map them back to the text bytes and validate every mark (`markByteMismatches`); Polly's marks for SSML tags (seen in
   hi-IN) are dropped.
 - English uses Polly **generative** Kajal (no speech marks): Amazon Transcribe listens to the narration, an

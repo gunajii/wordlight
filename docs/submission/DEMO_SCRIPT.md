@@ -40,7 +40,7 @@ Everything shown happened as filmed: cut for length, never stage a recognition r
 | 1:45–1:58 | *व्यस्त चींटियाँ*: one Hindi line lighting up and a Hindi turn | VO: “It works in Hindi too.” |
 | 1:58–2:10 | “Well read!” end card → the phone's parent summary | VO: “At the end, parents see what really happened: words read on their own, and words with a little help.” |
 | 2:10–2:25 | **Parent's verdict**, on camera | Their own words. Prompts: *“What did you notice?”* / *“Would you use it again?”* Keep whatever they really say, including doubts. |
-| 2:25–2:45 | Architecture card (below) | VO: “Under the hood: a Vega OS app on Fire TV, a phone microphone over a secure connection, Amazon Transcribe streaming to hear the child, and Amazon Polly to narrate, all on AWS. We measured it: a spoken word lights up in about a second, so the TV reads first and the child repeats, which is guided echo reading.” |
+| 2:25–2:45 | Architecture card (below) | VO: “Under the hood: a Vega OS app on Fire TV, a phone microphone over a secure connection, Amazon Transcribe streaming to hear the child, and Amazon Polly to narrate, all on AWS. I measured it: a spoken word lights up in about a second, so the TV reads first and the child repeats, which is guided echo reading.” |
 | 2:45–2:55 | GitHub: wordlight + karaoke-vega | VO: “It's open source, and the word-timing component is reusable by any Vega developer. Next: more stories and more Indian languages.” |
 | 2:55–3:00 | Icon + name | VO: “WordLight. The TV already has the words; now it helps children read them.” |
 
@@ -82,7 +82,7 @@ child took part · “Fire TV device” for the footage (it's the Vega Virtual D
   Code: https://github.com/gunajii/wordlight (MIT) · Word-timing component: https://github.com/gunajii/karaoke-vega
   Stories: “Busy Ants” and “Naughty Dog”, written by Kanchan Bannerjee, illustrated by Deepa Balsavar, published by
   Pratham Books (© Pratham Books, 2015) under a CC BY 4.0 licence on StoryWeaver (storyweaver.org.in).
-  “व्यस्त चींटियाँ” is our own unofficial Hindi translation of Busy Ants (CC BY 4.0).
+  “व्यस्त चींटियाँ” is my own unofficial Hindi translation of Busy Ants (CC BY 4.0).
   Narration: Amazon Polly. Shown with a parent's written permission.
   ```
 

@@ -10,7 +10,7 @@ Nothing is ever marked wrong.
 
 WordLight is designed around same-language subtitling
 ([UNESCO LitBase](https://www.uil.unesco.org/en/litbase/reading-billion-same-language-subtitling-india)).
-**We have not measured any effect on children's reading and claim none.** Two children (ages 4 and 6) used
+**I have not measured any effect on children's reading and claim none.** Two children (ages 4 and 6) used
 WordLight on 2026-10-12 with a parent present: **14 of 14 reading turns completed**, and the TV helped with 3 words
 ([results](docs/submission/MEASURED_RESULTS.md#children-2026-10-12-two-children-ages-4-and-6-a-parent-present)). The
 6-year-old read the earlier 3–4 turns easily, which led to more turns by age.
@@ -26,7 +26,7 @@ WordLight on 2026-10-12 with a parent present: **14 of 14 reading turns complete
 | **Open source** | [`karaoke-vega`](https://github.com/gunajii/karaoke-vega): word-timed subtitles for Vega (MIT) · `npm install github:gunajii/karaoke-vega` | [OPEN_SOURCE](docs/submission/OPEN_SOURCE.md) |
 | **Friction log** | 19 entries on Vega and AWS (task → steps → expected → actual → severity → workaround → suggestion) | [FRICTION_LOG](docs/FRICTION_LOG.md) |
 
-Limits we know of: tested on the Vega Virtual Device (physical Fire TV: UNKNOWN) · recognition takes ≈ 1 s · three
+Limits I know of: tested on the Vega Virtual Device (physical Fire TV: UNKNOWN) · recognition takes ≈ 1 s · three
 stories · two children so far, and no measure of learning.
 
 | The child's turn on the TV | Help, then say it back | The phone during a turn |
@@ -44,7 +44,7 @@ stories · two children so far, and no measure of learning.
 5. **Well read!** — the TV and the parent's phone show what really happened: words read on their own, words that
    needed a little help.
 
-Why Echo Mode: our measurements showed Amazon Transcribe recognises ≈ 95 % of words but typically ~1 s after they
+Why Echo Mode: my measurements showed Amazon Transcribe recognises ≈ 95 % of words but typically ~1 s after they
 are spoken, too late for “the child reads first” (only ≈ 51 % lit within 1 s across 169 test lines). Hearing the line
 first and then saying it is a deliberate guided-reading design, not a hidden fallback. Details:
 [docs/submission/MEASURED_RESULTS.md](docs/submission/MEASURED_RESULTS.md).
@@ -52,7 +52,7 @@ first and then saying it is a deliberate guided-reading design, not a hidden fal
 ## Stories
 - **Busy Ants** (English) — Kanchan Bannerjee, illustrated by Deepa Balsavar, Pratham Books, CC BY 4.0, via
   StoryWeaver. Narrated by Amazon Polly's expressive (generative) Kajal voice.
-- **व्यस्त चींटियाँ** (Hindi) — our own unofficial translation of Busy Ants (CC BY 4.0), narrated by Polly neural Kajal.
+- **व्यस्त चींटियाँ** (Hindi) — my own unofficial translation of Busy Ants (CC BY 4.0), narrated by Polly neural Kajal.
 - **Naughty Dog** (English) — Kanchan Bannerjee, illustrated by Deepa Balsavar, Pratham Books, CC BY 4.0, via
   StoryWeaver (same “Animals Around Us” series). Expressive Kajal voice; three reading turns chosen by hand (common words, no names).
 Credits are shown in the app and in [docs/CONTENT.md](docs/CONTENT.md).
@@ -114,6 +114,6 @@ Audio goes only to the WordLight server on AWS (HTTPS) and on to Amazon Transcri
 transcript text — only counts. [docs/PRIVACY.md](docs/PRIVACY.md) · [docs/SECURITY.md](docs/SECURITY.md)
 
 ## Licence and attribution
-Code: MIT (`LICENSE`). Stories CC BY 4.0 (Pratham Books / StoryWeaver; Hindi translation ours), narration generated
+Code: MIT (`LICENSE`). Stories CC BY 4.0 (Pratham Books / StoryWeaver; Hindi translation mine), narration generated
 with Amazon Polly, Noto Sans Devanagari under SIL OFL — details in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
 Code reused from the author's Earshot project: [docs/REUSED.md](docs/REUSED.md).

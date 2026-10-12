@@ -1,8 +1,8 @@
 # Friction log
 
-Real problems we hit while building WordLight (solo developer, macOS arm64, Vega SDK 0.24.12112, new AWS account in
+Real problems I hit while building WordLight (solo developer, macOS arm64, Vega SDK 0.24.12112, new AWS account in
 ap-south-1), each written as: **task → steps → expected → actual → severity → workaround → suggestion**. Nothing here is
-invented; where a detail was not recorded at the time it says so. Severity is our own rating of the cost to us.
+invented; where a detail was not recorded at the time it says so. Severity is my own rating of the cost to me.
 
 | # | Product | Friction | Severity |
 |---|---|---|---|
@@ -18,7 +18,7 @@ invented; where a detail was not recorded at the time it says so. Severity is ou
 | [W10](#w10) | AWS · account activation | Services came online one by one ~30 min after the Paid-plan upgrade | Medium |
 | [W11](#w11) | AWS · Polly voices | Kajal not listed for hi-IN unless `IncludeAdditionalLanguageCodes` | Low |
 | [W12](#w12) | AWS · Bedrock | Every model refused on a new account (`NOT_AUTHORIZED`), no remedy in the error | Medium |
-| [W13](#w13) | (our tooling) macOS Python | numpy missing — **not Amazon friction**, kept for honesty | Low |
+| [W13](#w13) | (my tooling) macOS Python | numpy missing — **not Amazon friction**, kept for honesty | Low |
 | [W14](#w14) | Vega · Virtual Device | Clock hours behind → HTTPS fails as “Network request failed” | High |
 | [W15](#w15) | AWS · EC2 | Stopped t4g.micro would not start (`InsufficientInstanceCapacity`) | Medium |
 | [W16](#w16) | AWS · Polly SSML marks | hi-IN returned a *word* speech mark for a `<break/>` tag | Low |
@@ -146,7 +146,7 @@ invented; where a detail was not recorded at the time it says so. Severity is ou
 ### W10 — Services came online one by one after the Paid-plan upgrade
 **Date / env:** 2026-10-08 · same account; “Your AWS account upgraded to a paid plan” e-mail at 17:26 IST
 - **Task:** start the AWS measurements as soon as the upgrade was confirmed.
-- **Steps:** ran our guard script (`infra/aws/guard.sh`: Polly, Transcribe, EC2 probes) every few minutes.
+- **Steps:** ran my guard script (`infra/aws/guard.sh`: Polly, Transcribe, EC2 probes) every few minutes.
 - **Expected:** every service usable once the e-mail arrives.
 - **Actual:** Transcribe answered first; Polly and EC2 kept returning `SubscriptionRequiredException` /
   `OptInRequired` until about 17:54 — roughly 30 minutes.
@@ -162,7 +162,7 @@ invented; where a detail was not recorded at the time it says so. Severity is ou
 - **Expected:** the Hindi neural voice is listed.
 - **Actual:** empty list. Kajal's primary language is en-IN with hi-IN as an “additional language”; she appears only
   with `--include-additional-language-codes`, yet `SynthesizeSpeech` with `LanguageCode=hi-IN` works.
-- **Severity:** Low (one debugging round; our guard script had reported Hindi as unavailable).
+- **Severity:** Low (one debugging round; my guard script had reported Hindi as unavailable).
 - **Workaround:** always pass the flag.
 - **Suggestion:** list bilingual voices under their additional languages by default, or note it on the voice page.
 
@@ -183,16 +183,16 @@ invented; where a detail was not recorded at the time it says so. Severity is ou
 - **Suggestion:** an actionable message (“new accounts need …; open a case at …”) and one exception name for one cause.
 
 <a id="w13"></a>
-### W13 — (our own tooling) macOS system Python has no numpy
+### W13 — (my own tooling) macOS system Python has no numpy
 **Date / env:** 2026-10-08 · macOS 26 `python3`
-- **Task / steps:** run our S4 timing analysis on the Mac → `import numpy` failed.
+- **Task / steps:** run my S4 timing analysis on the Mac → `import numpy` failed.
 - **Severity:** Low. **Workaround:** synthesise on the Mac, analyse elsewhere. **Not an Amazon product issue** —
   kept so the record is complete; not part of the friction bonus.
 
 <a id="w14"></a>
 ### W14 — Virtual Device clock hours behind → every HTTPS request fails as “Network request failed”
 **Date / env:** 2026-10-08 · Vega Virtual Device (SDK 0.24.12112) on macOS, `fetch` in a React Native for Vega app
-- **Task:** point the TV app at our AWS server (Let's Encrypt certificate).
+- **Task:** point the TV app at my AWS server (Let's Encrypt certificate).
 - **Steps:** health check from the Mac passed → TV showed “No WordLight server answered” → read the device log
   (`CURL Error code 60`) → suspected the certificate chain and switched Caddy to RSA (no change) → logged the device
   clock from the app → restarted the Virtual Device.
@@ -201,7 +201,7 @@ invented; where a detail was not recorded at the time it says so. Severity is ou
   valid”. JavaScript saw only `Network request failed`; nothing mentioned time. On 2026-10-09 the device's log timestamps again
   lagged the real time by many hours (their time zone not verified; HTTPS still worked because the certificate was older).
 - **Severity:** High for first-time developers (looks exactly like a server or network outage; ~1 hour lost).
-- **Workaround:** restart the Virtual Device before testing (our demo script offers it); the app shows its clock on
+- **Workaround:** restart the Virtual Device before testing (my demo script offers it); the app shows its clock on
   the error screen.
 - **Suggestion:** keep the virtual device clock synced with the host (also after sleep), and report
   `certificate not yet valid` distinctly to the app and the log.
@@ -210,7 +210,7 @@ invented; where a detail was not recorded at the time it says so. Severity is ou
 ### W15 — A stopped t4g.micro could not be started
 **Date / env:** 2026-10-09 · Amazon EC2 `StartInstances`, ap-south-1, t4g.micro (Graviton), stopped overnight
 - **Task:** start the demo server for a test run.
-- **Steps:** `aws ec2 start-instances` (via our deploy script) → failed → read the error → changed the instance type.
+- **Steps:** `aws ec2 start-instances` (via my deploy script) → failed → read the error → changed the instance type.
 - **Expected:** a stopped instance of the smallest size starts, or the CLI can wait for capacity.
 - **Actual:** `InsufficientInstanceCapacity … (reached max retries: 2): Insufficient capacity.` The instance is tied to
   its Availability Zone, so the only options are to wait or change the type.
@@ -223,11 +223,11 @@ invented; where a detail was not recorded at the time it says so. Severity is ou
 ### W16 — Polly hi-IN returned a word speech mark for an SSML `<break/>` tag
 **Date / env:** 2026-10-08 · Amazon Polly neural Kajal, `LanguageCode=hi-IN`, SSML input, `SpeechMarkTypes=["word"]`
 - **Task:** add pauses between lines (`<break time="650ms"/>`) and keep word highlighting exact.
-- **Steps:** built the Hindi story with SSML → our byte check (`markByteMismatches`) stopped the build → inspected the marks.
+- **Steps:** built the Hindi story with SSML → my byte check (`markByteMismatches`) stopped the build → inspected the marks.
 - **Expected:** word marks only for spoken words (offsets into the SSML input, as documented).
 - **Actual:** a `"type":"word"` mark whose value was the tag itself: `{"value":"<break time=\"650ms\"/>", …}`. The same
   SSML style in en-IN produced no such mark.
-- **Severity:** Low (caught by our validation; a silent mis-highlight without it).
+- **Severity:** Low (caught by my validation; a silent mis-highlight without it).
 - **Workaround:** drop word marks whose value is an SSML tag before mapping offsets.
 - **Suggestion:** never emit word marks for SSML tags, or document it.
 
@@ -239,7 +239,7 @@ invented; where a detail was not recorded at the time it says so. Severity is ou
 - **Expected:** word speech marks like the neural voices (they are what makes read-along possible).
 - **Actual:** generative voices do not support speech marks (documented), so the expressive voice cannot highlight words.
 - **Severity:** Medium (forces a second service for timing).
-- **Workaround:** Amazon Transcribe listens to the generative narration and our aligner maps its words onto the known
+- **Workaround:** Amazon Transcribe listens to the generative narration and my aligner maps its words onto the known
   text (measured before adoption: median 40 ms vs 52 ms for neural speech marks on the same pages).
 - **Suggestion:** speech marks for generative voices — it would make them usable for read-along and karaoke apps.
 
@@ -250,9 +250,9 @@ invented; where a detail was not recorded at the time it says so. Severity is ou
 - **Expected:** the focused card looks highlighted.
 - **Actual:** the focused card had the yellow border but its whole content was faded, so the selected item looked
   disabled and the unselected one looked active (screen recording frames, 2026-10-09 23:51 IST). The faded look matches
-  `TouchableOpacity`'s pressed opacity, so we believe focus applies `activeOpacity`; we did not find this documented.
+  `TouchableOpacity`'s pressed opacity, so I believe focus applies `activeOpacity`; I did not find this documented.
 - **Severity:** Medium (the main navigation looked broken on a TV).
-- **Workaround:** `activeOpacity={1}` and our own focus style; checked in a second recording (2026-10-10 00:20 IST).
+- **Workaround:** `activeOpacity={1}` and my own focus style; checked in a second recording (2026-10-10 00:20 IST).
 - **Suggestion:** document how focus interacts with `activeOpacity` on Vega, or keep focused items at full opacity.
 
 ### W19 — `backgroundColor` on a nested `<Text>` is not drawn
@@ -261,7 +261,7 @@ invented; where a detail was not recorded at the time it says so. Severity is ou
 - **Steps:** per-word `<Text style={{ color: '#101820', backgroundColor: '#ffd166' }}>` inside a line `<Text>` → screen recording.
 - **Expected:** a yellow box behind the current word (standard React Native behaviour for nested text).
 - **Actual:** no box; the dark text sat on the dark subtitle panel, so the current word was nearly invisible — the one
-  word the child should be following. The same style on a `<View>` (our word chips) draws correctly.
+  word the child should be following. The same style on a `<View>` (my word chips) draws correctly.
 - **Severity:** Medium (silent visual failure; it took a screen recording to notice).
 - **Workaround:** highlight with text colour (yellow) instead; checked in a second recording. Fixed in the open-source
   `<KaraokeLine>` default as well (karaoke-vega `8624470`).

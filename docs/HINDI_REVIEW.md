@@ -1,7 +1,7 @@
 # Hindi review — “व्यस्त चींटियाँ” and the TV's Hindi words
 
 Reviewed 2026-10-09 against the English original (Busy Ants, StoryWeaver, CC BY 4.0). The rule: faithful and
-child-friendly; no rewriting for taste. Status of the translation itself: **our own, unofficial** (marked so in the
+child-friendly; no rewriting for taste. Status of the translation itself: **my own, unofficial** (marked so in the
 credits). A native-speaker review by the developer is still recorded below as pending.
 
 ## Mechanical checks (MEASURED, `hindiTextProblems` + Unicode checks on `content/sources/busy-ants-hi/source.json`)

@@ -1,6 +1,6 @@
 # AWS Builder mini-challenge: AWS in WordLight
 
-Status words: **integrated** = code and tests exist · **ran** = called successfully on our account · **measured** =
+Status words: **integrated** = code and tests exist · **ran** = called successfully on my account · **measured** =
 results recorded in docs/results/ (see MEASURED_RESULTS.md). Only services WordLight actually uses are listed.
 
 ```
@@ -35,7 +35,7 @@ story package ─► S3 (private) ─► EC2 ─► HTTPS ─► Vega TV        
 - **Stability "high".** "none" was faster (58.8 % within 1 s) but accepted one more Hindi misread; a rule fixed before
   the run kept "high".
 - **Generative English voice with Transcribe alignment.** Polly speech marks were within 50 ms for 53 % of words
-  (S4: FAIL against our 95 % target). The expressive voice + alignment measured a 40 ms median error vs 52 ms for
+  (S4: FAIL against my 95 % target). The expressive voice + alignment measured a 40 ms median error vs 52 ms for
   speech marks on the same pages, so it was adopted by a rule fixed before the run; it is not an S4 pass.
 - **One small instance.** Long-lived WebSockets and one Transcribe stream per turn; ≈ USD 0.015/h running, idle
   auto-stop after 90 min.

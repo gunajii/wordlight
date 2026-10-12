@@ -32,7 +32,7 @@ Official deadline: **2026-10-23, 12:00 PM PDT**. Submit as soon as everything be
 
 ## Content
 - ✅ Busy Ants and Naughty Dog credits verbatim from StoryWeaver's attribution files; shown on the end card and in docs/CONTENT.md
-- ✅ Our test story (Mina's Red Kite) is off the demo shelf
+- ✅ My test story (Mina's Red Kite) is off the demo shelf
 
 ## Privacy and security
 - ✅ No audio or transcript text stored; mic audit 0/891 on AWS; child audio only via the AWS endpoint

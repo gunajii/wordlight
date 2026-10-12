@@ -30,8 +30,8 @@ agrees. The software does not need a child; every automated test uses scripts, s
 > WordLight is a student project for a hackathon. It shows a story on the TV, and your child reads a few lines aloud
 > into a phone. The phone's microphone is on only while your child is reading a line. The sound goes over an
 > encrypted connection to Amazon Web Services (the Mumbai region), which turns speech into words so the TV can light
-> them up. WordLight does not save the recording. With your permission we will write down, on paper, which words your
-> child read, so that we can check how well the app follows a child's reading. We will not publish your child's
+> them up. WordLight does not save the recording. With your permission I will write down, on paper, which words your
+> child read, so that I can check how well the app follows a child's reading. I will not publish your child's
 > name, voice or picture. You can stop at any time.
 >
 > Parent/guardian name: ____________  Signature: ____________  Date: ________
@@ -49,7 +49,7 @@ by hackathon judges and anyone with the link.
 > cannot be recalled). Parent/guardian name: ____________ Signature: ____________ Date: ________
 
 Before recording:
-1. `bash tools/aws/final-checks.sh` shows the **AI services opt-out = optOut** (our rule before any child audio).
+1. `bash tools/aws/final-checks.sh` shows the **AI services opt-out = optOut** (my rule before any child audio).
 2. The phone's address bar shows the AWS host (`…sslip.io`), not a tunnel.
 3. The parent is in the room for the whole session; the child agrees too and can stop any time; short (≈ 5 min).
 4. Fill the paper sheet for every turn — the session doubles as the first child test (score it with

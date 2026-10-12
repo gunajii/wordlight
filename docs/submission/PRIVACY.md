@@ -13,7 +13,7 @@ WordLight is for children, so privacy is part of the design. Full record: [docs/
 - **No audio, no transcripts stored.** Audio frames go to Amazon Transcribe during a turn and are discarded by
   WordLight. Voice activity is computed as loudness numbers and kept only as counts. Production traces hold timings
   and counts, never what the child said.
-- **Only our AWS endpoint.** Child audio only goes over HTTPS/WSS to the WordLight server on AWS — never through a
+- **Only my AWS endpoint.** Child audio only goes over HTTPS/WSS to the WordLight server on AWS — never through a
   development tunnel; a health check confirms it before a session.
 - **AI services opt-out** policy attached to the AWS account (content not used for service improvement).
 - **Minimal data:** in memory per session — first name, age, language, counts. In DynamoDB (30-day TTL) — a random
