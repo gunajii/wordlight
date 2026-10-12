@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.1 (2026-10-12)
+
+- Installable from GitHub: `npm install github:gunajii/karaoke-vega` (a `prepare` script builds `dist/`).
+  The README's `npm install @wordlight/karaoke-vega` did not work: the package was never published to npm.
+- The build compiles from a clean checkout (`lib: ES2022` for `Array.prototype.at`).
+
 ## 0.1.0 (unreleased)
 
 The first extraction from WordLight, a read-along app for Fire TV.

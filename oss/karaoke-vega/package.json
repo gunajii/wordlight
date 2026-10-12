@@ -1,6 +1,6 @@
 {
   "name": "@wordlight/karaoke-vega",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Word-timed (karaoke) subtitles for React Native on Vega OS / Fire TV: accurate playhead from a coarse currentTime, word lookup, WebVTT word timestamps, Amazon Polly speech marks (UTF-8 byte offsets) and a <KaraokeLine> component.",
   "type": "module",
   "license": "MIT",
@@ -39,6 +39,7 @@
   "sideEffects": false,
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
+    "prepare": "npm run build",
     "test": "node --test test/*.test.ts",
     "prepublishOnly": "npm test && npm run build"
   },
