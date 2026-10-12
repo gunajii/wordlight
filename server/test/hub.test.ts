@@ -73,7 +73,9 @@ test('reconnect: same phone id rejoins, TV hears reader connected, old socket cl
   const { hub, id, tv, phone } = setup();
   const phone2 = conn();
   hub.handle(phone2, { t: 'hello', role: 'phone', sessionId: id, clientId: 'p1' });
-  assert.equal(tv.out.at(-1).state, 'connected');
+  assert.equal(tv.out.at(-2).state, 'connected');
+  assert.equal(tv.out.at(-1).t, 'readers', 'the TV also gets the full reader list');
+  assert.equal(tv.out.at(-1).readers[0].online, true);
   hub.disconnect(phone); // the old socket
   assert.equal(hub.get(id)!.phones.get('p1'), phone2);
   assert.ok(hub.get(id)!.telemetry.some((r) => r.kind === 'rejoin'));

@@ -375,6 +375,9 @@ export class SessionHub {
       for (const r of s.readers.values()) {
         if (r.phoneClientId === clientId) this.toTv(s, { type: 'reader.status', sessionId: s.id, readerId: r.readerId, state: 'connected', serverMs: this.o.now() });
       }
+      // ...and the whole list, so a TV that missed a status update (2026-10-12: phone back from an auto-lock, TV
+      // still showing "Pair a phone") rebuilds who is online from the server's truth.
+      if ([...s.readers.values()].some((r) => r.phoneClientId === clientId)) this.toTv(s, { t: 'readers', readers: this.readerList(s), serverMs: this.o.now() });
     }
     conn.send({ t: 'welcome', sessionId: s.id, role, readers: this.readerList(s), serverMs: this.o.now() });
     // A phone that reconnects while it owns the active turn lost its stream (the page stops the microphone when

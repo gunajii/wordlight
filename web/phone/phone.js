@@ -11,6 +11,7 @@ import { SyncClient, ClockSync } from '/pkg/session-client/index.js';
 import { encodeAudioFrame } from '/pkg/shared-protocol/audio.ts';
 import { initialState, reduce, micWanted, needsTap, micTip } from '/phone/mic-lifecycle.js';
 import { WakeLockKeeper } from '/phone/wakelock.js';
+import { resumeAction } from '/phone/resume.js';
 
 const $ = (id) => document.getElementById(id);
 const store = {
@@ -313,12 +314,27 @@ $('session-end-btn').onclick = () => { ev('session-end'); if (L.turn) client.sen
 document.addEventListener('click', () => { if (S.wake === 'lost' && L.session === 'active' && L.ready) wake.enable(); });
 
 // ---------- page lifecycle ----------
-document.addEventListener('visibilitychange', () => { ev('visibility', { v: document.visibilityState }); dispatch({ type: document.visibilityState === 'hidden' ? 'hidden' : 'visible' }); flushEvents(); });
+// Coming back from a lock / another app / the back-forward cache: get a fresh socket so the TV sees the reader again
+// (resume.js). The microphone is not affected: only a NEW turn.start can open it.
+let hiddenAtMs = null;
+function resume(event, extra = {}) {
+  const a = resumeAction({ event, hiddenAtMs, nowMs: Date.now(), status: S.status, ...extra });
+  if (event === 'visible') hiddenAtMs = null;
+  if (a === 'reconnect' && code) { ev('resume-reconnect', { on: event }); client.reconnect(); }
+}
+document.addEventListener('visibilitychange', () => {
+  const hidden = document.visibilityState === 'hidden';
+  ev('visibility', { v: document.visibilityState });
+  if (hidden) hiddenAtMs = Date.now();
+  dispatch({ type: hidden ? 'hidden' : 'visible' });
+  if (!hidden) resume('visible');
+  flushEvents();
+});
 addEventListener('pagehide', (e) => { ev('pagehide', { persisted: e.persisted }); dispatch({ type: 'unload' }); wake.disable(); flushEvents(); });
-addEventListener('pageshow', (e) => ev('pageshow', { persisted: e.persisted }));
+addEventListener('pageshow', (e) => { ev('pageshow', { persisted: e.persisted }); if (e.persisted) { dispatch({ type: 'visible' }); resume('pageshow', { persisted: true }); } });
 document.addEventListener('freeze', () => ev('freeze'));   // Chromium Page Lifecycle API
 document.addEventListener('resume', () => ev('resume'));
-addEventListener('online', () => ev('online'));
+addEventListener('online', () => { ev('online'); resume('online'); });
 addEventListener('offline', () => { ev('offline'); dispatch({ type: 'disconnected' }); }); // the OS says the network is gone
 addEventListener('focus', () => ev('focus'));
 addEventListener('blur', () => ev('blur'));

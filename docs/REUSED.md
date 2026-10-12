@@ -4,7 +4,7 @@ Source: `~/Projects/earshot` (same author, MIT), commit `fe64ce9`. Earshot is un
 
 | WordLight file | From Earshot | Change |
 |---|---|---|
-| `packages/session-client/src/{client,clock,pinger}.js` | `packages/vega-sync/src/` | none (header added) |
+| `packages/session-client/src/{client,clock,pinger}.js` | `packages/vega-sync/src/` | header added; `client.js`: `reconnect()` added 2026-10-12 (phone waking from a lock) |
 | `packages/session-client/test/earshot-reused.test.js` | `packages/vega-sync/test/core.test.js` (clock, pinger, client tests) | extracted |
 | `packages/karaoke-core/src/sampler.ts` | `packages/vega-sync/src/sampler.js` | TypeScript, `positionAt()` added |
 | `server/src/index.ts` | `server/index.js` | HTTP/QR/heartbeat/Range plumbing adapted; WordLight routes |

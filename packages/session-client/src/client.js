@@ -1,5 +1,5 @@
 // Copied from Earshot (@earshot/vega-sync, commit fe64ce9, packages/vega-sync/src/client.js; MIT, same author).
-// Unchanged except for this header. See docs/REUSED.md.
+// Unchanged except for this header and reconnect() (added 2026-10-12 for phones waking from a lock). See docs/REUSED.md.
 // @ts-check
 import { ClockPinger } from './pinger.js';
 
@@ -163,6 +163,26 @@ export class SyncClient {
     ws.onerror = () => {
       /* onclose follows */
     };
+  }
+
+  /**
+   * Drop the current socket and connect again right away (WordLight addition, 2026-10-12). For a page that wakes up
+   * after a phone lock: the server already dropped it after a few silent seconds, but the old socket can still look
+   * open here (no close event while the page was suspended), and the watchdog's clock may not have run while the
+   * phone slept. A fresh hello makes the server tell the TV the reader is back.
+   */
+  reconnect() {
+    if (this.stopped) return;
+    if (this.reconnectTimer != null) this._clearTimeout(this.reconnectTimer);
+    this.reconnectTimer = null;
+    this.backoffMs = 250;
+    const ws = this.ws;
+    this.ws = null;
+    this.pinger.stop();
+    try {
+      ws?.close();
+    } catch {}
+    this._connect();
   }
 
   /** Drop a socket we no longer trust and reconnect. */
