@@ -20,5 +20,5 @@ WordLight is for children, so privacy is part of the design. Full record: [docs/
   reader id, age, language, story ids, counts, and the book words the TV helped with. No accounts, no names, no audio.
 - **The summary makes no claims:** counts are deterministic; AI wording (when enabled) is rejected if it changes a
   number or claims anything about ability or progress.
-- **Children:** only with written parent/guardian permission (docs/CHILD_TESTING.md). No child has used WordLight.
+- **Children:** only with written parent/guardian permission (docs/CHILD_TESTING.md). One child (age 6) has tried it (2026-10-12).
 - No legal compliance claim (COPPA, DPDP): this is a hackathon prototype.

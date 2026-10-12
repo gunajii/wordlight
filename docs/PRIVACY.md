@@ -5,6 +5,10 @@ Children use WordLight. Privacy is a product requirement, not a feature.
 ## Rules (design)
 
 - The microphone opens **only during a reading turn**, never while browsing or listening.
+- **Permission is asked at “Start reading session”**, not at the first turn: the page asks the browser for the
+  microphone and closes it at once (no audio is read or sent; the mic state machine is not involved), so the browser's
+  prompt does not interrupt the story. On iPhone, Safari re-asks about a minute after capture stops (WebKit), so the
+  phone shows a one-time tip to set Safari's Website Settings → Microphone → Allow; the mic still closes between turns.
 - A parent gives **explicit consent** on the phone before the first turn; the server refuses a reader without it (`reader.save` validation).
 - Audio is streamed to Amazon Transcribe for recognition and **not stored** by WordLight: no voice archive, nothing written to S3 or logs.
 - Stored: reader first name, age, language, and reading outcomes (counts, per-word read/helped/skipped) needed for the parent summary.

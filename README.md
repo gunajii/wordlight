@@ -10,7 +10,9 @@ Nothing is ever marked wrong.
 
 WordLight is designed around same-language subtitling
 ([UNESCO LitBase](https://www.uil.unesco.org/en/litbase/reading-billion-same-language-subtitling-india)).
-**We have not measured any effect on children's reading and claim none. No child has used WordLight yet.**
+**We have not measured any effect on children's reading and claim none.** One child (age 6) tried WordLight on
+2026-10-12 and read the turns easily (developer's report), which led to more turns by age; no results from that
+session are reported here.
 
 ## How it works
 1. **Pair:** the TV shows a QR code; a parent scans it (no app install), agrees to the microphone rule, and adds the
@@ -51,7 +53,7 @@ is likely to mishear them). Set on 2026-10-12 after a 6-year-old tester read the
 | Real loop: phone → AWS → Transcribe → TV (adult tester) | word lit a median 1.05 s after spoken (n = 93, 5 sessions); target ≤ 1 s not met | MEASURED |
 | Help recovery (next word helped too early) | 1/20 → 0/20 after the fix (synthetic reader, real Transcribe) | MEASURED |
 | Privacy audit on AWS | 0 violations in 891 microphone reports (5 sessions); mic off 8–107 ms after each turn end | MEASURED |
-| Children | not tested | UNKNOWN |
+| Children | one child, age 6, tried it (developer's report, 2026-10-12); not measured | UNKNOWN |
 
 ## Run it
 Needs Node ≥ 22.18; the TV app needs the Vega SDK (macOS).

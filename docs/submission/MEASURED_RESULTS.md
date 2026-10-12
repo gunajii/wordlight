@@ -6,7 +6,8 @@ Labels:
 - **UNKNOWN**: not measured.
 - **SIMULATED**: produced by a local script. Never evidence about real services.
 
-Nothing on this page comes from a child: no child has used WordLight.
+Nothing on this page comes from a child. One child (age 6) tried WordLight on 2026-10-12 (developer's report); that
+session is not reported here.
 
 ## S1 — narration and word highlight in sync on Vega
 | | |
