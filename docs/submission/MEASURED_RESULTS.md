@@ -6,9 +6,9 @@ Labels:
 - **UNKNOWN**: not measured.
 - **SIMULATED**: produced by a local script. Never evidence about real services.
 
-No reading result on this page comes from a child. Two children tried WordLight on 2026-10-12 with a parent present
-(developer's report); their sessions are not reported here. (The cost table counts the Transcribe seconds of every real
-run, which may include those sessions: seconds only, nothing about the reader.)
+Every result on this page comes from an adult tester or synthetic speech, except the section **Children (2026-10-12)**:
+two children, ages 4 and 6, with a parent present. The cost table counts the Transcribe seconds of every real run,
+including those sessions.
 
 ## S1 — narration and word highlight in sync on Vega
 | | |
@@ -167,6 +167,28 @@ window-only stills and the server traces (`.dev/aws/phase-b-20261011T172017Z.log
 on the TV (Vega Virtual Device). Against the original ≤ 1 s median target: **not met** (just over); almost all of it is speech
 recognition. In Echo Mode the child has just heard the line, so the highlight confirms what was said rather than
 leading it — which is why Echo Mode is the product's interaction (S2 decision above). MEASURED; one adult; child UNKNOWN.
+
+## Children (2026-10-12): two children, ages 4 and 6, a parent present
+Real AWS sessions on the Vega Virtual Device. A parent was present and agreed to these counts and the filmed session
+being shown (developer's report). As always, no audio and no transcript were stored: counts and timings only.
+
+| Session | Story | Turns | On their own · helped · skipped | Word lit after spoken | Microphone audit |
+|---|---|---|---|---|---|
+| CCWN, 12:58 UTC | *Busy Ants* (English), before age-based turns | 4 / 4 completed | 19 · 0 · 1 | 19 words: median 1 145 ms, p95 1 545 ms, 5 within 1 s | 128 reports, **0 violations**; off 8–16 ms after each turn |
+| 13:17 UTC | *व्यस्त चींटियाँ* (Hindi) | 4 / 4 completed | 20 · 1 · — (TV end card, screen recording) | not saved: the run script picked an empty session (EKH9) | not saved |
+| 7F4M, 14:45 UTC (the filmed demo) | *Busy Ants* (English), age-based turns: 6 turns = age 6 on the phone | 6 / 6 completed | 29 · 2 · 1 | 29 words: median 1 163 ms, p95 3 308 ms, 8 within 1 s | 219 reports, **0 violations**; off 8–248 ms after each turn |
+
+- **14 of 14 reading turns that started were completed.** In the filmed session the TV helped twice after a stall
+  (“a”, then “language”); the child said “a” back (✓).
+- **Recognition with children:** 48 words over the two saved sessions, **median 1 152 ms**, 13 of 48 within 1 s:
+  about the adult tester's median (1 050 ms), with a longer tail in one session (p95 3.3 s).
+- **Found in the filmed session:** the phone auto-locked during the next story (*Naughty Dog*); after unlocking it
+  showed “connected”, but the TV went on as if no phone was paired. Fixed on 2026-10-12 (the phone reconnects after
+  being hidden ≥ 3 s; the server re-sends the reader list). The fix has unit tests but no re-run with a phone yet.
+- Which child read in the first two sessions was not recorded; the filmed session is the 6-year-old. The 4-year-old is
+  below the age WordLight is designed for (about 6–10); the phone's age setting starts at 5.
+- **MEASURED** (server records: `docs/results/e2e/real-20261012T125811Z.json`, `real-20261012T144543Z.json`,
+  `docs/results/privacy/aws-…`). This is usage evidence from two children, **not** evidence about learning to read.
 
 ## Cost per reading session (real AWS runs, 2026-10-09 to 12)
 The server counts the seconds it streams to Amazon Transcribe (`.dev/aws/usage-server-*.json`, cumulative per day,

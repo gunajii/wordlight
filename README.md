@@ -10,23 +10,24 @@ Nothing is ever marked wrong.
 
 WordLight is designed around same-language subtitling
 ([UNESCO LitBase](https://www.uil.unesco.org/en/litbase/reading-billion-same-language-subtitling-india)).
-**We have not measured any effect on children's reading and claim none.** Two children tried WordLight on
-2026-10-12 with a parent present (developer's report); the first, aged 6, read the turns easily, which led to more
-turns by age. No results from those sessions are reported here.
+**We have not measured any effect on children's reading and claim none.** Two children (ages 4 and 6) used
+WordLight on 2026-10-12 with a parent present: **14 of 14 reading turns completed**, and the TV helped with 3 words
+([results](docs/submission/MEASURED_RESULTS.md#children-2026-10-12-two-children-ages-4-and-6-a-parent-present)). The
+6-year-old read the earlier 3–4 turns easily, which led to more turns by age.
 
 ## For judges: where the evidence is
 | Criterion | What WordLight does | Evidence (labels: MEASURED / INFERRED / UNKNOWN) |
 |---|---|---|
 | **Technological implementation** | Vega OS app (React Native for Vega) · phone web page, no install · AWS server streaming the child's voice to **Amazon Transcribe** · deterministic reading engine for English and Hindi | Spoken word → lit on the TV: **median 1.05 s** (93 words, 5 real sessions, adult; target ≤ 1 s just missed) · narration ↔ highlight sync **median −1.0 ms** (Vega Virtual Device) · **207 tests** (`npm test`) — [MEASURED_RESULTS](docs/submission/MEASURED_RESULTS.md) |
 | **Design** | Scan a QR → consent → reader. The TV reads a line, the child says it back, words light green; after a stall the TV says just the next word (amber) and lets the child repeat it; nothing is marked wrong. Turns follow the child's age | Screenshots below · [privacy rules](docs/PRIVACY.md): microphone **only during a turn**, always shown on the phone — **0 violations in 891 status reports** (MEASURED) |
-| **Potential impact** | Children about 6–10 reading with a parent on the family TV; English and Hindi; open-licence picture books (StoryWeaver, CC BY) | **≈ USD 0.03 of Transcribe per reading session** (median of 7 real runs; narration costs nothing at play time) — [cost](docs/submission/MEASURED_RESULTS.md#cost-per-reading-session-real-aws-runs-2026-10-09-to-12) · two children tried it (developer's report, not measured) · no learning effect claimed |
+| **Potential impact** | Children about 6–10 reading with a parent on the family TV; English and Hindi; open-licence picture books (StoryWeaver, CC BY) | **≈ USD 0.03 of Transcribe per reading session** (median of 7 real runs; narration costs nothing at play time) — [cost](docs/submission/MEASURED_RESULTS.md#cost-per-reading-session-real-aws-runs-2026-10-09-to-12) · two children (4 and 6) completed 14 of 14 turns, 0 microphone violations (MEASURED) · no learning effect claimed |
 | **Quality of the idea** | Same-language subtitling (word-by-word highlighting) + echo reading on the screen families already watch together | Why Echo Mode: Transcribe lit only ≈ 51 % of words within 1 s (169 lines), so the TV reads first — [S2](docs/submission/MEASURED_RESULTS.md) |
 | **AWS Builder** | Transcribe streaming · Polly (narration, help clips) · EC2 + CloudFormation · IAM role · S3 · DynamoDB (counts only). Bedrock integrated but **not in use** (account not authorised) | [AWS_BUILDER](docs/submission/AWS_BUILDER.md) |
 | **Open source** | [`karaoke-vega`](https://github.com/gunajii/karaoke-vega): word-timed subtitles for Vega (MIT) · `npm install github:gunajii/karaoke-vega` | [OPEN_SOURCE](docs/submission/OPEN_SOURCE.md) |
 | **Friction log** | 19 entries on Vega and AWS (task → steps → expected → actual → severity → workaround → suggestion) | [FRICTION_LOG](docs/FRICTION_LOG.md) |
 
 Limits we know of: tested on the Vega Virtual Device (physical Fire TV: UNKNOWN) · recognition takes ≈ 1 s · three
-stories · no measured results from children.
+stories · two children so far, and no measure of learning.
 
 | The child's turn on the TV | Help, then say it back | The phone during a turn |
 |---|---|---|
@@ -71,7 +72,7 @@ is likely to mishear them). Set on 2026-10-12 after a 6-year-old read the earlie
 | Real loop: phone → AWS → Transcribe → TV (adult tester) | word lit a median 1.05 s after spoken (n = 93, 5 sessions); target ≤ 1 s not met | MEASURED |
 | Help recovery (next word helped too early) | 1/20 → 0/20 after the fix (synthetic reader, real Transcribe) | MEASURED |
 | Privacy audit on AWS | 0 violations in 891 microphone reports (5 sessions); mic off 8–107 ms after each turn end | MEASURED |
-| Children | two children tried it with a parent present (developer's report, 2026-10-12); not measured | UNKNOWN |
+| Children (2026-10-12) | two children, 4 and 6, parent present: 14/14 turns completed; 48 words lit a median 1.15 s after spoken; 0 microphone violations | MEASURED · learning effect: not measured |
 
 ## Run it
 Needs Node ≥ 22.18; the TV app needs the Vega SDK (macOS).

@@ -1,6 +1,6 @@
 # Child reading tests — protocol (prepared, NOT yet run)
 
-Two children tried WordLight on 2026-10-12 with a parent present (developer's report); no measurement from those sessions is published. This protocol exists so that a test can be run properly if a parent or guardian
+Two children (ages 4 and 6) used WordLight on 2026-10-12 with a parent present; their counts are in MEASURED_RESULTS.md → Children (no audio, text or names). This protocol exists so that a test can be run properly if a parent or guardian
 agrees. The software does not need a child; every automated test uses scripts, synthetic speech or adult control speech.
 
 ## Rules
