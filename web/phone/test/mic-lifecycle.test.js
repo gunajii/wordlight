@@ -93,3 +93,15 @@ test('not-ready before the first unlock does not drop a pending (needs-tap) turn
   ({ s } = run(s, { type: 'not-ready' }));
   assert.equal(needsTap(s), true, 'turn kept');
 });
+
+test('mic tip: only on iPhone/iPad, hidden once the site is allowed', async () => {
+  const { micTip } = await import('../mic-lifecycle.js');
+  const iphone = 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.5 Mobile/15E148 Safari/604.1';
+  const chromeIos = 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) CriOS/139.0 Mobile/15E148 Safari/604.1';
+  const android = 'Mozilla/5.0 (Linux; Android 15; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0 Mobile Safari/537.36';
+  assert.equal(micTip({ ua: iphone, permission: 'prompt' }), 'ios-safari');
+  assert.equal(micTip({ ua: iphone, permission: null }), 'ios-safari');
+  assert.equal(micTip({ ua: iphone, permission: 'granted' }), null);
+  assert.equal(micTip({ ua: chromeIos, permission: 'prompt' }), 'ios-other');
+  assert.equal(micTip({ ua: android, permission: 'prompt' }), null, 'Chrome on Android remembers the permission');
+});

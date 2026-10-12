@@ -18,6 +18,7 @@
   .row { display:flex; justify-content:space-between; gap:12px; padding: 4px 0; font-size: 15px; }
   .row b { font-variant-numeric: tabular-nums; font-weight: 600; }
   .dim { color: var(--dim); font-size: 14px; }
+  .tip { margin: 10px 0 14px; line-height: 1.45; }
   .mic { font-size: 24px; font-weight: 700; letter-spacing: .02em; padding: 10px 14px; border-radius: 12px; display: inline-block; margin-top: 6px; }
   .mic.off { color: var(--dim); background: var(--line); } .mic.on { color: #0b1a12; background: var(--ok); } .mic.err { color: var(--warn); }
   .meter { height: 12px; background: var(--line); border-radius: 6px; overflow: hidden; margin-top: 10px; }
@@ -70,6 +71,8 @@
 
   <section class="card hidden" id="ready-card">
     <p>Reading as <b id="ready-name">—</b>. Keep this page open near your child; the TV will say when it is their turn.</p>
+    <p class="dim tip hidden" id="mic-tip-safari"><b>iPhone tip (once):</b> so Safari doesn't ask for the microphone at every turn, tap <b>aA</b> (the page menu) in the address bar → <b>Website Settings</b> → <b>Microphone</b> → <b>Allow</b>. The microphone still only turns on during a reading turn.</p>
+    <p class="dim tip hidden" id="mic-tip-other"><b>iPhone tip:</b> this browser may ask for the microphone at every turn. Safari can be set to allow it once (aA → Website Settings → Microphone → Allow).</p>
     <button id="ready-btn">Start reading session</button>
     <button id="reader-change" class="secondary">Change reader</button>
   </section>

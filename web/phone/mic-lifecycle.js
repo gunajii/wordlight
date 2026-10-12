@@ -59,3 +59,16 @@ export function micWanted(s) {
 export function needsTap(s) {
   return !!(s.turn && s.consent && s.session === 'active' && s.connected && s.visible && !s.ready);
 }
+
+/**
+ * Whether to show the one-time tip that stops Safari on iPhone/iPad from asking for the microphone at every turn.
+ * WebKit remembers an "Ask" answer only while capture is ongoing (about a minute after it stops), and WordLight closes
+ * the microphone between turns, so only the site setting "Allow" avoids a prompt mid-story. Hidden once allowed.
+ * @param {{ ua: string, permission: string | null }} o  navigator.userAgent, permissions.query('microphone').state
+ */
+export function micTip({ ua, permission }) {
+  if (permission === 'granted') return null;
+  const ios = /iPhone|iPad|iPod/.test(ua) || (/Macintosh/.test(ua) && /Mobile\//.test(ua));
+  if (!ios) return null;
+  return /CriOS|FxiOS|EdgiOS/.test(ua) ? 'ios-other' : 'ios-safari';
+}

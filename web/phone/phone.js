@@ -9,7 +9,7 @@
 // sessionStorage, and sent to the server when connected. No audio, no transcript.
 import { SyncClient, ClockSync } from '/pkg/session-client/index.js';
 import { encodeAudioFrame } from '/pkg/shared-protocol/audio.ts';
-import { initialState, reduce, micWanted, needsTap } from '/phone/mic-lifecycle.js';
+import { initialState, reduce, micWanted, needsTap, micTip } from '/phone/mic-lifecycle.js';
 import { WakeLockKeeper } from '/phone/wakelock.js';
 
 const $ = (id) => document.getElementById(id);
@@ -268,7 +268,34 @@ function render() {
   $('level').style.width = `${Math.max(0, Math.min(100, ((db + 60) / 60) * 100))}%`;
 }
 
-async function startSession() { ev('session-start'); wake.enable(); /* requested inside the tap */ dispatch({ type: 'session-start' }); await unlockAudio(); }
+// Ask for the microphone at "Start reading session" (inside the tap), not at the first turn in the middle of the story.
+// The stream is closed at once: no audio is read or sent, and the mic state machine is not involved.
+async function checkMicPermission() {
+  if (!navigator.mediaDevices?.getUserMedia) return;
+  ev('mic-permission-check');
+  try {
+    const st = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+    for (const t of st.getTracks()) t.stop();
+    ev('mic-permission', { state: 'granted' });
+  } catch (e) {
+    ev('mic-permission', { state: e?.name ?? 'error' });
+    if (e?.name === 'NotAllowedError') msg('The microphone is blocked for this page. Allow it in the browser’s site settings, then tap Start reading session again.');
+  }
+  updateMicTip();
+}
+async function updateMicTip() {
+  let permission = null;
+  try { permission = (await navigator.permissions?.query?.({ name: 'microphone' }))?.state ?? null; } catch {}
+  const tip = micTip({ ua: navigator.userAgent, permission });
+  $('mic-tip-safari').classList.toggle('hidden', tip !== 'ios-safari');
+  $('mic-tip-other').classList.toggle('hidden', tip !== 'ios-other');
+}
+updateMicTip();
+async function startSession() {
+  ev('session-start'); wake.enable(); /* requested inside the tap */ dispatch({ type: 'session-start' });
+  const perm = checkMicPermission(); // started inside the tap, like the AudioContext below
+  await unlockAudio(); await perm;
+}
 $('consent-btn').onclick = () => { S.consent = Date.now(); store.set(CONSENT_KEY, String(S.consent)); ev('consent'); dispatch({ type: 'consent' }); sendReader(); if (DIAG) startSession(); else render(); };
 $('reader-save').onclick = () => {
   const name = $('reader-name').value.trim().replace(/\s+/g, ' ').slice(0, 20);
