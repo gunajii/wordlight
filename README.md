@@ -36,6 +36,16 @@ stories · two children so far, and no measure of learning.
 |---|---|---|
 | ![Words light green as the child reads](docs/submission/screenshots/tv-3-line-done.png) | ![The TV helps with one word in amber](docs/submission/screenshots/tv-2-turn-help-say-it-back.png) | ![Microphone on only during the turn](docs/submission/screenshots/phone-4-reading-turn-en.png) |
 
+## Why the TV, not a tablet
+Reading-aloud tutors already exist on phones and tablets. WordLight puts the same idea on the screen a family shares:
+- **Reading becomes family time.** The child reads to the TV with a parent beside them, not alone on one more personal
+  screen.
+- **Nothing to hand to a 6-year-old.** The phone stays with the parent as the microphone; the child follows big words
+  on the TV from the sofa.
+- **Made for Indian homes.** English and Hindi stories from StoryWeaver's free library, a Hindi narrator, and a reading
+  engine that handles Devanagari.
+- **No new hardware.** A Fire TV app plus the phone the family already has.
+
 ## How it works
 1. **Pair:** the TV shows a QR code; a parent scans it (no app install), agrees to the microphone rule, and adds the
    reader (first name, age, language).

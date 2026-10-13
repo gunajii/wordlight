@@ -15,6 +15,16 @@ WordLight turns the family Fire TV into a read-along partner for children of abo
 - **Well read!** The TV and the parent's phone show what really happened: words read on their own, and words that needed a little help.
 - **English and Hindi:** *Busy Ants* and *Naughty Dog* (Pratham Books, StoryWeaver, CC BY 4.0), plus my Hindi translation of *Busy Ants*.
 
+## Why the TV, not a tablet
+Reading-aloud tutors already exist on phones and tablets. WordLight puts the same idea on the screen a family shares:
+- **Reading becomes family time.** The child reads to the TV with a parent beside them, not alone on one more personal
+  screen.
+- **Nothing to hand to a 6-year-old.** The phone stays with the parent as the microphone; the child follows big words
+  on the TV from the sofa.
+- **Made for Indian homes.** English and Hindi stories from StoryWeaver's free library, a Hindi narrator, and a reading
+  engine that handles Devanagari.
+- **No new hardware.** A Fire TV app plus the phone the family already has.
+
 ## How I built it
 - **Fire TV app on Vega OS:** React Native for Vega, the W3C `AudioPlayer`, and remote-only navigation. Word timing uses my open-source **[karaoke-vega](https://github.com/gunajii/karaoke-vega)** (MIT). It turns the player's coarse `currentTime` into an accurate playhead and cancels the measured audio latency.
 - **Phone:** a plain web page. The microphone opens **only during a reading turn**, and the page always shows whether it is on or off.
