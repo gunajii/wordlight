@@ -59,3 +59,8 @@ the console by the developer.
 ≥ 7/8 accepted outputs and median ≤ 2.5 s; the server then runs with `SUMMARY=bedrock BEDROCK_MODEL_ID=<model>`
 (deploy.sh). Every generated summary passes `checkGenerated` (numbers exactly the counters, the child's name, no
 claims about ability or progress) or the template is used.
+
+## Re-check 2026-10-13 04:41 UTC
+Still `NOT_AUTHORIZED` for Nova Micro and Nova Lite (AVAILABLE region, entitlement and agreement). Converse on
+`apac.amazon.nova-micro-v1:0`: `ValidationException: Operation not allowed`, HTTP 400, request
+`9d804abe-9b41-4196-b876-34b6e7107fb9`. The parent summary stays on the template.
