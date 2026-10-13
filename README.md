@@ -68,6 +68,10 @@ first and then saying it is a deliberate guided-reading design, not a hidden fal
 - **व्यस्त चींटियाँ** (Hindi) — my own unofficial translation of Busy Ants (CC BY 4.0), narrated by Polly neural Kajal.
 - **Naughty Dog** (English) — Kanchan Bannerjee, illustrated by Deepa Balsavar, Pratham Books, CC BY 4.0, via
   StoryWeaver (same “Animals Around Us” series). Expressive Kajal voice; three reading turns chosen by hand (common words, no names).
+- **Noisy Crows** and **Clean Cat** (English) — Kanchan Bannerjee, illustrated by Deepa Balsavar, Pratham Books,
+  CC BY 4.0, via StoryWeaver (“Animals Around Us” series). Expressive Kajal voice.
+- **The Moon and The Cap** (English) — Rohini Nilekani, illustrated by Angie & Upesh, Pratham Books, CC BY 4.0, via
+  StoryWeaver. Expressive Kajal voice.
 Credits are shown in the app and in [docs/CONTENT.md](docs/CONTENT.md).
 
 **Reading turns follow the child's age** (set on the phone): 5 lines at age 5 and one more per year, up to 12 at

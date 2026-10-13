@@ -13,7 +13,7 @@ WordLight turns the family Fire TV into a read-along partner for children of abo
 - **Help, never "wrong":** if the child is stuck, the TV waits while they are still trying (a stutter counts as trying). After about 3 seconds of quiet it says just the next word, slowly, marks it amber, and lets the child say it back (✓).
 - **Turns grow with the child:** 5 reading turns at age 5, one more per year, with longer lines for older readers.
 - **Well read!** The TV and the parent's phone show what really happened: words read on their own, and words that needed a little help.
-- **English and Hindi:** *Busy Ants* and *Naughty Dog* (Pratham Books, StoryWeaver, CC BY 4.0), plus my Hindi translation of *Busy Ants*.
+- **English and Hindi:** five English picture books from Pratham Books on StoryWeaver (CC BY 4.0): *Busy Ants*, *Naughty Dog*, *Noisy Crows*, *Clean Cat* and *The Moon and The Cap*, plus my Hindi translation of *Busy Ants*.
 
 ## Why the TV, not a tablet
 Reading-aloud tutors already exist on phones and tablets. WordLight puts the same idea on the screen a family shares:

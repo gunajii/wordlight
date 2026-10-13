@@ -1,0 +1,81 @@
+{
+ "id": "clean-cat",
+ "lang": "en-IN",
+ "level": 1,
+ "title": "Clean Cat",
+ "credits": {
+  "source": "StoryWeaver",
+  "license": "CC BY 4.0",
+  "title": "Clean Cat",
+  "author": "Kanchan Bannerjee",
+  "illustrator": "Deepa Balsavar",
+  "publisher": "Pratham Books",
+  "url": "https://storyweaver.org.in/en/stories/1057-clean-cat",
+  "attribution": "Clean Cat (English), written by Kanchan Bannerjee, illustrated by Deepa Balsavar, published by Pratham Books (© Pratham Books, 2015) under a CC BY 4.0 license on StoryWeaver. Read, create and translate stories for free on www.storyweaver.org.in"
+ },
+ "pages": [
+  {
+   "image": "p1.jpg",
+   "text": "This is my house. Ma, Pa and Cheena also live here."
+  },
+  {
+   "image": "p2.jpg",
+   "text": "The best chair in the house is for me. But sitting on the lap is even better, isn’t it?"
+  },
+  {
+   "image": "p3.jpg",
+   "text": "Cheena is my best friend. I wait for her to return from school."
+  },
+  {
+   "image": "p4.jpg",
+   "text": "I keep myself clean without water. I do not need a bath like Tommy."
+  },
+  {
+   "image": "p5.jpg",
+   "text": "Shhh... don’t tell anyone that I am hiding here. 1... 2... 3... Got you!"
+  },
+  {
+   "image": "p6.jpg",
+   "text": "Ma shouts at me, when I bring some tasty food from the garden."
+  },
+  {
+   "image": "p7.jpg",
+   "text": "I can climb trees. I can jump. I know all the short cuts here."
+  },
+  {
+   "image": "p8.jpg",
+   "text": "Sanju lives nearby. He teases me. It makes me very angry."
+  },
+  {
+   "image": "p9.jpg",
+   "text": "Please tell Sanju that the tiger is from our cat family. We have sharp claws."
+  },
+  {
+   "image": "p10.jpg",
+   "text": "My friends sometimes make a lot of noise at night. By then I am quietly in bed."
+  }
+ ],
+ "turns": [
+  {
+   "page": 4,
+   "line": 1
+  },
+  {
+   "page": 7,
+   "line": 1
+  },
+  {
+   "page": 10,
+   "line": 2
+  }
+ ],
+ "turnsReason": "Chosen by hand: short lines of common words (\"I keep myself clean without water.\", \"I can climb trees.\", \"By then I am quietly in bed.\"), spread across the book; no names or rare words; never the first line.",
+ "turnAvoid": [
+  "Ma",
+  "Pa",
+  "Cheena",
+  "Tommy",
+  "Sanju",
+  "Shhh"
+ ]
+}

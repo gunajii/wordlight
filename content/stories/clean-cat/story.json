@@ -1,0 +1,1081 @@
+{
+ "packageVersion": 1,
+ "id": "clean-cat",
+ "lang": "en-IN",
+ "level": 1,
+ "title": "Clean Cat",
+ "credits": {
+  "source": "StoryWeaver",
+  "license": "CC BY 4.0",
+  "title": "Clean Cat",
+  "author": "Kanchan Bannerjee",
+  "illustrator": "Deepa Balsavar",
+  "publisher": "Pratham Books",
+  "url": "https://storyweaver.org.in/en/stories/1057-clean-cat",
+  "attribution": "Clean Cat (English), written by Kanchan Bannerjee, illustrated by Deepa Balsavar, published by Pratham Books (© Pratham Books, 2015) under a CC BY 4.0 license on StoryWeaver. Read, create and translate stories for free on www.storyweaver.org.in"
+ },
+ "voice": {
+  "engine": "polly-generative",
+  "id": "Kajal",
+  "style": {
+   "volume": "+6dB",
+   "lineBreakMs": 650
+  }
+ },
+ "timing": {
+  "source": "transcribe",
+  "verified": false
+ },
+ "pages": [
+  {
+   "image": "p1.jpg",
+   "audio": "p1.mp3",
+   "durationMs": 4736,
+   "lines": [
+    {
+     "text": "This is my house.",
+     "words": [
+      {
+       "w": "This",
+       "t0": 345,
+       "t1": 505
+      },
+      {
+       "w": "is",
+       "t0": 505,
+       "t1": 745
+      },
+      {
+       "w": "my",
+       "t0": 745,
+       "t1": 1025
+      },
+      {
+       "w": "house.",
+       "t0": 1025,
+       "t1": 1400
+      }
+     ],
+     "turn": false
+    },
+    {
+     "text": "Ma, Pa and Cheena also live here.",
+     "words": [
+      {
+       "w": "Ma,",
+       "t0": 2585,
+       "t1": 3005
+      },
+      {
+       "w": "Pa",
+       "t0": 3005,
+       "t1": 3305
+      },
+      {
+       "w": "and",
+       "t0": 3305,
+       "t1": 3478
+      },
+      {
+       "w": "Cheena",
+       "t0": 3478,
+       "t1": 3825
+      },
+      {
+       "w": "also",
+       "t0": 3825,
+       "t1": 4125
+      },
+      {
+       "w": "live",
+       "t0": 4125,
+       "t1": 4345
+      },
+      {
+       "w": "here.",
+       "t0": 4345,
+       "t1": 4500
+      }
+     ],
+     "turn": false
+    }
+   ]
+  },
+  {
+   "image": "p2.jpg",
+   "audio": "p2.mp3",
+   "durationMs": 5845,
+   "lines": [
+    {
+     "text": "The best chair in the house is for me.",
+     "words": [
+      {
+       "w": "The",
+       "t0": 345,
+       "t1": 545,
+       "clip": "h1.mp3"
+      },
+      {
+       "w": "best",
+       "t0": 545,
+       "t1": 825,
+       "clip": "h2.mp3"
+      },
+      {
+       "w": "chair",
+       "t0": 825,
+       "t1": 1025,
+       "clip": "h3.mp3"
+      },
+      {
+       "w": "in",
+       "t0": 1025,
+       "t1": 1145,
+       "clip": "h4.mp3"
+      },
+      {
+       "w": "the",
+       "t0": 1145,
+       "t1": 1305,
+       "clip": "h1.mp3"
+      },
+      {
+       "w": "house",
+       "t0": 1305,
+       "t1": 1525,
+       "clip": "h5.mp3"
+      },
+      {
+       "w": "is",
+       "t0": 1525,
+       "t1": 1705,
+       "clip": "h6.mp3"
+      },
+      {
+       "w": "for",
+       "t0": 1705,
+       "t1": 1905,
+       "clip": "h7.mp3"
+      },
+      {
+       "w": "me.",
+       "t0": 1905,
+       "t1": 2060,
+       "clip": "h8.mp3"
+      }
+     ],
+     "turn": false
+    },
+    {
+     "text": "But sitting on the lap is even better, isn’t it?",
+     "words": [
+      {
+       "w": "But",
+       "t0": 3145,
+       "t1": 3385,
+       "clip": "h9.mp3"
+      },
+      {
+       "w": "sitting",
+       "t0": 3385,
+       "t1": 3625,
+       "clip": "h10.mp3"
+      },
+      {
+       "w": "on",
+       "t0": 3625,
+       "t1": 3785,
+       "clip": "h11.mp3"
+      },
+      {
+       "w": "the",
+       "t0": 3785,
+       "t1": 3865,
+       "clip": "h1.mp3"
+      },
+      {
+       "w": "lap",
+       "t0": 3865,
+       "t1": 4175,
+       "clip": "h12.mp3"
+      },
+      {
+       "w": "is",
+       "t0": 4175,
+       "t1": 4335,
+       "clip": "h6.mp3"
+      },
+      {
+       "w": "even",
+       "t0": 4335,
+       "t1": 4585,
+       "clip": "h13.mp3"
+      },
+      {
+       "w": "better,",
+       "t0": 4585,
+       "t1": 5105,
+       "clip": "h14.mp3"
+      },
+      {
+       "w": "isn’t",
+       "t0": 5105,
+       "t1": 5425,
+       "clip": "h15.mp3"
+      },
+      {
+       "w": "it?",
+       "t0": 5425,
+       "t1": 5620,
+       "clip": "h16.mp3"
+      }
+     ],
+     "turn": false
+    }
+   ]
+  },
+  {
+   "image": "p3.jpg",
+   "audio": "p3.mp3",
+   "durationMs": 4779,
+   "lines": [
+    {
+     "text": "Cheena is my best friend.",
+     "words": [
+      {
+       "w": "Cheena",
+       "t0": 646,
+       "t1": 705
+      },
+      {
+       "w": "is",
+       "t0": 705,
+       "t1": 905
+      },
+      {
+       "w": "my",
+       "t0": 905,
+       "t1": 1105
+      },
+      {
+       "w": "best",
+       "t0": 1105,
+       "t1": 1425
+      },
+      {
+       "w": "friend.",
+       "t0": 1425,
+       "t1": 1670
+      }
+     ],
+     "turn": false
+    },
+    {
+     "text": "I wait for her to return from school.",
+     "words": [
+      {
+       "w": "I",
+       "t0": 2825,
+       "t1": 2985,
+       "clip": "h17.mp3"
+      },
+      {
+       "w": "wait",
+       "t0": 2985,
+       "t1": 3225,
+       "clip": "h18.mp3"
+      },
+      {
+       "w": "for",
+       "t0": 3225,
+       "t1": 3345,
+       "clip": "h7.mp3"
+      },
+      {
+       "w": "her",
+       "t0": 3345,
+       "t1": 3495,
+       "clip": "h19.mp3"
+      },
+      {
+       "w": "to",
+       "t0": 3495,
+       "t1": 3785,
+       "clip": "h20.mp3"
+      },
+      {
+       "w": "return",
+       "t0": 3785,
+       "t1": 4025,
+       "clip": "h21.mp3"
+      },
+      {
+       "w": "from",
+       "t0": 4025,
+       "t1": 4345,
+       "clip": "h22.mp3"
+      },
+      {
+       "w": "school.",
+       "t0": 4345,
+       "t1": 4580,
+       "clip": "h23.mp3"
+      }
+     ],
+     "turn": false
+    }
+   ]
+  },
+  {
+   "image": "p4.jpg",
+   "audio": "p4.mp3",
+   "durationMs": 5248,
+   "lines": [
+    {
+     "text": "I keep myself clean without water.",
+     "words": [
+      {
+       "w": "I",
+       "t0": 345,
+       "t1": 545,
+       "clip": "h17.mp3"
+      },
+      {
+       "w": "keep",
+       "t0": 545,
+       "t1": 945,
+       "clip": "h24.mp3"
+      },
+      {
+       "w": "myself",
+       "t0": 945,
+       "t1": 1225,
+       "clip": "h25.mp3"
+      },
+      {
+       "w": "clean",
+       "t0": 1225,
+       "t1": 1545,
+       "clip": "h26.mp3"
+      },
+      {
+       "w": "without",
+       "t0": 1545,
+       "t1": 1825,
+       "clip": "h27.mp3"
+      },
+      {
+       "w": "water.",
+       "t0": 1825,
+       "t1": 2180,
+       "clip": "h28.mp3"
+      }
+     ],
+     "turn": true
+    },
+    {
+     "text": "I do not need a bath like Tommy.",
+     "words": [
+      {
+       "w": "I",
+       "t0": 3385,
+       "t1": 3545
+      },
+      {
+       "w": "do",
+       "t0": 3545,
+       "t1": 3665
+      },
+      {
+       "w": "not",
+       "t0": 3665,
+       "t1": 3905
+      },
+      {
+       "w": "need",
+       "t0": 3905,
+       "t1": 4065
+      },
+      {
+       "w": "a",
+       "t0": 4065,
+       "t1": 4105
+      },
+      {
+       "w": "bath",
+       "t0": 4105,
+       "t1": 4495
+      },
+      {
+       "w": "like",
+       "t0": 4495,
+       "t1": 4725
+      },
+      {
+       "w": "Tommy.",
+       "t0": 4725,
+       "t1": 5060
+      }
+     ],
+     "turn": false
+    }
+   ]
+  },
+  {
+   "image": "p5.jpg",
+   "audio": "p5.mp3",
+   "durationMs": 7359,
+   "lines": [
+    {
+     "text": "Shhh... don’t tell anyone that I am hiding here.",
+     "words": [
+      {
+       "w": "Shhh...",
+       "t0": 696,
+       "t1": 745
+      },
+      {
+       "w": "don’t",
+       "t0": 745,
+       "t1": 985
+      },
+      {
+       "w": "tell",
+       "t0": 985,
+       "t1": 1425
+      },
+      {
+       "w": "anyone",
+       "t0": 1425,
+       "t1": 1485
+      },
+      {
+       "w": "that",
+       "t0": 1485,
+       "t1": 1771
+      },
+      {
+       "w": "I",
+       "t0": 1771,
+       "t1": 1842
+      },
+      {
+       "w": "am",
+       "t0": 1842,
+       "t1": 1985
+      },
+      {
+       "w": "hiding",
+       "t0": 1985,
+       "t1": 2385
+      },
+      {
+       "w": "here.",
+       "t0": 2385,
+       "t1": 2580
+      }
+     ],
+     "turn": false
+    },
+    {
+     "text": "1...",
+     "words": [
+      {
+       "w": "1...",
+       "t0": 3815,
+       "t1": 4070
+      }
+     ],
+     "turn": false
+    },
+    {
+     "text": "2...",
+     "words": [
+      {
+       "w": "2...",
+       "t0": 4535,
+       "t1": 4630
+      }
+     ],
+     "turn": false
+    },
+    {
+     "text": "3...",
+     "words": [
+      {
+       "w": "3...",
+       "t0": 5255,
+       "t1": 5540
+      }
+     ],
+     "turn": false
+    },
+    {
+     "text": "Got you!",
+     "words": [
+      {
+       "w": "Got",
+       "t0": 6725,
+       "t1": 7045
+      },
+      {
+       "w": "you!",
+       "t0": 7045,
+       "t1": 7220
+      }
+     ],
+     "turn": false
+    }
+   ]
+  },
+  {
+   "image": "p6.jpg",
+   "audio": "p6.mp3",
+   "durationMs": 3627,
+   "lines": [
+    {
+     "text": "Ma shouts at me, when I bring some tasty food from the garden.",
+     "words": [
+      {
+       "w": "Ma",
+       "t0": 385,
+       "t1": 535
+      },
+      {
+       "w": "shouts",
+       "t0": 535,
+       "t1": 985
+      },
+      {
+       "w": "at",
+       "t0": 985,
+       "t1": 1225
+      },
+      {
+       "w": "me,",
+       "t0": 1225,
+       "t1": 1605
+      },
+      {
+       "w": "when",
+       "t0": 1605,
+       "t1": 1705
+      },
+      {
+       "w": "I",
+       "t0": 1705,
+       "t1": 1905
+      },
+      {
+       "w": "bring",
+       "t0": 1905,
+       "t1": 2065
+      },
+      {
+       "w": "some",
+       "t0": 2065,
+       "t1": 2185
+      },
+      {
+       "w": "tasty",
+       "t0": 2185,
+       "t1": 2625
+      },
+      {
+       "w": "food",
+       "t0": 2625,
+       "t1": 2825
+      },
+      {
+       "w": "from",
+       "t0": 2825,
+       "t1": 2985
+      },
+      {
+       "w": "the",
+       "t0": 2985,
+       "t1": 3025
+      },
+      {
+       "w": "garden.",
+       "t0": 3025,
+       "t1": 3460
+      }
+     ],
+     "turn": false
+    }
+   ]
+  },
+  {
+   "image": "p7.jpg",
+   "audio": "p7.mp3",
+   "durationMs": 6016,
+   "lines": [
+    {
+     "text": "I can climb trees.",
+     "words": [
+      {
+       "w": "I",
+       "t0": 345,
+       "t1": 505,
+       "clip": "h17.mp3"
+      },
+      {
+       "w": "can",
+       "t0": 505,
+       "t1": 585,
+       "clip": "h29.mp3"
+      },
+      {
+       "w": "climb",
+       "t0": 585,
+       "t1": 1085,
+       "clip": "h30.mp3"
+      },
+      {
+       "w": "trees.",
+       "t0": 1085,
+       "t1": 1380,
+       "clip": "h31.mp3"
+      }
+     ],
+     "turn": true
+    },
+    {
+     "text": "I can jump.",
+     "words": [
+      {
+       "w": "I",
+       "t0": 2525,
+       "t1": 2725,
+       "clip": "h17.mp3"
+      },
+      {
+       "w": "can",
+       "t0": 2725,
+       "t1": 2925,
+       "clip": "h29.mp3"
+      },
+      {
+       "w": "jump.",
+       "t0": 2925,
+       "t1": 3120,
+       "clip": "h32.mp3"
+      }
+     ],
+     "turn": false
+    },
+    {
+     "text": "I know all the short cuts here.",
+     "words": [
+      {
+       "w": "I",
+       "t0": 4355,
+       "t1": 4555,
+       "clip": "h17.mp3"
+      },
+      {
+       "w": "know",
+       "t0": 4555,
+       "t1": 4705,
+       "clip": "h33.mp3"
+      },
+      {
+       "w": "all",
+       "t0": 4705,
+       "t1": 4915,
+       "clip": "h34.mp3"
+      },
+      {
+       "w": "the",
+       "t0": 4915,
+       "t1": 5085,
+       "clip": "h1.mp3"
+      },
+      {
+       "w": "short",
+       "t0": 5085,
+       "t1": 5368,
+       "clip": "h35.mp3"
+      },
+      {
+       "w": "cuts",
+       "t0": 5368,
+       "t1": 5595,
+       "clip": "h36.mp3"
+      },
+      {
+       "w": "here.",
+       "t0": 5595,
+       "t1": 5790,
+       "clip": "h37.mp3"
+      }
+     ],
+     "turn": false
+    }
+   ]
+  },
+  {
+   "image": "p8.jpg",
+   "audio": "p8.mp3",
+   "durationMs": 6229,
+   "lines": [
+    {
+     "text": "Sanju lives nearby.",
+     "words": [
+      {
+       "w": "Sanju",
+       "t0": 425,
+       "t1": 855
+      },
+      {
+       "w": "lives",
+       "t0": 855,
+       "t1": 1375
+      },
+      {
+       "w": "nearby.",
+       "t0": 1375,
+       "t1": 1620
+      }
+     ],
+     "turn": false
+    },
+    {
+     "text": "He teases me.",
+     "words": [
+      {
+       "w": "He",
+       "t0": 2745,
+       "t1": 2865,
+       "clip": "h38.mp3"
+      },
+      {
+       "w": "teases",
+       "t0": 2865,
+       "t1": 3385,
+       "clip": "h39.mp3"
+      },
+      {
+       "w": "me.",
+       "t0": 3385,
+       "t1": 3520,
+       "clip": "h8.mp3"
+      }
+     ],
+     "turn": false
+    },
+    {
+     "text": "It makes me very angry.",
+     "words": [
+      {
+       "w": "It",
+       "t0": 4665,
+       "t1": 4865,
+       "clip": "h16.mp3"
+      },
+      {
+       "w": "makes",
+       "t0": 4865,
+       "t1": 5145,
+       "clip": "h40.mp3"
+      },
+      {
+       "w": "me",
+       "t0": 5145,
+       "t1": 5305,
+       "clip": "h8.mp3"
+      },
+      {
+       "w": "very",
+       "t0": 5305,
+       "t1": 5545,
+       "clip": "h41.mp3"
+      },
+      {
+       "w": "angry.",
+       "t0": 5545,
+       "t1": 5980,
+       "clip": "h42.mp3"
+      }
+     ],
+     "turn": false
+    }
+   ]
+  },
+  {
+   "image": "p9.jpg",
+   "audio": "p9.mp3",
+   "durationMs": 5547,
+   "lines": [
+    {
+     "text": "Please tell Sanju that the tiger is from our cat family.",
+     "words": [
+      {
+       "w": "Please",
+       "t0": 345,
+       "t1": 625
+      },
+      {
+       "w": "tell",
+       "t0": 625,
+       "t1": 892
+      },
+      {
+       "w": "Sanju",
+       "t0": 892,
+       "t1": 1225
+      },
+      {
+       "w": "that",
+       "t0": 1225,
+       "t1": 1385
+      },
+      {
+       "w": "the",
+       "t0": 1385,
+       "t1": 1425
+      },
+      {
+       "w": "tiger",
+       "t0": 1425,
+       "t1": 1825
+      },
+      {
+       "w": "is",
+       "t0": 1825,
+       "t1": 1985
+      },
+      {
+       "w": "from",
+       "t0": 1985,
+       "t1": 2105
+      },
+      {
+       "w": "our",
+       "t0": 2105,
+       "t1": 2305
+      },
+      {
+       "w": "cat",
+       "t0": 2305,
+       "t1": 2585
+      },
+      {
+       "w": "family.",
+       "t0": 2585,
+       "t1": 2950
+      }
+     ],
+     "turn": false
+    },
+    {
+     "text": "We have sharp claws.",
+     "words": [
+      {
+       "w": "We",
+       "t0": 4105,
+       "t1": 4345,
+       "clip": "h43.mp3"
+      },
+      {
+       "w": "have",
+       "t0": 4345,
+       "t1": 4505,
+       "clip": "h44.mp3"
+      },
+      {
+       "w": "sharp",
+       "t0": 4505,
+       "t1": 4865,
+       "clip": "h45.mp3"
+      },
+      {
+       "w": "claws.",
+       "t0": 4865,
+       "t1": 5370,
+       "clip": "h46.mp3"
+      }
+     ],
+     "turn": false
+    }
+   ]
+  },
+  {
+   "image": "p10.jpg",
+   "audio": "p10.mp3",
+   "durationMs": 5461,
+   "lines": [
+    {
+     "text": "My friends sometimes make a lot of noise at night.",
+     "words": [
+      {
+       "w": "My",
+       "t0": 345,
+       "t1": 585,
+       "clip": "h47.mp3"
+      },
+      {
+       "w": "friends",
+       "t0": 585,
+       "t1": 1065,
+       "clip": "h48.mp3"
+      },
+      {
+       "w": "sometimes",
+       "t0": 1065,
+       "t1": 1305,
+       "clip": "h49.mp3"
+      },
+      {
+       "w": "make",
+       "t0": 1305,
+       "t1": 1465,
+       "clip": "h50.mp3"
+      },
+      {
+       "w": "a",
+       "t0": 1465,
+       "t1": 1585,
+       "clip": "h51.mp3"
+      },
+      {
+       "w": "lot",
+       "t0": 1585,
+       "t1": 1745,
+       "clip": "h52.mp3"
+      },
+      {
+       "w": "of",
+       "t0": 1745,
+       "t1": 1915,
+       "clip": "h53.mp3"
+      },
+      {
+       "w": "noise",
+       "t0": 1915,
+       "t1": 2145,
+       "clip": "h54.mp3"
+      },
+      {
+       "w": "at",
+       "t0": 2145,
+       "t1": 2345,
+       "clip": "h55.mp3"
+      },
+      {
+       "w": "night.",
+       "t0": 2345,
+       "t1": 2630,
+       "clip": "h56.mp3"
+      }
+     ],
+     "turn": false
+    },
+    {
+     "text": "By then I am quietly in bed.",
+     "words": [
+      {
+       "w": "By",
+       "t0": 3705,
+       "t1": 3985,
+       "clip": "h57.mp3"
+      },
+      {
+       "w": "then",
+       "t0": 3985,
+       "t1": 4265,
+       "clip": "h58.mp3"
+      },
+      {
+       "w": "I",
+       "t0": 4265,
+       "t1": 4385,
+       "clip": "h17.mp3"
+      },
+      {
+       "w": "am",
+       "t0": 4385,
+       "t1": 4465,
+       "clip": "h59.mp3"
+      },
+      {
+       "w": "quietly",
+       "t0": 4465,
+       "t1": 4935,
+       "clip": "h60.mp3"
+      },
+      {
+       "w": "in",
+       "t0": 4935,
+       "t1": 5105,
+       "clip": "h4.mp3"
+      },
+      {
+       "w": "bed.",
+       "t0": 5105,
+       "t1": 5260,
+       "clip": "h61.mp3"
+      }
+     ],
+     "turn": true
+    }
+   ]
+  }
+ ],
+ "turnPool": [
+  {
+   "page": 1,
+   "line": 0
+  },
+  {
+   "page": 1,
+   "line": 1
+  },
+  {
+   "page": 2,
+   "line": 1
+  },
+  {
+   "page": 3,
+   "line": 0
+  },
+  {
+   "page": 6,
+   "line": 0
+  },
+  {
+   "page": 6,
+   "line": 1
+  },
+  {
+   "page": 6,
+   "line": 2
+  },
+  {
+   "page": 7,
+   "line": 1
+  },
+  {
+   "page": 7,
+   "line": 2
+  },
+  {
+   "page": 8,
+   "line": 1
+  },
+  {
+   "page": 9,
+   "line": 0
+  },
+  {
+   "page": 9,
+   "line": 1
+  }
+ ],
+ "turnSelection": {
+  "source": "editor",
+  "level": 1,
+  "reason": "Chosen by hand: short lines of common words (\"I keep myself clean without water.\", \"I can climb trees.\", \"By then I am quietly in bed.\"), spread across the book; no names or rare words; never the first line."
+ }
+}

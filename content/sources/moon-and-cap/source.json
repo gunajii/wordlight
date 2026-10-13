@@ -1,0 +1,83 @@
+{
+ "id": "moon-and-cap",
+ "lang": "en-IN",
+ "level": 1,
+ "title": "The Moon and The Cap",
+ "credits": {
+  "source": "StoryWeaver",
+  "license": "CC BY 4.0",
+  "title": "The Moon and The Cap",
+  "author": "Rohini Nilekani",
+  "illustrator": "Angie & Upesh",
+  "publisher": "Pratham Books",
+  "url": "https://storyweaver.org.in/en/stories/234-the-moon-and-the-cap",
+  "attribution": "The Moon and The Cap (English), written by Rohini Nilekani, illustrated by Angie & Upesh, published by Pratham Books (© Pratham Books, 2007) under a CC BY 4.0 license on StoryWeaver. Read, create and translate stories for free on www.storyweaver.org.in"
+ },
+ "pages": [
+  {
+   "image": "p1.jpg",
+   "text": "All of us went to the Dasara fair."
+  },
+  {
+   "image": "p2.jpg",
+   "text": "Papa bought Chintu fancy glasses. Mother bought me a bright blue cap. The baby got sugar candy."
+  },
+  {
+   "image": "p3.jpg",
+   "text": "On the way home, a very strong wind came. It blew my cap away."
+  },
+  {
+   "image": "p4.jpg",
+   "text": "My cap got stuck on a branch of the old Pipal tree."
+  },
+  {
+   "image": "p5.jpg",
+   "text": "I cried a lot. And I did not eat my dinner."
+  },
+  {
+   "image": "p6.jpg",
+   "text": "Later that night, the moon came up. It looked at my cap on the old Pipal tree."
+  },
+  {
+   "image": "p7.jpg",
+   "text": "It tried on my cap. The moon smiled happily. I had to smile too."
+  },
+  {
+   "image": "p8.jpg",
+   "text": "After school the next day, my mother gave me a shiny new red cap. “The moon sent it,” she said."
+  },
+  {
+   "image": "p9.jpg",
+   "text": "That night, both the moon and I wore our caps and smiled. We were happy."
+  },
+  {
+   "image": "p10.jpg",
+   "text": "Do you think the sun needs a hat?"
+  },
+  {
+   "image": "p11.jpg",
+   "text": "Guess which cap I am wearing today!"
+  }
+ ],
+ "turns": [
+  {
+   "page": 3,
+   "line": 2
+  },
+  {
+   "page": 5,
+   "line": 1
+  },
+  {
+   "page": 7,
+   "line": 2
+  }
+ ],
+ "turnsReason": "Chosen by hand: short lines of common words (\"It blew my cap away.\", \"I cried a lot.\", \"The moon smiled happily.\"); no names or rare words.",
+ "turnAvoid": [
+  "Dasara",
+  "Chintu",
+  "Pipal",
+  "Papa"
+ ]
+}

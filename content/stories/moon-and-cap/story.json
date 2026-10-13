@@ -1,0 +1,1104 @@
+{
+ "packageVersion": 1,
+ "id": "moon-and-cap",
+ "lang": "en-IN",
+ "level": 1,
+ "title": "The Moon and The Cap",
+ "credits": {
+  "source": "StoryWeaver",
+  "license": "CC BY 4.0",
+  "title": "The Moon and The Cap",
+  "author": "Rohini Nilekani",
+  "illustrator": "Angie & Upesh",
+  "publisher": "Pratham Books",
+  "url": "https://storyweaver.org.in/en/stories/234-the-moon-and-the-cap",
+  "attribution": "The Moon and The Cap (English), written by Rohini Nilekani, illustrated by Angie & Upesh, published by Pratham Books (© Pratham Books, 2007) under a CC BY 4.0 license on StoryWeaver. Read, create and translate stories for free on www.storyweaver.org.in"
+ },
+ "voice": {
+  "engine": "polly-generative",
+  "id": "Kajal",
+  "style": {
+   "volume": "+6dB",
+   "lineBreakMs": 650
+  }
+ },
+ "timing": {
+  "source": "transcribe",
+  "verified": false
+ },
+ "pages": [
+  {
+   "image": "p1.jpg",
+   "audio": "p1.mp3",
+   "durationMs": 2219,
+   "lines": [
+    {
+     "text": "All of us went to the Dasara fair.",
+     "words": [
+      {
+       "w": "All",
+       "t0": 345,
+       "t1": 505
+      },
+      {
+       "w": "of",
+       "t0": 505,
+       "t1": 665
+      },
+      {
+       "w": "us",
+       "t0": 665,
+       "t1": 865
+      },
+      {
+       "w": "went",
+       "t0": 865,
+       "t1": 985
+      },
+      {
+       "w": "to",
+       "t0": 985,
+       "t1": 1105
+      },
+      {
+       "w": "the",
+       "t0": 1105,
+       "t1": 1345
+      },
+      {
+       "w": "Dasara",
+       "t0": 1345,
+       "t1": 1825
+      },
+      {
+       "w": "fair.",
+       "t0": 1825,
+       "t1": 2040
+      }
+     ],
+     "turn": false
+    }
+   ]
+  },
+  {
+   "image": "p2.jpg",
+   "audio": "p2.mp3",
+   "durationMs": 7978,
+   "lines": [
+    {
+     "text": "Papa bought Chintu fancy glasses.",
+     "words": [
+      {
+       "w": "Papa",
+       "t0": 385,
+       "t1": 745
+      },
+      {
+       "w": "bought",
+       "t0": 745,
+       "t1": 1105
+      },
+      {
+       "w": "Chintu",
+       "t0": 1105,
+       "t1": 1465
+      },
+      {
+       "w": "fancy",
+       "t0": 1465,
+       "t1": 1865
+      },
+      {
+       "w": "glasses.",
+       "t0": 1865,
+       "t1": 2260
+      }
+     ],
+     "turn": false
+    },
+    {
+     "text": "Mother bought me a bright blue cap.",
+     "words": [
+      {
+       "w": "Mother",
+       "t0": 3515,
+       "t1": 3915,
+       "clip": "h1.mp3"
+      },
+      {
+       "w": "bought",
+       "t0": 3915,
+       "t1": 4145,
+       "clip": "h2.mp3"
+      },
+      {
+       "w": "me",
+       "t0": 4145,
+       "t1": 4235,
+       "clip": "h3.mp3"
+      },
+      {
+       "w": "a",
+       "t0": 4235,
+       "t1": 4355,
+       "clip": "h4.mp3"
+      },
+      {
+       "w": "bright",
+       "t0": 4355,
+       "t1": 4795,
+       "clip": "h5.mp3"
+      },
+      {
+       "w": "blue",
+       "t0": 4795,
+       "t1": 4995,
+       "clip": "h6.mp3"
+      },
+      {
+       "w": "cap.",
+       "t0": 4995,
+       "t1": 5140,
+       "clip": "h7.mp3"
+      }
+     ],
+     "turn": false
+    },
+    {
+     "text": "The baby got sugar candy.",
+     "words": [
+      {
+       "w": "The",
+       "t0": 6425,
+       "t1": 6625,
+       "clip": "h8.mp3"
+      },
+      {
+       "w": "baby",
+       "t0": 6625,
+       "t1": 6905,
+       "clip": "h9.mp3"
+      },
+      {
+       "w": "got",
+       "t0": 6905,
+       "t1": 7065,
+       "clip": "h10.mp3"
+      },
+      {
+       "w": "sugar",
+       "t0": 7065,
+       "t1": 7465,
+       "clip": "h11.mp3"
+      },
+      {
+       "w": "candy.",
+       "t0": 7465,
+       "t1": 7820,
+       "clip": "h12.mp3"
+      }
+     ],
+     "turn": false
+    }
+   ]
+  },
+  {
+   "image": "p3.jpg",
+   "audio": "p3.mp3",
+   "durationMs": 4736,
+   "lines": [
+    {
+     "text": "On the way home, a very strong wind came.",
+     "words": [
+      {
+       "w": "On",
+       "t0": 345,
+       "t1": 465,
+       "clip": "h13.mp3"
+      },
+      {
+       "w": "the",
+       "t0": 465,
+       "t1": 625,
+       "clip": "h8.mp3"
+      },
+      {
+       "w": "way",
+       "t0": 625,
+       "t1": 815,
+       "clip": "h14.mp3"
+      },
+      {
+       "w": "home,",
+       "t0": 815,
+       "t1": 1145,
+       "clip": "h15.mp3"
+      },
+      {
+       "w": "a",
+       "t0": 1145,
+       "t1": 1295,
+       "clip": "h4.mp3"
+      },
+      {
+       "w": "very",
+       "t0": 1295,
+       "t1": 1585,
+       "clip": "h16.mp3"
+      },
+      {
+       "w": "strong",
+       "t0": 1585,
+       "t1": 1865,
+       "clip": "h17.mp3"
+      },
+      {
+       "w": "wind",
+       "t0": 1865,
+       "t1": 2145,
+       "clip": "h18.mp3"
+      },
+      {
+       "w": "came.",
+       "t0": 2145,
+       "t1": 2340,
+       "clip": "h19.mp3"
+      }
+     ],
+     "turn": false
+    },
+    {
+     "text": "It blew my cap away.",
+     "words": [
+      {
+       "w": "It",
+       "t0": 3465,
+       "t1": 3575,
+       "clip": "h20.mp3"
+      },
+      {
+       "w": "blew",
+       "t0": 3575,
+       "t1": 3815,
+       "clip": "h21.mp3"
+      },
+      {
+       "w": "my",
+       "t0": 3815,
+       "t1": 4025,
+       "clip": "h22.mp3"
+      },
+      {
+       "w": "cap",
+       "t0": 4025,
+       "t1": 4345,
+       "clip": "h7.mp3"
+      },
+      {
+       "w": "away.",
+       "t0": 4345,
+       "t1": 4500,
+       "clip": "h23.mp3"
+      }
+     ],
+     "turn": true
+    }
+   ]
+  },
+  {
+   "image": "p4.jpg",
+   "audio": "p4.mp3",
+   "durationMs": 3200,
+   "lines": [
+    {
+     "text": "My cap got stuck on a branch of the old Pipal tree.",
+     "words": [
+      {
+       "w": "My",
+       "t0": 345,
+       "t1": 665
+      },
+      {
+       "w": "cap",
+       "t0": 665,
+       "t1": 905
+      },
+      {
+       "w": "got",
+       "t0": 905,
+       "t1": 1065
+      },
+      {
+       "w": "stuck",
+       "t0": 1065,
+       "t1": 1385
+      },
+      {
+       "w": "on",
+       "t0": 1385,
+       "t1": 1505
+      },
+      {
+       "w": "a",
+       "t0": 1505,
+       "t1": 1585
+      },
+      {
+       "w": "branch",
+       "t0": 1585,
+       "t1": 1905
+      },
+      {
+       "w": "of",
+       "t0": 1905,
+       "t1": 2095
+      },
+      {
+       "w": "the",
+       "t0": 2095,
+       "t1": 2225
+      },
+      {
+       "w": "old",
+       "t0": 2225,
+       "t1": 2465
+      },
+      {
+       "w": "Pipal",
+       "t0": 2465,
+       "t1": 2865
+      },
+      {
+       "w": "tree.",
+       "t0": 2865,
+       "t1": 3010
+      }
+     ],
+     "turn": false
+    }
+   ]
+  },
+  {
+   "image": "p5.jpg",
+   "audio": "p5.mp3",
+   "durationMs": 3840,
+   "lines": [
+    {
+     "text": "I cried a lot.",
+     "words": [
+      {
+       "w": "I",
+       "t0": 345,
+       "t1": 465,
+       "clip": "h24.mp3"
+      },
+      {
+       "w": "cried",
+       "t0": 465,
+       "t1": 785,
+       "clip": "h25.mp3"
+      },
+      {
+       "w": "a",
+       "t0": 785,
+       "t1": 895,
+       "clip": "h4.mp3"
+      },
+      {
+       "w": "lot.",
+       "t0": 895,
+       "t1": 1180,
+       "clip": "h26.mp3"
+      }
+     ],
+     "turn": true
+    },
+    {
+     "text": "And I did not eat my dinner.",
+     "words": [
+      {
+       "w": "And",
+       "t0": 2345,
+       "t1": 2465,
+       "clip": "h27.mp3"
+      },
+      {
+       "w": "I",
+       "t0": 2465,
+       "t1": 2625,
+       "clip": "h24.mp3"
+      },
+      {
+       "w": "did",
+       "t0": 2625,
+       "t1": 2785,
+       "clip": "h28.mp3"
+      },
+      {
+       "w": "not",
+       "t0": 2785,
+       "t1": 2975,
+       "clip": "h29.mp3"
+      },
+      {
+       "w": "eat",
+       "t0": 2975,
+       "t1": 3185,
+       "clip": "h30.mp3"
+      },
+      {
+       "w": "my",
+       "t0": 3185,
+       "t1": 3345,
+       "clip": "h22.mp3"
+      },
+      {
+       "w": "dinner.",
+       "t0": 3345,
+       "t1": 3640,
+       "clip": "h31.mp3"
+      }
+     ],
+     "turn": false
+    }
+   ]
+  },
+  {
+   "image": "p6.jpg",
+   "audio": "p6.mp3",
+   "durationMs": 5760,
+   "lines": [
+    {
+     "text": "Later that night, the moon came up.",
+     "words": [
+      {
+       "w": "Later",
+       "t0": 345,
+       "t1": 705,
+       "clip": "h32.mp3"
+      },
+      {
+       "w": "that",
+       "t0": 705,
+       "t1": 985,
+       "clip": "h33.mp3"
+      },
+      {
+       "w": "night,",
+       "t0": 985,
+       "t1": 1465,
+       "clip": "h34.mp3"
+      },
+      {
+       "w": "the",
+       "t0": 1465,
+       "t1": 1545,
+       "clip": "h8.mp3"
+      },
+      {
+       "w": "moon",
+       "t0": 1545,
+       "t1": 1905,
+       "clip": "h35.mp3"
+      },
+      {
+       "w": "came",
+       "t0": 1905,
+       "t1": 2065,
+       "clip": "h19.mp3"
+      },
+      {
+       "w": "up.",
+       "t0": 2065,
+       "t1": 2170,
+       "clip": "h36.mp3"
+      }
+     ],
+     "turn": false
+    },
+    {
+     "text": "It looked at my cap on the old Pipal tree.",
+     "words": [
+      {
+       "w": "It",
+       "t0": 3465,
+       "t1": 3665
+      },
+      {
+       "w": "looked",
+       "t0": 3665,
+       "t1": 3865
+      },
+      {
+       "w": "at",
+       "t0": 3865,
+       "t1": 4095
+      },
+      {
+       "w": "my",
+       "t0": 4095,
+       "t1": 4305
+      },
+      {
+       "w": "cap",
+       "t0": 4305,
+       "t1": 4505
+      },
+      {
+       "w": "on",
+       "t0": 4505,
+       "t1": 4665
+      },
+      {
+       "w": "the",
+       "t0": 4665,
+       "t1": 4815
+      },
+      {
+       "w": "old",
+       "t0": 4815,
+       "t1": 5059
+      },
+      {
+       "w": "Pipal",
+       "t0": 5059,
+       "t1": 5465
+      },
+      {
+       "w": "tree.",
+       "t0": 5465,
+       "t1": 5600
+      }
+     ],
+     "turn": false
+    }
+   ]
+  },
+  {
+   "image": "p7.jpg",
+   "audio": "p7.mp3",
+   "durationMs": 6442,
+   "lines": [
+    {
+     "text": "It tried on my cap.",
+     "words": [
+      {
+       "w": "It",
+       "t0": 345,
+       "t1": 585,
+       "clip": "h20.mp3"
+      },
+      {
+       "w": "tried",
+       "t0": 585,
+       "t1": 785,
+       "clip": "h37.mp3"
+      },
+      {
+       "w": "on",
+       "t0": 785,
+       "t1": 945,
+       "clip": "h13.mp3"
+      },
+      {
+       "w": "my",
+       "t0": 945,
+       "t1": 1155,
+       "clip": "h22.mp3"
+      },
+      {
+       "w": "cap.",
+       "t0": 1155,
+       "t1": 1330,
+       "clip": "h7.mp3"
+      }
+     ],
+     "turn": false
+    },
+    {
+     "text": "The moon smiled happily.",
+     "words": [
+      {
+       "w": "The",
+       "t0": 2665,
+       "t1": 2825,
+       "clip": "h8.mp3"
+      },
+      {
+       "w": "moon",
+       "t0": 2825,
+       "t1": 3105,
+       "clip": "h35.mp3"
+      },
+      {
+       "w": "smiled",
+       "t0": 3105,
+       "t1": 3505,
+       "clip": "h38.mp3"
+      },
+      {
+       "w": "happily.",
+       "t0": 3505,
+       "t1": 4020,
+       "clip": "h39.mp3"
+      }
+     ],
+     "turn": true
+    },
+    {
+     "text": "I had to smile too.",
+     "words": [
+      {
+       "w": "I",
+       "t0": 5145,
+       "t1": 5345,
+       "clip": "h24.mp3"
+      },
+      {
+       "w": "had",
+       "t0": 5345,
+       "t1": 5505,
+       "clip": "h40.mp3"
+      },
+      {
+       "w": "to",
+       "t0": 5505,
+       "t1": 5585,
+       "clip": "h41.mp3"
+      },
+      {
+       "w": "smile",
+       "t0": 5585,
+       "t1": 6065,
+       "clip": "h42.mp3"
+      },
+      {
+       "w": "too.",
+       "t0": 6065,
+       "t1": 6200,
+       "clip": "h43.mp3"
+      }
+     ],
+     "turn": false
+    }
+   ]
+  },
+  {
+   "image": "p8.jpg",
+   "audio": "p8.mp3",
+   "durationMs": 6656,
+   "lines": [
+    {
+     "text": "After school the next day, my mother gave me a shiny new red cap.",
+     "words": [
+      {
+       "w": "After",
+       "t0": 345,
+       "t1": 785
+      },
+      {
+       "w": "school",
+       "t0": 785,
+       "t1": 985
+      },
+      {
+       "w": "the",
+       "t0": 985,
+       "t1": 1145
+      },
+      {
+       "w": "next",
+       "t0": 1145,
+       "t1": 1425
+      },
+      {
+       "w": "day,",
+       "t0": 1425,
+       "t1": 1825
+      },
+      {
+       "w": "my",
+       "t0": 1825,
+       "t1": 1985
+      },
+      {
+       "w": "mother",
+       "t0": 1985,
+       "t1": 2265
+      },
+      {
+       "w": "gave",
+       "t0": 2265,
+       "t1": 2465
+      },
+      {
+       "w": "me",
+       "t0": 2465,
+       "t1": 2545
+      },
+      {
+       "w": "a",
+       "t0": 2545,
+       "t1": 2625
+      },
+      {
+       "w": "shiny",
+       "t0": 2625,
+       "t1": 3105
+      },
+      {
+       "w": "new",
+       "t0": 3105,
+       "t1": 3215
+      },
+      {
+       "w": "red",
+       "t0": 3215,
+       "t1": 3585
+      },
+      {
+       "w": "cap.",
+       "t0": 3585,
+       "t1": 3730
+      }
+     ],
+     "turn": false
+    },
+    {
+     "text": "“The moon sent it,” she said.",
+     "words": [
+      {
+       "w": "“The",
+       "t0": 4985,
+       "t1": 5105,
+       "clip": "h8.mp3"
+      },
+      {
+       "w": "moon",
+       "t0": 5105,
+       "t1": 5505,
+       "clip": "h35.mp3"
+      },
+      {
+       "w": "sent",
+       "t0": 5505,
+       "t1": 5705,
+       "clip": "h44.mp3"
+      },
+      {
+       "w": "it,”",
+       "t0": 5705,
+       "t1": 6145,
+       "clip": "h20.mp3"
+      },
+      {
+       "w": "she",
+       "t0": 6145,
+       "t1": 6355,
+       "clip": "h45.mp3"
+      },
+      {
+       "w": "said.",
+       "t0": 6355,
+       "t1": 6520,
+       "clip": "h46.mp3"
+      }
+     ],
+     "turn": false
+    }
+   ]
+  },
+  {
+   "image": "p9.jpg",
+   "audio": "p9.mp3",
+   "durationMs": 5419,
+   "lines": [
+    {
+     "text": "That night, both the moon and I wore our caps and smiled.",
+     "words": [
+      {
+       "w": "That",
+       "t0": 345,
+       "t1": 705,
+       "clip": "h33.mp3"
+      },
+      {
+       "w": "night,",
+       "t0": 705,
+       "t1": 1065,
+       "clip": "h34.mp3"
+      },
+      {
+       "w": "both",
+       "t0": 1065,
+       "t1": 1225,
+       "clip": "h47.mp3"
+      },
+      {
+       "w": "the",
+       "t0": 1225,
+       "t1": 1345,
+       "clip": "h8.mp3"
+      },
+      {
+       "w": "moon",
+       "t0": 1345,
+       "t1": 1625,
+       "clip": "h35.mp3"
+      },
+      {
+       "w": "and",
+       "t0": 1625,
+       "t1": 1745,
+       "clip": "h27.mp3"
+      },
+      {
+       "w": "I",
+       "t0": 1745,
+       "t1": 1905,
+       "clip": "h24.mp3"
+      },
+      {
+       "w": "wore",
+       "t0": 1905,
+       "t1": 2375,
+       "clip": "h48.mp3"
+      },
+      {
+       "w": "our",
+       "t0": 2375,
+       "t1": 2385,
+       "clip": "h49.mp3"
+      },
+      {
+       "w": "caps",
+       "t0": 2385,
+       "t1": 2968,
+       "clip": "h50.mp3"
+      },
+      {
+       "w": "and",
+       "t0": 2968,
+       "t1": 3405,
+       "clip": "h27.mp3"
+      },
+      {
+       "w": "smiled.",
+       "t0": 3405,
+       "t1": 3500,
+       "clip": "h38.mp3"
+      }
+     ],
+     "turn": false
+    },
+    {
+     "text": "We were happy.",
+     "words": [
+      {
+       "w": "We",
+       "t0": 4425,
+       "t1": 4625,
+       "clip": "h51.mp3"
+      },
+      {
+       "w": "were",
+       "t0": 4625,
+       "t1": 4815,
+       "clip": "h52.mp3"
+      },
+      {
+       "w": "happy.",
+       "t0": 4815,
+       "t1": 5160,
+       "clip": "h53.mp3"
+      }
+     ],
+     "turn": false
+    }
+   ]
+  },
+  {
+   "image": "p10.jpg",
+   "audio": "p10.mp3",
+   "durationMs": 2091,
+   "lines": [
+    {
+     "text": "Do you think the sun needs a hat?",
+     "words": [
+      {
+       "w": "Do",
+       "t0": 345,
+       "t1": 465,
+       "clip": "h54.mp3"
+      },
+      {
+       "w": "you",
+       "t0": 465,
+       "t1": 665,
+       "clip": "h55.mp3"
+      },
+      {
+       "w": "think",
+       "t0": 665,
+       "t1": 785,
+       "clip": "h56.mp3"
+      },
+      {
+       "w": "the",
+       "t0": 785,
+       "t1": 1005,
+       "clip": "h8.mp3"
+      },
+      {
+       "w": "sun",
+       "t0": 1005,
+       "t1": 1225,
+       "clip": "h57.mp3"
+      },
+      {
+       "w": "needs",
+       "t0": 1225,
+       "t1": 1465,
+       "clip": "h58.mp3"
+      },
+      {
+       "w": "a",
+       "t0": 1465,
+       "t1": 1545,
+       "clip": "h4.mp3"
+      },
+      {
+       "w": "hat?",
+       "t0": 1545,
+       "t1": 1910,
+       "clip": "h59.mp3"
+      }
+     ],
+     "turn": false
+    }
+   ]
+  },
+  {
+   "image": "p11.jpg",
+   "audio": "p11.mp3",
+   "durationMs": 2219,
+   "lines": [
+    {
+     "text": "Guess which cap I am wearing today!",
+     "words": [
+      {
+       "w": "Guess",
+       "t0": 465,
+       "t1": 755,
+       "clip": "h60.mp3"
+      },
+      {
+       "w": "which",
+       "t0": 755,
+       "t1": 1025,
+       "clip": "h61.mp3"
+      },
+      {
+       "w": "cap",
+       "t0": 1025,
+       "t1": 1245,
+       "clip": "h7.mp3"
+      },
+      {
+       "w": "I",
+       "t0": 1245,
+       "t1": 1318,
+       "clip": "h24.mp3"
+      },
+      {
+       "w": "am",
+       "t0": 1318,
+       "t1": 1465,
+       "clip": "h62.mp3"
+      },
+      {
+       "w": "wearing",
+       "t0": 1465,
+       "t1": 1905,
+       "clip": "h63.mp3"
+      },
+      {
+       "w": "today!",
+       "t0": 1905,
+       "t1": 2030,
+       "clip": "h64.mp3"
+      }
+     ],
+     "turn": false
+    }
+   ]
+  }
+ ],
+ "turnPool": [
+  {
+   "page": 1,
+   "line": 1
+  },
+  {
+   "page": 1,
+   "line": 2
+  },
+  {
+   "page": 2,
+   "line": 0
+  },
+  {
+   "page": 2,
+   "line": 1
+  },
+  {
+   "page": 4,
+   "line": 0
+  },
+  {
+   "page": 4,
+   "line": 1
+  },
+  {
+   "page": 5,
+   "line": 0
+  },
+  {
+   "page": 6,
+   "line": 0
+  },
+  {
+   "page": 6,
+   "line": 1
+  },
+  {
+   "page": 6,
+   "line": 2
+  },
+  {
+   "page": 7,
+   "line": 1
+  },
+  {
+   "page": 8,
+   "line": 0
+  },
+  {
+   "page": 8,
+   "line": 1
+  },
+  {
+   "page": 9,
+   "line": 0
+  },
+  {
+   "page": 10,
+   "line": 0
+  }
+ ],
+ "turnSelection": {
+  "source": "editor",
+  "level": 1,
+  "reason": "Chosen by hand: short lines of common words (\"It blew my cap away.\", \"I cried a lot.\", \"The moon smiled happily.\"); no names or rare words."
+ }
+}
