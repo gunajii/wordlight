@@ -22,15 +22,19 @@ tar -rf "$TMP/app.tar" $(find content/stories -type f \( -name '*.mp3' -o -name 
 # so changing the reading mode or the coach model is just another deploy
 mkdir -p .dev/aws
 LAST=.dev/aws/last-deploy.env; if [ -f "$LAST" ]; then while IFS="=" read -r k v; do [ -n "$k" ] && [ -z "${!k:-}" ] && export "$k=$v" || true; done < "$LAST"; fi
-printf 'READING_MODE=%s\nSUMMARY=%s\nBEDROCK_MODEL_ID=%s\nTRANSCRIBE_STABILITY=%s\n' "${READING_MODE:-echo}" "${SUMMARY:-template}" "${BEDROCK_MODEL_ID:-}" "${TRANSCRIBE_STABILITY:-high}" > "$LAST"
-echo "runtime: READING_MODE=${READING_MODE:-echo} TRANSCRIBE_STABILITY=${TRANSCRIBE_STABILITY:-high} SUMMARY=${SUMMARY:-template} ${BEDROCK_MODEL_ID:-}"
+printf 'READING_MODE=%s\nSUMMARY=%s\nBEDROCK_MODEL_ID=%s\nTRANSCRIBE_STABILITY=%s\nTRANSLATE=%s\n' "${READING_MODE:-echo}" "${SUMMARY:-template}" "${BEDROCK_MODEL_ID:-}" "${TRANSCRIBE_STABILITY:-high}" "${TRANSLATE:-aws}" > "$LAST"
+echo "runtime: READING_MODE=${READING_MODE:-echo} TRANSCRIBE_STABILITY=${TRANSCRIBE_STABILITY:-high} SUMMARY=${SUMMARY:-template} ${BEDROCK_MODEL_ID:-} TRANSLATE=${TRANSLATE:-aws}"
 [ -s .dev/aws/admin-token ] || (umask 077; openssl rand -hex 16 > .dev/aws/admin-token)   # operator endpoints; never committed
-printf 'READING_MODE=%s\nSUMMARY=%s\nBEDROCK_MODEL_ID=%s\nTRANSCRIBE_STABILITY=%s\nADMIN_TOKEN=%s\n' "${READING_MODE:-echo}" "${SUMMARY:-template}" "${BEDROCK_MODEL_ID:-}" "${TRANSCRIBE_STABILITY:-high}" "$(cat .dev/aws/admin-token)" > "$TMP/.deploy.env"
+printf 'READING_MODE=%s\nSUMMARY=%s\nBEDROCK_MODEL_ID=%s\nTRANSCRIBE_STABILITY=%s\nTRANSLATE=%s\nADMIN_TOKEN=%s\n' "${READING_MODE:-echo}" "${SUMMARY:-template}" "${BEDROCK_MODEL_ID:-}" "${TRANSCRIBE_STABILITY:-high}" "${TRANSLATE:-aws}" "$(cat .dev/aws/admin-token)" > "$TMP/.deploy.env"
 tar -rf "$TMP/app.tar" -C "$TMP" .deploy.env
 gzip -9 "$TMP/app.tar" && aws s3 cp "$TMP/app.tar.gz" "s3://$BUCKET/wordlight/app.tgz" --region "$REGION" >/dev/null && rm -rf "$TMP"
 echo "uploaded code to s3://$BUCKET/wordlight/app.tgz"
 if aws cloudformation describe-stacks --region "$REGION" --stack-name $STACK >/dev/null 2>&1; then
   ID=$(aws cloudformation describe-stacks --region "$REGION" --stack-name $STACK --query "Stacks[0].Outputs[?OutputKey=='InstanceId'].OutputValue" --output text)
+  # stacks created before the translated parent summary (2026-10-13): give the existing role translate:TranslateText too
+  ROLE=$(aws cloudformation describe-stack-resource --region "$REGION" --stack-name $STACK --logical-resource-id Role --query StackResourceDetail.PhysicalResourceId --output text)
+  aws iam put-role-policy --role-name "$ROLE" --policy-name wordlight-translate --policy-document '{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Action":"translate:TranslateText","Resource":"*"}]}' \
+    && echo "role $ROLE: translate:TranslateText ok" || echo "could not add translate:TranslateText (summaries stay in English)"
   bash tools/aws/start-server.sh || { echo "could not start the server instance"; exit 1; }
   CMD=$(aws ssm send-command --region "$REGION" --instance-ids "$ID" --document-name AWS-RunShellScript --parameters 'commands=["/usr/local/bin/wordlight-update","bash /opt/wordlight/app/infra/aws/on-update.sh"]' --query Command.CommandId --output text)
   echo "update sent ($CMD); waiting…"; aws ssm wait command-executed --region "$REGION" --command-id "$CMD" --instance-id "$ID" || true

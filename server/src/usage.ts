@@ -8,18 +8,18 @@
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import path from 'node:path';
 
-export type Meter = 'transcribeSeconds' | 'pollyChars' | 'bedrockCalls' | 'bedrockTokensIn' | 'bedrockTokensOut';
-export const PRICE = { transcribePerMin: 0.024, pollyNeuralPerMChars: 16 };
+export type Meter = 'transcribeSeconds' | 'pollyChars' | 'bedrockCalls' | 'bedrockTokensIn' | 'bedrockTokensOut' | 'translateChars';
+export const PRICE = { transcribePerMin: 0.024, pollyNeuralPerMChars: 16, translatePerMChars: 15 };
 
 export class UsageCapError extends Error {
   constructor(meter: Meter, used: number, cap: number) { super(`usage cap reached: ${meter} ${Math.round(used)} / ${cap} today`); this.name = 'UsageCapError'; }
 }
 
-export interface UsageDay { day: string; transcribeSeconds: number; pollyChars: number; bedrockCalls: number; bedrockTokensIn: number; bedrockTokensOut: number; refused: number }
+export interface UsageDay { day: string; transcribeSeconds: number; pollyChars: number; bedrockCalls: number; bedrockTokensIn: number; bedrockTokensOut: number; translateChars: number; refused: number }
 
 export class UsageMeter {
   private d: UsageDay;
-  readonly caps: { transcribeSeconds: number; pollyChars: number; bedrockCalls: number };
+  readonly caps: { transcribeSeconds: number; pollyChars: number; bedrockCalls: number; translateChars: number };
   private readonly file: string | null;
   private readonly today: () => string;
   constructor(o: { file?: string | null; caps?: Partial<UsageMeter['caps']>; today?: () => string } = {}) {
@@ -29,11 +29,12 @@ export class UsageMeter {
       transcribeSeconds: (Number(process.env.USAGE_TRANSCRIBE_MIN_PER_DAY) || 60) * 60,
       pollyChars: Number(process.env.USAGE_POLLY_CHARS_PER_DAY) || 150_000,
       bedrockCalls: Number(process.env.USAGE_BEDROCK_CALLS_PER_DAY) || 300,
+      translateChars: Number(process.env.USAGE_TRANSLATE_CHARS_PER_DAY) || 100_000,
       ...o.caps,
     };
     this.d = this.load();
   }
-  private blank(): UsageDay { return { day: this.today(), transcribeSeconds: 0, pollyChars: 0, bedrockCalls: 0, bedrockTokensIn: 0, bedrockTokensOut: 0, refused: 0 }; }
+  private blank(): UsageDay { return { day: this.today(), transcribeSeconds: 0, pollyChars: 0, bedrockCalls: 0, bedrockTokensIn: 0, bedrockTokensOut: 0, translateChars: 0, refused: 0 }; }
   private load(): UsageDay {
     if (!this.file) return this.blank();
     try { const all = JSON.parse(readFileSync(this.file, 'utf8')); const d = all?.days?.[this.today()]; return d ? { ...this.blank(), ...d } : this.blank(); } catch { return this.blank(); }
@@ -50,14 +51,14 @@ export class UsageMeter {
   }
   private roll() { if (this.d.day !== this.today()) this.d = this.blank(); }
   /** Throws UsageCapError if `meter` (capped ones) cannot take `amount` more today. */
-  check(meter: 'transcribeSeconds' | 'pollyChars' | 'bedrockCalls', amount = 0) {
+  check(meter: 'transcribeSeconds' | 'pollyChars' | 'bedrockCalls' | 'translateChars', amount = 0) {
     this.roll();
     if (this.d[meter] + amount > this.caps[meter]) { this.d.refused++; this.save(); throw new UsageCapError(meter, this.d[meter], this.caps[meter]); }
   }
   add(meter: Meter, amount: number) { this.roll(); this.d[meter] += amount; this.save(); }
   snapshot() {
     this.roll();
-    const est = (this.d.transcribeSeconds / 60) * PRICE.transcribePerMin + (this.d.pollyChars / 1e6) * PRICE.pollyNeuralPerMChars;
+    const est = (this.d.transcribeSeconds / 60) * PRICE.transcribePerMin + (this.d.pollyChars / 1e6) * PRICE.pollyNeuralPerMChars + (this.d.translateChars / 1e6) * PRICE.translatePerMChars;
     return { ...this.d, caps: this.caps, estimatedUsdToday: Math.round(est * 1000) / 1000, note: 'estimate from list prices (INFERRED); Bedrock cost not included; the AWS bill is authoritative' };
   }
 }

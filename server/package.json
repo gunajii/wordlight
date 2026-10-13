@@ -8,6 +8,7 @@
     "@aws-sdk/client-bedrock-runtime": "^3.1146.0",
     "@aws-sdk/client-dynamodb": "^3.1147.0",
     "@aws-sdk/client-transcribe-streaming": "^3.1143.0",
+    "@aws-sdk/client-translate": "^3.1150.0",
     "@wordlight/reading-engine": "*",
     "@wordlight/shared-protocol": "*",
     "@wordlight/story-package": "*",

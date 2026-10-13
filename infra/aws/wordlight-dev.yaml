@@ -31,6 +31,7 @@ Resources:
               - { Effect: Allow, Action: [transcribe:StartStreamTranscription, transcribe:StartStreamTranscriptionWebSocket, polly:SynthesizeSpeech, polly:DescribeVoices], Resource: '*' }
               - { Effect: Allow, Action: [s3:GetObject], Resource: !Sub 'arn:aws:s3:::${ArtifactBucket}/*' }
               - { Effect: Allow, Action: [bedrock:InvokeModel, bedrock:Converse], Resource: '*' }  # used only when Summary=bedrock
+              - { Effect: Allow, Action: [translate:TranslateText], Resource: '*' }  # parent summary in the parent's language (TRANSLATE=aws)
               - { Effect: Allow, Action: [dynamodb:PutItem, dynamodb:Query], Resource: !GetAtt ProgressTable.Arn }
   ProgressTable:
     Type: AWS::DynamoDB::Table
@@ -100,7 +101,7 @@ Resources:
           [Service]
           User=wordlight
           WorkingDirectory=/opt/wordlight/app
-          Environment=NODE_ENV=production PORT=8787 HOST=127.0.0.1 AWS_REGION=${AWS::Region} PUBLIC_URL=https://$HOST MEDIA_URL=https://$HOST SPEECH=transcribe READING_MODE=${ReadingMode} SUMMARY=${Summary} BEDROCK_MODEL_ID=${BedrockModelId} PROGRESS=dynamodb PROGRESS_TABLE=${ProgressTable} USAGE_FILE=/var/lib/wordlight/usage.json
+          Environment=NODE_ENV=production PORT=8787 HOST=127.0.0.1 AWS_REGION=${AWS::Region} PUBLIC_URL=https://$HOST MEDIA_URL=https://$HOST SPEECH=transcribe READING_MODE=${ReadingMode} SUMMARY=${Summary} BEDROCK_MODEL_ID=${BedrockModelId} TRANSLATE=aws PROGRESS=dynamodb PROGRESS_TABLE=${ProgressTable} USAGE_FILE=/var/lib/wordlight/usage.json
           EnvironmentFile=-/opt/wordlight/app/.deploy.env
           StateDirectory=wordlight
           ExecStart=/usr/local/bin/node server/src/index.ts

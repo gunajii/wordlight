@@ -1,4 +1,4 @@
-import { LANGS, SENDERS, type EventType, type WordLightEvent } from './events.ts';
+import { LANGS, SUMMARY_LANGS, SENDERS, type EventType, type WordLightEvent } from './events.ts';
 
 export type Result = { ok: true; event: WordLightEvent } | { ok: false; error: string };
 
@@ -43,6 +43,7 @@ export function validateEvent(msg: unknown): Result {
     case 'reader.save': {
       const r = m.reader as Record<string, unknown> | undefined;
       if (!r || !isStr(r.readerId, 64) || !isStr(r.firstName, 40) || !isInt(r.age, 3, 18) || !LANGS.includes(r.lang as never)) return fail('reader');
+      if (r.summaryLang !== undefined && !SUMMARY_LANGS.includes(r.summaryLang as never)) return fail('reader.summaryLang');
       const c = m.consent as Record<string, unknown> | undefined;
       if (!c || c.microphone !== true || !isNum(c.atMs)) return fail('consent');
       break;

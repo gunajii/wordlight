@@ -5,6 +5,8 @@
 
 export const LANGS = ['hi-IN', 'en-IN'] as const;
 export type Lang = (typeof LANGS)[number];
+/** Languages offered for the parent's summary (Amazon Translate codes; 'en' = no translation). */
+export const SUMMARY_LANGS = ['en', 'hi', 'mr', 'bn', 'gu', 'kn', 'ta', 'te'] as const;
 
 export type Role = 'tv' | 'phone';
 
@@ -22,6 +24,8 @@ export interface Reader {
   firstName: string;
   age: number;
   lang: Lang;
+  /** Language for the parent's summary on the phone (Amazon Translate code, e.g. 'mr'); absent = English. */
+  summaryLang?: string;
 }
 
 // ---- TV → server → phone ----

@@ -23,6 +23,7 @@ import { TranscribeSource, type SpeechSource } from './reading/speech.ts';
 import { scriptedFromEnv } from './reading/scripted.ts';
 import { checkAllStories } from './content.ts';
 import { summaryFromEnv } from './summary.ts';
+import { AwsTranslator, SummaryTranslator } from './translate.ts';
 import { usage } from './usage.ts';
 import { progressFromEnv } from './progress.ts';
 
@@ -118,6 +119,10 @@ export function createServer({ hub = new SessionHub({ now: serverNow }), publicU
   hub.meta = { mode: readingMode, speech: speechName };
   if (process.env.PROGRESS === 'dynamodb') progressFromEnv(log).then((p) => { hub.progress = p; log(`[progress] ${p.name}`); });
   if (process.env.SUMMARY === 'bedrock') summaryFromEnv(log).then((sv) => { hub.summary = sv; log(`[summary] ${sv.name}`); });
+  // Parent's summary in the parent's language: only with TRANSLATE=aws (needs translate:TranslateText). Falls back to English.
+  if (process.env.TRANSLATE === 'aws') AwsTranslator.create(process.env.TRANSLATE_REGION ?? process.env.AWS_REGION ?? 'ap-south-1')
+    .then((t) => { hub.translator = new SummaryTranslator({ translator: t, log }); log('[translate] amazon-translate'); })
+    .catch((e) => log(`[translate] off (${String(e?.message ?? e).slice(0, 80)})`));
   const server = http.createServer(async (req, res) => {
     const url = new URL(req.url ?? '/', 'http://x');
     const p = url.pathname;

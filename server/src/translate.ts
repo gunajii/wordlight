@@ -1,0 +1,75 @@
+// The parent's summary in the parent's language, with Amazon Translate.
+// Only the counts-based summary sentence is translated, for the PHONE (the TV keeps the original: its bundled fonts
+// cover Latin and Devanagari only). The child's first name never leaves the server: it is replaced by a placeholder
+// before the call and put back afterwards; if the placeholder does not survive translation exactly, the parent gets
+// the English text instead. Any error, timeout or cap → English. Translation can never break the session.
+import { usage as defaultUsage, type UsageMeter } from './usage.ts';
+
+/** Languages a parent can choose for the summary (Amazon Translate codes). */
+export const SUMMARY_LANGS: Record<string, string> = {
+  en: 'English', hi: 'हिन्दी (Hindi)', mr: 'मराठी (Marathi)', bn: 'বাংলা (Bengali)', gu: 'ગુજરાતી (Gujarati)',
+  kn: 'ಕನ್ನಡ (Kannada)', ta: 'தமிழ் (Tamil)', te: 'తెలుగు (Telugu)',
+};
+export const isSummaryLang = (x: unknown): x is string => typeof x === 'string' && Object.hasOwn(SUMMARY_LANGS, x);
+// (keep in step with SUMMARY_LANGS in @wordlight/shared-protocol; a test checks they match)
+
+/** Placeholder for the child's name: short, Latin, unlikely to be translated or transliterated. */
+export const NAME_TOKEN = 'XQZ';
+
+export interface Translator { readonly name: string; translate(text: string, target: string, signal?: AbortSignal): Promise<string> }
+
+type TranslateLike = { send(cmd: any, opts?: { abortSignal?: AbortSignal }): Promise<any> };
+export class AwsTranslator implements Translator {
+  readonly name = 'amazon-translate';
+  private readonly o: { client: TranslateLike; TranslateTextCommand: any };
+  constructor(o: { client: TranslateLike; TranslateTextCommand: any }) { this.o = o; }
+  static async create(region: string) {
+    const { TranslateClient, TranslateTextCommand } = await import('@aws-sdk/client-translate');
+    return new AwsTranslator({ client: new TranslateClient({ region }), TranslateTextCommand });
+  }
+  async translate(text: string, target: string, signal?: AbortSignal) {
+    const r = await this.o.client.send(new this.o.TranslateTextCommand({ Text: text, SourceLanguageCode: 'en', TargetLanguageCode: target }), { abortSignal: signal });
+    return String(r?.TranslatedText ?? '');
+  }
+}
+
+export interface TranslatedSummary { text: string; lang: string; source: 'original' | 'amazon-translate'; fallbackReason?: string }
+
+const count = (s: string, sub: string) => s.split(sub).length - 1;
+
+export class SummaryTranslator {
+  private calls = 0;
+  private readonly cache = new Map<string, string>();
+  private readonly o: { translator: Translator | null; timeoutMs: number; maxCalls: number; log: (m: string) => void; usage: UsageMeter };
+  constructor(o: { translator: Translator | null; timeoutMs?: number; maxCalls?: number; log?: (m: string) => void; usage?: UsageMeter }) {
+    this.o = { timeoutMs: 3000, maxCalls: 200, log: () => {}, usage: defaultUsage, ...o };
+  }
+
+  /** `text` is the English summary that mentions the child as `name`. */
+  async translate(text: string, name: string, target: string | undefined): Promise<TranslatedSummary> {
+    const original: TranslatedSummary = { text, lang: 'en', source: 'original' };
+    if (!target || target === 'en') return original;
+    const fail = (reason: string): TranslatedSummary => { this.o.log(`[translate] ${target}: English instead (${reason})`); return { ...original, fallbackReason: reason }; };
+    if (!isSummaryLang(target)) return fail('unsupported-language');
+    if (!this.o.translator) return fail('off');
+    if (!name || text.includes(NAME_TOKEN)) return fail('name');
+    const masked = text.split(name).join(NAME_TOKEN);
+    const want = count(masked, NAME_TOKEN);
+    const key = `${target}\u0000${masked}`;
+    let out = this.cache.get(key);
+    if (out === undefined) {
+      if (this.calls >= this.o.maxCalls) return fail('budget');
+      try { this.o.usage.check('translateChars', masked.length); } catch { return fail('daily-cap'); }
+      this.calls++; this.o.usage.add('translateChars', masked.length);
+      const ctl = new AbortController();
+      const timer = setTimeout(() => ctl.abort(), this.o.timeoutMs);
+      try { out = await this.o.translator.translate(masked, target, ctl.signal); }
+      catch (e: any) { return fail(ctl.signal.aborted ? 'timeout' : `error:${String(e?.name ?? e).slice(0, 40)}`); }
+      finally { clearTimeout(timer); }
+      if (!out) return fail('empty');
+      this.cache.set(key, out);
+    }
+    if (count(out, NAME_TOKEN) !== want) return fail('placeholder-lost');
+    return { text: out.split(NAME_TOKEN).join(name), lang: target, source: 'amazon-translate' };
+  }
+}

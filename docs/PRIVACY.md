@@ -58,6 +58,10 @@ Children use WordLight. Privacy is a product requirement, not a feature.
 - **Parent summary.** The counts are computed by the server. Optional Bedrock wording gets only the first name and
   counts, never audio or transcripts. Its text is rejected if it changes a number or makes a claim about ability
   or progress.
+- **Translated summary (2026-10-13).** If the parent picks a summary language, the server sends Amazon Translate
+  only the counts-based English sentence, with the child's first name replaced by a placeholder (`XQZ`). The name is
+  put back on the server; if the placeholder doesn't come back exactly once per mention, the parent gets English.
+  Nothing about the child's voice or words is ever sent to Translate.
 - **Child testing protocol:** `docs/CHILD_TESTING.md`. It requires written permission, uses the AWS path only and
   prefers no recording. If recordings are made, they stay outside Git and are deleted after scoring.
 - **Still to verify on the real account:** that the effective AI opt-out policy shows `optOut` (the first check,

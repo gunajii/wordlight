@@ -66,6 +66,9 @@
     <select id="reader-age"><option>5</option><option>6</option><option selected>7</option><option>8</option><option>9</option><option>10</option><option>11</option><option>12</option></select>
     <label for="reader-lang">Reads in</label>
     <select id="reader-lang"><option value="en-IN">English</option><option value="hi-IN">हिंदी (Hindi)</option></select>
+    <label for="reader-summary-lang">Your summary at the end, in</label>
+    <select id="reader-summary-lang"><option value="en">English</option><option value="hi">हिन्दी (Hindi)</option><option value="mr">मराठी (Marathi)</option><option value="bn">বাংলা (Bengali)</option><option value="gu">ગુજરાતી (Gujarati)</option><option value="kn">ಕನ್ನಡ (Kannada)</option><option value="ta">தமிழ் (Tamil)</option><option value="te">తెలుగు (Telugu)</option></select>
+    <p class="dim">Other languages are machine-translated by Amazon Translate; your child's name is not sent for translation.</p>
     <button id="reader-save">Save</button>
   </section>
 
@@ -102,6 +105,7 @@
   <section class="card hidden" id="summary-card">
     <div class="dim">Tonight</div>
     <p id="summary"></p>
+    <p class="dim hidden" id="summary-note">Translated by Amazon Translate (machine translation).</p>
   </section>
 
   <section class="card hidden" id="test-card">

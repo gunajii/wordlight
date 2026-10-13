@@ -32,7 +32,7 @@ if (DIAG) document.body.classList.add('diag');
 const READER_KEY = 'wordlight.reader.v1';
 let reader = null; try { reader = JSON.parse(store.get(READER_KEY) || 'null'); } catch {}
 let editingReader = false;
-let lineWords = [], lineMarks = [], lastDone = null, summaryText = null, lineMode = 'free', simulated = false;
+let lineWords = [], lineMarks = [], lastDone = null, summaryText = null, summaryTranslated = false, lineMode = 'free', simulated = false;
 // A local simulation must never look like real recognition: the server says when its speech source is scripted.
 fetch('/api/config').then((r) => r.json()).then((c) => { simulated = !!c?.speech?.simulated; render(); }).catch(() => {});
 const now = () => performance.now();
@@ -88,7 +88,7 @@ function sendReader() {
   if (!S.consent) return;
   const r = reader ?? (DIAG ? { name: 'Test reader', age: 8, lang: 'en-IN' } : null);
   if (!r) return;
-  client.send({ type: 'reader.save', reader: { readerId: 'rd-' + clientId.slice(3, 11), firstName: r.name, age: Number(r.age), lang: r.lang }, consent: { microphone: true, atMs: S.consent } });
+  client.send({ type: 'reader.save', reader: { readerId: 'rd-' + clientId.slice(3, 11), firstName: r.name, age: Number(r.age), lang: r.lang, ...(r.summaryLang && r.summaryLang !== 'en' ? { summaryLang: r.summaryLang } : {}) }, consent: { microphone: true, atMs: S.consent } });
 }
 function micLive() { let n = 0; for (const t of S.tracks) if (t.readyState === 'live') n++; return n; }
 function sendStatus() {
@@ -132,7 +132,7 @@ function onStatus(st) {
 function onMessage(m) {
   if (m.t === 'error') msg(`${m.code}: ${m.message}`);
   if (m.t === 's3.ack' && L.turn && m.turnId === L.turn.turnId) { S.acked = m.frames; S.lost = m.missing; S.latMs = m.latencyMedianMs; }
-  if (m.type === 'session.summary') { summaryText = m.text; render(); }
+  if (m.type === 'session.summary') { summaryText = m.text; summaryTranslated = m.translatedBy === 'amazon-translate'; render(); }
   if (L.turn && m.turnId === L.turn.turnId) {
     const mark = (k) => { if (m.index >= 0 && m.index < lineMarks.length && lineMarks[m.index] === 'pending') lineMarks[m.index] = k; };
     if (m.type === 'word.read') mark('read'); if (m.type === 'word.helped') mark('helped'); if (m.type === 'word.skipped') mark('skipped');
@@ -245,6 +245,7 @@ function render() {
   $('mic-card').classList.toggle('hidden', !S.consent || !L.ready);
   $('summary-card').classList.toggle('hidden', !summaryText);
   $('summary').textContent = summaryText ?? '';
+  $('summary-note').classList.toggle('hidden', !summaryTranslated);
   // Manual turn buttons only with ?manual=1: in run 2 a tap on them started a turn that collided with the runner's.
   $('test-card').classList.toggle('hidden', !MANUAL || !S.consent || !L.ready);
   $('session-end-btn').classList.toggle('hidden', !L.ready || L.session !== 'active');
@@ -301,11 +302,11 @@ $('consent-btn').onclick = () => { S.consent = Date.now(); store.set(CONSENT_KEY
 $('reader-save').onclick = () => {
   const name = $('reader-name').value.trim().replace(/\s+/g, ' ').slice(0, 20);
   if (!name) { msg('Please type a first name.'); return; }
-  reader = { name, age: Number($('reader-age').value), lang: $('reader-lang').value };
+  reader = { name, age: Number($('reader-age').value), lang: $('reader-lang').value, summaryLang: $('reader-summary-lang').value };
   store.set(READER_KEY, JSON.stringify(reader)); editingReader = false; msg('');
   sendReader(); render();
 };
-$('reader-change').onclick = () => { editingReader = true; if (reader) { $('reader-name').value = reader.name; $('reader-age').value = String(reader.age); $('reader-lang').value = reader.lang; } render(); };
+$('reader-change').onclick = () => { editingReader = true; if (reader) { $('reader-name').value = reader.name; $('reader-age').value = String(reader.age); $('reader-lang').value = reader.lang; $('reader-summary-lang').value = reader.summaryLang ?? 'en'; } render(); };
 $('ready-btn').onclick = () => startSession();
 $('tap-btn').onclick = () => unlockAudio();
 $('start-btn').onclick = () => client.send({ t: 's3.turn', action: 'start', chunkMs: Number($('chunk-sel').value), durationMs: 60_000 });

@@ -7,6 +7,7 @@
 import { validateEvent, mayClientSend, type Reader, type TurnStart, type WordLightEvent, type AudioFrame } from '@wordlight/shared-protocol';
 import { LocalSummaryService, templateSummary, type SummaryService, type SummaryInput } from './summary.ts';
 import { MemoryProgressStore, type ProgressStore } from './progress.ts';
+import { SummaryTranslator } from './translate.ts';
 
 export interface Conn { send: (msg: unknown) => void }
 interface ConnInfo { role: 'tv' | 'phone'; sessionId: string; clientId: string }
@@ -81,6 +82,8 @@ export class SessionHub {
   summary: SummaryService = new LocalSummaryService();
   /** session records (counts only); DynamoDB in production */
   progress: ProgressStore = new MemoryProgressStore();
+  /** the parent's copy of the summary in the parent's language (Amazon Translate); off = English */
+  translator: SummaryTranslator = new SummaryTranslator({ translator: null });
   /** labels stored with each record */
   meta: { mode: 'free' | 'echo'; speech: string } = { mode: 'free', speech: 'unknown' };
   private readonly o: { now: () => number; random?: () => number; telemetryLimit?: number };
@@ -329,9 +332,15 @@ export class SessionHub {
       try { out = await this.summary.summarize(input); } catch { out = { text: templateSummary(input), source: 'template', fallbackReason: 'error' }; }
       const ev = { type: 'session.summary', sessionId: s.id, readerId: r.readerId, wordsReadAlone: p.read, wordsHelped: p.helped, wordsSkipped: p.skipped, turns: p.lines,
         storiesCompleted: s.storiesCompleted.length, sessionMs, text: out.text, source: out.source, serverMs: this.o.now() };
-      this.toTv(s, ev);
-      s.phones.get(r.phoneClientId)?.send(ev);
-      this.log(s, { kind: 'session-summary', readerId: r.readerId, read: p.read, helped: p.helped, skipped: p.skipped, lines: p.lines, source: out.source, fallback: out.fallbackReason });
+      this.toTv(s, ev); // the TV always shows the original (its fonts cover Latin and Devanagari only)
+      // The parent's phone: the same counts, the sentence in the language the parent chose. Only the template sentence
+      // (always English) is translated; the child's name is masked before the call (see translate.ts).
+      const want = r.summaryLang && r.summaryLang !== 'en' ? r.summaryLang : undefined;
+      const tr = want && out.source === 'template' ? await this.translator.translate(out.text, r.firstName, want)
+        : { text: out.text, lang: 'en', source: 'original' as const, fallbackReason: want ? 'not-template' : undefined };
+      s.phones.get(r.phoneClientId)?.send(tr.source === 'amazon-translate' ? { ...ev, text: tr.text, textLang: tr.lang, textEn: out.text, translatedBy: 'amazon-translate' } : ev);
+      this.log(s, { kind: 'session-summary', readerId: r.readerId, read: p.read, helped: p.helped, skipped: p.skipped, lines: p.lines, source: out.source, fallback: out.fallbackReason,
+        summaryLang: want ?? 'en', translated: tr.source === 'amazon-translate', translateFallback: tr.fallbackReason });
       // persist counts only (never the name, audio or transcripts); a failing store never breaks the session
       this.progress.save({ readerId: r.readerId, sessionId: s.id, endedAt: new Date().toISOString(), lang: r.lang, age: r.age, storyIds: [...new Set([...p.stories, ...s.storiesCompleted])], storiesCompleted: s.storiesCompleted.slice(),
         turns: p.lines, read: p.read, helped: p.helped, skipped: p.skipped, durationMs: sessionMs, helpedWords: (p.helpedWords ?? []).slice(0, 50), mode: this.meta.mode, speech: this.meta.speech })
