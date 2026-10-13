@@ -178,7 +178,8 @@ invented; where a detail was not recorded at the time it says so. Severity is my
   Availability: region, entitlement, agreement AVAILABLE but `authorizationStatus: NOT_AUTHORIZED`, with no console
   action to change it. Re-checked 2026-10-09 19:00 UTC: unchanged (request ID `5f398b1f-ece7-49ed-bb67-0489cf3bec3d`;
   the support case still had no reply). Re-checked 2026-10-13 04:41 UTC: still `NOT_AUTHORIZED` (request ID
-  `9d804abe-9b41-4196-b876-34b6e7107fb9`).
+  `9d804abe-9b41-4196-b876-34b6e7107fb9`); us-east-1 the same (`c9c94255-b20f-4cbf-942d-ff9f47a53da9`), so the block is
+  account-wide, not regional.
 - **Severity:** Medium (it blocked the Bedrock feature).
 - **Workaround:** a deterministic template summary (the product works without Bedrock).
 - **Suggestion:** an actionable message (“new accounts need …; open a case at …”) and one exception name for one cause.

@@ -64,3 +64,7 @@ claims about ability or progress) or the template is used.
 Still `NOT_AUTHORIZED` for Nova Micro and Nova Lite (AVAILABLE region, entitlement and agreement). Converse on
 `apac.amazon.nova-micro-v1:0`: `ValidationException: Operation not allowed`, HTTP 400, request
 `9d804abe-9b41-4196-b876-34b6e7107fb9`. The parent summary stays on the template.
+
+Same day, us-east-1: `GetFoundationModelAvailability` for `amazon.nova-micro-v1:0` → `NOT_AUTHORIZED`; Converse on
+`us.amazon.nova-micro-v1:0` → `ValidationException: Operation not allowed`, request `c9c94255-b20f-4cbf-942d-ff9f47a53da9`.
+The block is account-wide, not regional.
