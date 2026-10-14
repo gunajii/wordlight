@@ -1,5 +1,7 @@
 # WordLight
 
+[![test](https://github.com/gunajii/wordlight/actions/workflows/test.yml/badge.svg)](https://github.com/gunajii/wordlight/actions/workflows/test.yml)
+
 > **The TV already has the words. WordLight teaches your child to read them.**
 
 **▶ Demo video (2:52):** https://youtu.be/-5x0W25ymOw (a narrated intro, then a real session with a 6-year-old on the
