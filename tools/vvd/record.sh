@@ -15,6 +15,9 @@ WIN=""; for _ in $(seq 1 10); do WIN=$(osascript -l JavaScript tools/vvd/vvd-win
 if [ -n "$WIN" ]; then
   read -r WID WX WY WW WH <<< "$WIN"
   STILL=(-o -l "$WID"); VIDEO=(-R "$WX,$WY,$WW,$WH"); WINDOW=1
+  # FULL=1: video of the whole main display (the window rectangle came out as a small corner on 2026-10-14);
+  # the stills stay window-only and full resolution
+  [ "${FULL:-0}" = 1 ] && VIDEO=() && WINDOW=0 && echo "FULL=1: video of the whole main display"
   echo "Virtual Device window $WID at $WX,$WY ${WW}×$WH — recording only that window"
 else
   STILL=(); VIDEO=(); WINDOW=0; echo "Virtual Device window not found — recording the whole main display"

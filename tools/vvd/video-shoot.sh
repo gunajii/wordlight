@@ -33,7 +33,7 @@ echo "== 3. recording ${MIN} min — tell Claude \"recording\" now"
 bash tools/vvd/shots.sh 2 > .dev/video-shoot-shots.log 2>&1 &
 SHPID=$!
 trap 'kill -INT $SHPID 2>/dev/null' INT TERM
-bash tools/vvd/record.sh "$SECS" 2
+FULL=1 bash tools/vvd/record.sh "$SECS" 2
 kill -INT $SHPID 2>/dev/null; sleep 1; kill $SHPID 2>/dev/null
 echo; echo "== done. Recording: $(ls -td .dev/rec/* | head -1) · device frames: $(ls -td .dev/shots/* | head -1)"
 echo "tell Claude \"shoot done\""
