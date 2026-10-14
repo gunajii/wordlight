@@ -1,0 +1,127 @@
+{
+ "measuredAt": "2026-10-14T17:21:47.535Z",
+ "base": "https://3-110-13-229.sslip.io",
+ "session": "U6S8",
+ "rows": [
+  {
+   "turnId": "busy-ants-mr-0-2-mv8czugf",
+   "index": 0,
+   "recognitionMs": 1063,
+   "serverToTvMs": 5,
+   "e2eMs": 1067
+  },
+  {
+   "turnId": "busy-ants-mr-0-2-mv8czugf",
+   "index": 1,
+   "recognitionMs": 1071,
+   "serverToTvMs": 34,
+   "e2eMs": 1105
+  },
+  {
+   "turnId": "busy-ants-mr-0-2-mv8czugf",
+   "index": 2,
+   "recognitionMs": 791,
+   "serverToTvMs": 35,
+   "e2eMs": 827
+  },
+  {
+   "turnId": "busy-ants-mr-2-0-mv8d04r8",
+   "index": 0,
+   "recognitionMs": 1066,
+   "serverToTvMs": 39,
+   "e2eMs": 1105
+  },
+  {
+   "turnId": "busy-ants-mr-4-1-mv8d0rv3",
+   "index": 0,
+   "recognitionMs": 1064,
+   "serverToTvMs": 67,
+   "e2eMs": 1130
+  },
+  {
+   "turnId": "busy-ants-mr-4-1-mv8d0rv3",
+   "index": 2,
+   "recognitionMs": 874,
+   "serverToTvMs": 6,
+   "e2eMs": 880
+  },
+  {
+   "turnId": "busy-ants-mr-5-1-mv8d0y5r",
+   "index": 0,
+   "recognitionMs": 1066,
+   "serverToTvMs": 10,
+   "e2eMs": 1076
+  },
+  {
+   "turnId": "busy-ants-mr-5-1-mv8d0y5r",
+   "index": 1,
+   "recognitionMs": 1356,
+   "serverToTvMs": 73,
+   "e2eMs": 1429
+  },
+  {
+   "turnId": "busy-ants-mr-5-1-mv8d0y5r",
+   "index": 2,
+   "recognitionMs": 1076,
+   "serverToTvMs": 73,
+   "e2eMs": 1150
+  },
+  {
+   "turnId": "busy-ants-mr-8-0-mv8d1bp3",
+   "index": 0,
+   "recognitionMs": 1064,
+   "serverToTvMs": 40,
+   "e2eMs": 1103
+  },
+  {
+   "turnId": "busy-ants-mr-8-0-mv8d1bp3",
+   "index": 1,
+   "recognitionMs": 1194,
+   "serverToTvMs": 71,
+   "e2eMs": 1265
+  },
+  {
+   "turnId": "busy-ants-mr-8-0-mv8d1bp3",
+   "index": 2,
+   "recognitionMs": 1278,
+   "serverToTvMs": 121,
+   "e2eMs": 1398
+  },
+  {
+   "turnId": "busy-ants-mr-8-0-mv8d1bp3",
+   "index": 3,
+   "recognitionMs": 928,
+   "serverToTvMs": 121,
+   "e2eMs": 1048
+  },
+  {
+   "turnId": "busy-ants-mr-8-0-mv8d1bp3",
+   "index": 4,
+   "recognitionMs": 1161,
+   "serverToTvMs": 26,
+   "e2eMs": 1187
+  }
+ ],
+ "summary": {
+  "words": 14,
+  "spokenToEmit": {
+   "n": 14,
+   "median": 1066,
+   "p95": 1356,
+   "max": 1356
+  },
+  "serverToTv": {
+   "n": 14,
+   "median": 39,
+   "p95": 121,
+   "max": 121
+  },
+  "e2e": {
+   "n": 14,
+   "median": 1105,
+   "p95": 1429,
+   "max": 1429
+  },
+  "within1s": 2
+ }
+}
