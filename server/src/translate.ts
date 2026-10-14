@@ -15,6 +15,16 @@ export const isSummaryLang = (x: unknown): x is string => typeof x === 'string' 
 
 /** Placeholder for the child's name: short, Latin, unlikely to be translated or transliterated. */
 export const NAME_TOKEN = 'XQZ';
+/** Sent in Amazon Translate's do-not-translate markup, so the placeholder comes back untouched (field test 2026-10-14:
+ *  a Marathi summary fell back to English). https://docs.aws.amazon.com/translate/latest/dg/customizing-translations-tags.html */
+export const NAME_TAG = `<span translate="no">${NAME_TOKEN}</span>`;
+const esc = (x: string) => x.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+const unesc = (x: string) => x.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#0?39;/g, "'").replace(/&amp;/g, '&');
+/** Translator output → plain text with the bare placeholder: the do-not-translate span unwrapped, any other markup
+ *  dropped, entities decoded. */
+export function fromMarkup(out: string) {
+  return unesc(out.replace(/<span\b[^>]*>\s*XQZ\s*<\/span>/gi, NAME_TOKEN).replace(/<[^>]*>/g, ''));
+}
 
 export interface Translator { readonly name: string; translate(text: string, target: string, signal?: AbortSignal): Promise<string> }
 
@@ -53,7 +63,7 @@ export class SummaryTranslator {
     if (!isSummaryLang(target)) return fail('unsupported-language');
     if (!this.o.translator) return fail('off');
     if (!name || text.includes(NAME_TOKEN)) return fail('name');
-    const masked = text.split(name).join(NAME_TOKEN);
+    const masked = esc(text).split(esc(name)).join(NAME_TAG);
     const want = count(masked, NAME_TOKEN);
     const key = `${target}\u0000${masked}`;
     let out = this.cache.get(key);
@@ -67,6 +77,7 @@ export class SummaryTranslator {
       catch (e: any) { return fail(ctl.signal.aborted ? 'timeout' : `error:${String(e?.name ?? e).slice(0, 40)}`); }
       finally { clearTimeout(timer); }
       if (!out) return fail('empty');
+      out = fromMarkup(out);
       this.cache.set(key, out);
     }
     if (count(out, NAME_TOKEN) !== want) return fail('placeholder-lost');

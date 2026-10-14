@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { SUMMARY_LANGS as PROTOCOL_LANGS, validateEvent } from '@wordlight/shared-protocol';
-import { SummaryTranslator, AwsTranslator, SUMMARY_LANGS, NAME_TOKEN, type Translator } from '../src/translate.ts';
+import { SummaryTranslator, AwsTranslator, SUMMARY_LANGS, NAME_TOKEN, NAME_TAG, fromMarkup, type Translator } from '../src/translate.ts';
 import { UsageMeter } from '../src/usage.ts';
 import { SessionHub } from '../src/hub.ts';
 
@@ -70,7 +70,7 @@ test('cached per language; the per-process budget and the daily character cap ar
   await st.translate(EN, 'Riya', 'mr');
   await st.translate(EN.replace('Riya', 'Aarav'), 'Aarav', 'mr'); // same masked text → cache hit, different name back
   assert.equal(sent.length, 1);
-  assert.equal(u.snapshot().translateChars, EN.replace('Riya', NAME_TOKEN).length);
+  assert.equal(u.snapshot().translateChars, EN.replace('Riya', NAME_TAG).length);
   await st.translate(EN, 'Riya', 'hi');
   assert.equal((await st.translate(EN, 'Riya', 'ta')).fallbackReason, 'budget');
   const capped = new SummaryTranslator({ translator: t, usage: new UsageMeter({ file: null, caps: { translateChars: 10 } }) });
@@ -122,4 +122,13 @@ test("session end: the TV keeps the original; the parent's phone gets the summar
   assert.ok(!sent[0].text.includes('Riya'));
   const log = hub.get(id)!.telemetry.filter((x: any) => x.kind === 'session-summary');
   assert.deepEqual(log.map((x: any) => [x.summaryLang, x.translated]), [['mr', true], ['en', false]]);
+});
+
+test("the name placeholder goes in Amazon Translate's do-not-translate markup and comes back as plain text", async () => {
+  const { t, sent } = fake((text) => text.replace('read', 'वाचले').replace(NAME_TAG, '<span translate="no"> XQZ </span>'));
+  const r = await new SummaryTranslator({ translator: t, usage: meter() }).translate('Riya & Aarav read 3 words in “A <b> Book”.', 'Riya', 'mr');
+  assert.ok(sent[0].text.includes(NAME_TAG) && sent[0].text.includes('&amp;') && sent[0].text.includes('&lt;b&gt;'), 'escaped, name tagged');
+  assert.equal(r.source, 'amazon-translate');
+  assert.equal(r.text, 'Riya & Aarav वाचले 3 words in “A <b> Book”.');
+  assert.equal(fromMarkup('<p>x</p> <SPAN translate=no>XQZ</SPAN> &quot;y&quot;'), 'x XQZ "y"');
 });
