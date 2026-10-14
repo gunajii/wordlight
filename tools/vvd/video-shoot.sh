@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # One command to film the TV for the demo video (macOS + Vega Virtual Device + the AWS server):
 #   cd ~/Projects/wordlight && bash tools/vvd/video-shoot.sh [minutes=12]
-# 1. starts the AWS server instance if it is stopped and waits until it is healthy;
+# 1. deploys the latest code to the AWS server (infra/aws/deploy.sh also starts it if stopped), waits until healthy;
 # 2. launches the WordLight TV app on the Virtual Device (builds it only if no build exists; BUILD=1 forces a build);
 # 3. records for N minutes: a video of the Virtual Device window plus a still every 2 s (tools/vvd/record.sh) AND
 #    clean full-resolution frames from the device itself every 2 s (tools/vvd/shots.sh).
@@ -18,7 +18,7 @@ aws sts get-caller-identity --query Account --output text >/dev/null 2>&1 || fai
 URL=$(grep -oE "https://[0-9-]+\.sslip\.io" apps/vega-tv/WordLightTV/src/wordlight.config.ts | head -1)
 [ -n "$URL" ] || fail "no AWS server URL in the TV config (run apps/vega-tv/setup.sh with SERVER_URL)"
 echo "== 1. server ($URL)"
-bash tools/aws/start-server.sh || fail "could not start the server instance"
+bash infra/aws/deploy.sh || fail "deploy failed"
 for i in $(seq 1 40); do curl -sf -m 5 "$URL/healthz" >/dev/null && break; sleep 5; done
 curl -sf -m 5 "$URL/healthz" || fail "server not healthy at $URL/healthz after ~3 min"
 echo; echo "stories on the server: $(curl -sf "$URL/api/stories" | python3 -c 'import json,sys; print(", ".join(s["title"] for s in json.load(sys.stdin)))')"
