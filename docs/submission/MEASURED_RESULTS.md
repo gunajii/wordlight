@@ -192,6 +192,14 @@ being shown (developer's report). As always, no audio and no transcript were sto
   `docs/results/privacy/aws-…`). This is usage evidence from two children, **not** evidence about learning to read.
 - **The parent's view** (a statement, not a measurement): “This app is a really good way for Viraj to learn and revise his reading. Most of the time I am either unavailable or don't comprehend the exact words like the app might, which makes his learning better.” — Viraj's mother, 14 Oct 2026 (shared with permission; punctuation and grammar lightly edited, meaning unchanged).
 
+## Parent's summary in Marathi with Amazon Translate (2026-10-14, one adult tester, phone screen recordings)
+| | Result |
+|---|---|
+| First run (18:32 IST) | Marathi chosen on the phone; the summary came back in **English**. Server log: `[translate] mr: English instead (placeholder-lost)` × 4. `tools/aws/translate-check.sh`: Marathi turned the name placeholder `XQZ` into Devanagari (एक्सक्यूझेड); Hindi kept it |
+| Fix (commit 82d2cac) | The placeholder is sent inside Amazon Translate's do-not-translate markup (`<span translate="no">`); both languages then kept it (same script) |
+| Second run (18:54 IST), *The Moon and The Cap* | The phone showed the summary **in Marathi with the child's name restored** and the note "Translated by Amazon Translate", plus the reading diary (19 on their own, 2 helped). The TV kept English |
+| Label | **MEASURED** (developer's phone screen recording; not committed). Translation quality was not reviewed by a Marathi teacher |
+
 ## Cost per reading session (real AWS runs, 2026-10-09 to 12)
 The server counts the seconds it streams to Amazon Transcribe (`.dev/aws/usage-server-*.json`, cumulative per day,
 saved at the end of each run). Seven real runs (3–8 reading turns, one or two stories each):

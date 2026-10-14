@@ -268,3 +268,17 @@ invented; where a detail was not recorded at the time it says so. Severity is my
 - **Workaround:** highlight with text colour (yellow) instead; checked in a second recording. Fixed in the open-source
   `<KaraokeLine>` default as well (karaoke-vega `8624470`).
 - **Suggestion:** support or document `backgroundColor` for nested `<Text>` spans.
+
+<a id="w20"></a>
+### W20 — Amazon Translate transliterated a placeholder token into Marathi
+**Date / env:** 2026-10-14 · Amazon Translate `TranslateText`, ap-south-1, `en` → `mr` and `hi`
+- **Task:** translate the parent's summary while keeping the child's name out of the request (replaced by `XQZ`).
+- **Steps:** a parent chose Marathi on the phone → the summary stayed English → server log showed `placeholder-lost` →
+  `tools/aws/translate-check.sh` sent the same sentence to both languages.
+- **Expected:** an unknown all-caps token passes through unchanged (Hindi did this).
+- **Actual:** Marathi returned `एक्सक्यूझेड` (the token spelled out in Devanagari), so the name could not be put back.
+- **Severity:** Medium (the safety check fell back to English as designed; without it the parent would have seen nonsense
+  instead of the child's name).
+- **Workaround:** send the placeholder inside `<span translate="no">…</span>` and unwrap the reply; both languages keep it.
+- **Suggestion:** document that unknown tokens may be transliterated in some target languages, and point to
+  do-not-translate tags from the `TranslateText` reference.
