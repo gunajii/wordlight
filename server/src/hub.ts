@@ -36,6 +36,8 @@ export function summaryText(name: string, p: ReaderProgress): string {
 
 /** How many past sessions the parent's phone shows (the store keeps them 30 days). */
 export const HISTORY_SESSIONS = 7;
+/** How far back the TV's stickers look (records expire after 30 days anyway). */
+export const STICKER_SESSIONS = 100;
 /** One line of the parent's reading diary: counts and story ids only. */
 export function historyRow(r: SessionRecord) {
   return { endedAt: r.endedAt, lang: r.lang, read: r.read, helped: r.helped, skipped: r.skipped, turns: r.turns, storiesCompleted: r.storiesCompleted.length, storyIds: r.storyIds.slice(0, 5), minutes: Math.round(r.durationMs / 60000) };
@@ -138,6 +140,7 @@ export class SessionHub {
       case 'reader.save': {
         s.readers.set(e.reader.readerId, { ...e.reader, phoneClientId: info.clientId });
         this.toTv(s, { t: 'readers', readers: this.readerList(s), serverMs: this.o.now() });
+        void this.sendStickers(s, e.reader.readerId);
         conn.send({ t: 'reader.saved', readerId: e.reader.readerId });
         return;
       }
@@ -324,6 +327,15 @@ export class SessionHub {
     this.log(s, { kind: 'line-done', readerId: id, turnId: t.turn.turnId, storyId: t.turn.storyId, page: t.turn.page, line: t.turn.line, read: e.read, helped: e.helped, skipped: e.skipped, durationMs: e.durationMs });
   }
 
+  /** The books this reader has finished (story ids from the counts-only records) → the TV shows their stickers. */
+  async sendStickers(s: Session, readerId: string) {
+    try {
+      const rows = await this.progress.recent(readerId, STICKER_SESSIONS);
+      const storyIds = [...new Set(rows.flatMap((r) => r.storiesCompleted ?? []))].slice(0, 100);
+      this.toTv(s, { t: 'reader.stickers', readerId, storyIds, serverMs: this.o.now() });
+    } catch (e: any) { this.log(s, { kind: 'stickers-failed', error: String(e?.name ?? e).slice(0, 80) }); }
+  }
+
   /** TV finished the story/session: each reader's summary (counts are deterministic; wording via SummaryService). */
   async sessionEnd(s: Session, msg: any = {}) {
     if (s.turn) this.endTurn(s, 'exit');
@@ -356,7 +368,8 @@ export class SessionHub {
         .catch((e: any) => this.log(s, { kind: 'progress-save-failed', error: String(e?.name ?? e).slice(0, 80) }))
         .then(() => this.progress.recent(readerId, HISTORY_SESSIONS))
         .then((rows) => s.phones.get(phoneId)?.send({ t: 'reader.history', readerId, sessions: (rows ?? []).map(historyRow), serverMs: this.o.now() }))
-        .catch((e: any) => this.log(s, { kind: 'history-failed', error: String(e?.name ?? e).slice(0, 80) }));
+        .catch((e: any) => this.log(s, { kind: 'history-failed', error: String(e?.name ?? e).slice(0, 80) }))
+        .then(() => (msg.completed === true ? this.sendStickers(s, readerId) : undefined)); // after the save, so it counts this book
     }
   }
 

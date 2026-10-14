@@ -81,3 +81,25 @@ test("the parent's reading diary: after session end only that reader's phone get
   assert.ok(!JSON.stringify(h).includes('Riya'));
   assert.ok(!tvOut.some((m) => m.t === 'reader.history') && !qOut.some((m) => m.t === 'reader.history'), 'nobody else gets it');
 });
+
+test('stickers: the TV gets the books each reader has finished (story ids only) on pairing and after finishing a book', async () => {
+  const hub = new SessionHub({ now: () => Date.now() });
+  const mem = new MemoryProgressStore();
+  mem.rows.push({ ...R, readerId: 'rd-1', storiesCompleted: ['busy-ants'] }, { ...R, readerId: 'rd-1', storiesCompleted: [] }, { ...R, readerId: 'rd-x', storiesCompleted: ['clean-cat'] });
+  hub.progress = mem;
+  const id = hub.createSession();
+  const tvOut: any[] = [], pOut: any[] = [];
+  const tv = { send: (m: any) => tvOut.push(m) }, p = { send: (m: any) => pOut.push(m) };
+  hub.handle(tv, { t: 'hello', role: 'tv', sessionId: id, clientId: 'tv' });
+  hub.handle(p, { t: 'hello', role: 'phone', sessionId: id, clientId: 'p' });
+  hub.handle(p, { type: 'reader.save', reader: { readerId: 'rd-1', firstName: 'Riya', age: 7, lang: 'mr-IN' }, consent: { microphone: true, atMs: 1 } });
+  await new Promise((r) => setTimeout(r, 10));
+  const first = tvOut.filter((m) => m.t === 'reader.stickers');
+  assert.deepEqual(first.map((m) => [m.readerId, m.storyIds]), [['rd-1', ['busy-ants']]]);
+  assert.deepEqual(Object.keys(first[0]).sort(), ['readerId', 'serverMs', 'storyIds', 't']);
+  await hub.sessionEnd(hub.get(id)!, { storyId: 'busy-ants-mr', storyTitle: 'कामसू मुंग्या', completed: true, durationMs: 90_000 });
+  await new Promise((r) => setTimeout(r, 20));
+  const last = tvOut.filter((m) => m.t === 'reader.stickers').at(-1);
+  assert.deepEqual(last.storyIds.sort(), ['busy-ants', 'busy-ants-mr'], 'the book just finished is included');
+  assert.ok(!pOut.some((m) => m.t === 'reader.stickers'), 'stickers go to the TV only');
+});

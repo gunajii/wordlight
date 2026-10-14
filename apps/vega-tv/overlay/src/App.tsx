@@ -8,7 +8,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, Image, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
 import { useTVEventHandler } from '@amazon-devices/react-native-kepler';
-import { totals, formatDuration, playableStoryProblem, childText, langLabel, isDevanagari, applyAgeTurns, turnsForAge, maxWordsForAge, type ReadingMode } from './vendor/tv-core/index';
+import { totals, formatDuration, playableStoryProblem, childText, langLabel, isDevanagari, applyAgeTurns, turnsForAge, maxWordsForAge, stickerFor, isNewSticker, stickerCount, type ReadingMode, type Stickers } from './vendor/tv-core/index';
 import { SERVER_URL, SERVER_CANDIDATES, AUDIO_FILE, LEAD_MS } from './wordlight.config';
 import { log, logKey, findServer, fetchConfig, withTimeout, type Run } from './net';
 import { TvSession } from './session';
@@ -19,7 +19,7 @@ import { useDevanagariFont } from './fonts';
 type ShelfItem = { id: string; title: string; lang: string; cover: string | null; attribution: string; turns: number; poolWords?: number[]; test?: boolean };
 /** Turns this story will have for a reader of this age (same rule as applyAgeTurns); the story's own count otherwise. */
 const turnsFor = (it: ShelfItem, age?: number) => (age == null || !it.poolWords?.length ? it.turns : turnsForAge(age, it.poolWords.filter((n) => n <= maxWordsForAge(age)).length) || it.turns);
-type Screen = { name: 'home' } | { name: 'story'; story: Story } | { name: 'end'; story: Story; results: LineResult[]; info: EndInfo } | { name: 's1'; run: Run; key: string } | { name: 'fonts' };
+type Screen = { name: 'home' } | { name: 'story'; story: Story } | { name: 'end'; story: Story; results: LineResult[]; info: EndInfo; newSticker?: string | null } | { name: 's1'; run: Run; key: string } | { name: 'fonts' };
 
 export const App = () => {
   const [base, setBase] = useState<string | null>(null);
@@ -29,6 +29,7 @@ export const App = () => {
   const [screen, setScreen] = useState<Screen>({ name: 'home' });
   const [, force] = useState(0);
   const [summary, setSummary] = useState<string | null>(null);
+  const [stickers, setStickers] = useState<Stickers>({}); // readerId → finished story ids (from the server)
   const [mode, setMode] = useState<ReadingMode>('free');
   const [simulated, setSimulated] = useState(false);
   const [focused, setFocused] = useState<string | null>(null);
@@ -49,6 +50,7 @@ export const App = () => {
       try { setShelf(await (await withTimeout(fetch(`${b}/api/stories`), 6000)).json()); } catch (e: any) { log(`shelf: ${e?.message ?? e}`); }
       const s = new TvSession(() => force((n) => n + 1));
       session.current = s;
+      s.on((m: any) => { if (m?.t === 'reader.stickers' && typeof m.readerId === 'string' && Array.isArray(m.storyIds)) setStickers((st) => ({ ...st, [m.readerId]: m.storyIds })); });
       s.on((m: any) => { if (m?.type === 'session.summary') { setSummary(m.text); log(`summary from server: source ${m.source ?? '?'}${m.fallbackReason ? ` (fallback ${m.fallbackReason})` : ''} · ${m.wordsReadAlone}/${m.wordsHelped}/${m.wordsSkipped} read/helped/skipped`); } });
       s.start(b).catch((e) => setError(`Could not start a session: ${e?.message ?? e}`));
     })();
@@ -105,7 +107,7 @@ export const App = () => {
   if (screen.name === 's1') return <S1PlayerLoader base={base} mediaBase={mediaBase} run={screen.run} k={screen.key} fontReady={fontReady} onExit={() => setScreen({ name: 'home' })} />;
   if (screen.name === 'story' && mediaBase && session.current) {
     return <StoryPlayer story={screen.story} mediaBase={mediaBase} session={session.current} leadMs={LEAD_MS} mode={mode} simulated={simulated} fontReady={fontReady}
-      onEnd={(results, info) => { const tt = totals(results); log(`end card ${screen.story.id} · ${info.completed ? 'completed' : 'stopped early'} · read ${tt.onOwn} · helped ${tt.withHelp} · skipped ${tt.skipped} · turns ${tt.turns}`); session.current?.send({ t: 'session.end', storyId: screen.story.id, storyTitle: screen.story.title, completed: info.completed, durationMs: info.durationMs }); setScreen({ name: 'end', story: screen.story, results, info }); }} />;
+      onEnd={(results, info) => { const tt = totals(results); log(`end card ${screen.story.id} · ${info.completed ? 'completed' : 'stopped early'} · read ${tt.onOwn} · helped ${tt.withHelp} · skipped ${tt.skipped} · turns ${tt.turns}`); session.current?.send({ t: 'session.end', storyId: screen.story.id, storyTitle: screen.story.title, completed: info.completed, durationMs: info.durationMs }); const rd = session.current?.onlineReader(); const ns = isNewSticker(stickers, rd, screen.story.id, info.completed) ? rd!.firstName : null; if (ns) log(`new sticker for ${ns}: ${screen.story.id}`); setScreen({ name: 'end', story: screen.story, results, info, newSticker: ns }); }} />;
   }
   if (screen.name === 'end') {
     const t = totals(screen.results);
@@ -123,6 +125,7 @@ export const App = () => {
             <View style={s.stat}><Text style={s.statNum}>{t.turns}</Text><Text style={[s.statLbl, hf]}>{E.turns(t.turns)}</Text></View>
           </View>
         ) : <Text style={[s.endSub, hf]}>{E.pairNext}</Text>}
+        {screen.newSticker ? <Text style={[s.sticker, hf]}>{E.newSticker(screen.newSticker)}</Text> : null}
         <Text style={s.hint}>{screen.story.title} · {screen.info.completed ? 'story finished' : 'stopped early'} · {formatDuration(screen.info.durationMs)}{t.skipped ? ` · ${t.skipped} word${t.skipped === 1 ? '' : 's'} skipped` : ''}</Text>
         {summary ? <Text style={s.summary}>For the parent: “{summary}”</Text> : null}
         <TouchableOpacity hasTVPreferredFocus activeOpacity={1} style={[s.btn, focused === 'end' && s.btnFocus]} onFocus={() => setFocused('end')} onBlur={() => setFocused(null)} onPress={() => setScreen({ name: 'home' })}>
@@ -144,6 +147,7 @@ export const App = () => {
           {shelf.length === 0 ? <Text style={s.hint}>No stories yet on the server.</Text> : shelf.map((it, i) => (
             <TouchableOpacity key={it.id} hasTVPreferredFocus={i === 0} activeOpacity={1} style={[s.card, focused === it.id && s.cardFocus]} onFocus={() => setFocused(it.id)} onBlur={() => setFocused((f) => (f === it.id ? null : f))} onPress={() => openStory(it.id)}>
               {mediaBase && it.cover ? <Image source={{ uri: `${mediaBase}/content/stories/${it.id}/${it.cover}` }} style={s.cardImg} /> : <View style={s.cardImg} />}
+              {stickerFor(stickers, readers, it.id) ? <View style={s.badge}><Text style={s.badgeText}>✓ {stickerFor(stickers, readers, it.id)}</Text></View> : null}
               <Text style={s.cardTitle}>{it.title}</Text>
               <Text style={s.cardMeta}>{langLabel(it.lang)} · {turnsFor(it, readers.find((r) => r.online)?.age)} reading turn{turnsFor(it, readers.find((r) => r.online)?.age) === 1 ? '' : 's'}{it.test ? ' · test story' : ''}</Text>
             </TouchableOpacity>
@@ -158,7 +162,7 @@ export const App = () => {
         <Text style={s.code}>{sess?.id ? `code ${sess.id}` : 'starting…'}</Text>
         <Text style={[s.small, { color: sess?.status === 'open' ? '#5dd39e' : '#ff9f80' }]}>{sess?.status === 'open' ? '● connected' : `○ ${sess?.status ?? 'connecting'}`}</Text>
         {readers.length === 0 ? <Text style={s.small}>Scan with the phone camera. No app needed.</Text> : readers.map((r) => (
-          <Text key={r.readerId} style={s.reader}>{r.online ? '●' : '○'} {r.firstName}{r.online ? ' is ready to read' : ' (phone away)'}</Text>
+          <Text key={r.readerId} style={s.reader}>{r.online ? '●' : '○'} {r.firstName}{r.online ? ' is ready to read' : ' (phone away)'}{stickerCount(stickers, r.readerId) ? ` · ✓ ${stickerCount(stickers, r.readerId)} book${stickerCount(stickers, r.readerId) === 1 ? '' : 's'}` : ''}</Text>
         ))}
         <Text style={s.small}>The phone’s microphone is only on during a reading turn.</Text>
       </View>
@@ -208,6 +212,9 @@ const s = StyleSheet.create({
   err: { color: '#ff9f80', fontSize: 18, marginTop: 10 },
   endBig: { color: '#ffd166', fontSize: 44, fontWeight: '700' },
   endSub: { color: '#ffffff', fontSize: 22, marginTop: 4 },
+  badge: { position: 'absolute', top: 14, right: 14, backgroundColor: '#ffd166', borderRadius: 10, paddingHorizontal: 8, paddingVertical: 2 },
+  badgeText: { color: '#111111', fontSize: 14, fontWeight: '700' },
+  sticker: { color: '#ffd166', fontSize: 20, fontWeight: '700', marginTop: 10, textAlign: 'center' },
   credit: { color: '#8fa3b8', fontSize: 11, lineHeight: 14, marginTop: 12, textAlign: 'center', maxWidth: 860 },
 });
 export default App;
