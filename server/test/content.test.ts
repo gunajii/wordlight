@@ -76,7 +76,7 @@ test('validator rejects: overlapping words, missing credits, unsupported languag
   let s: any = good(); s.pages[0].lines[0].words[2].t0 = 600; assert.ok(errs(s).some((e) => /overlaps/.test(e)));
   s = good(); delete s.credits.author; assert.ok(errs(s).some((e) => /credits.author/.test(e)));
   s = good(); delete s.credits.url; assert.ok(errs(s).some((e) => /credits.url/.test(e)));
-  s = good(); s.lang = 'mr-IN'; assert.ok(errs(s).some((e) => /unsupported language/.test(e)));
+  s = good(); s.lang = 'ta-IN'; assert.ok(errs(s).some((e) => /unsupported language/.test(e)));
   s = good(); s.pages[0].lines[0] = { text: 'Cat.', turn: true, words: [{ w: 'Cat.', t0: 0, t1: 300 }] }; assert.ok(errs(s).some((e) => /turn line has 1 words/.test(e)));
   s = good(); s.voice = { engine: 'tts-x', id: '' }; assert.ok(errs(s).some((e) => /^voice/.test(e)));
   s = good(); s.pages[0].lines[0].words[3].t1 = 9000; assert.ok(errs(s).some((e) => /after the page audio/.test(e)));

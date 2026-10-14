@@ -17,7 +17,7 @@ export interface NarrationService {
   readonly voice: StoryPackage['voice'];
   readonly timingSource: StoryPackage['timing']['source'];
   /** `lines` (joined by single spaces = text) lets a styled narrator pause between lines. */
-  synthesize(text: string, lang: 'hi-IN' | 'en-IN', lines?: string[]): Promise<Narrated>;
+  synthesize(text: string, lang: 'hi-IN' | 'en-IN' | 'mr-IN', lines?: string[]): Promise<Narrated>;
 }
 
 type PollyLike = { send(cmd: any): Promise<any> };
@@ -41,12 +41,12 @@ export class PollyNarration implements NarrationService {
     return await r.AudioStream!.transformToByteArray();
   }
   /** One word, alone and slow — the TV's help clip (clear pronunciation, no seeking in the page audio). */
-  async wordClip(word: string, lang: 'hi-IN' | 'en-IN'): Promise<Uint8Array> {
+  async wordClip(word: string, lang: 'hi-IN' | 'en-IN' | 'mr-IN'): Promise<Uint8Array> {
     const bare = word.replace(/^[^\p{L}\p{M}\p{N}]+|[^\p{L}\p{M}\p{N}]+$/gu, '');
     if (!bare || /[<>&]/.test(bare)) throw new Error(`no help clip for ${JSON.stringify(word)}`);
     return this.synth(`<speak><prosody rate="80%">${bare}</prosody></speak>`, bare.length, true, lang, 'mp3');
   }
-  async synthesize(text: string, lang: 'hi-IN' | 'en-IN', lines?: string[]): Promise<Narrated> {
+  async synthesize(text: string, lang: 'hi-IN' | 'en-IN' | 'mr-IN', lines?: string[]): Promise<Narrated> {
     const s = this.style ? pageSsml(lines ?? [text], this.style) : null;
     if (s && s.text !== text) throw new Error('lines must join (single spaces) to the page text');
     const input = s ? s.ssml : text;
@@ -64,7 +64,7 @@ export class PollyNarration implements NarrationService {
  * times come from Amazon Transcribe aligned to the known text (tools/content/align.ts), shifted by a calibrated
  * offset measured on neural audio (tools/s4/align-check.ts). timingSource 'transcribe'.
  */
-type GenerativeOptions = { client: PollyLike; SynthesizeSpeechCommand: any; voiceId: string; style?: NarrationStyle | null; transcribe: (pcm: Int16Array, lang: 'hi-IN' | 'en-IN') => Promise<Heard[]>; offsetMs?: number };
+type GenerativeOptions = { client: PollyLike; SynthesizeSpeechCommand: any; voiceId: string; style?: NarrationStyle | null; transcribe: (pcm: Int16Array, lang: 'hi-IN' | 'en-IN' | 'mr-IN') => Promise<Heard[]>; offsetMs?: number };
 export class GenerativeNarration implements NarrationService {
   readonly voice: StoryPackage['voice'];
   readonly timingSource = 'transcribe' as const;
@@ -82,7 +82,7 @@ export class GenerativeNarration implements NarrationService {
     const src = new TranscribeSource({ region: o.transcribeRegion });
     return new GenerativeNarration({ client: cachedPolly(new PollyClient({ region: o.region })), SynthesizeSpeechCommand, voiceId: o.voiceId, style: o.style, offsetMs: o.offsetMs, transcribe: cachedTranscribe((pcm, lang) => transcribeWords(src, pcm, lang)) });
   }
-  async synthesize(text: string, lang: 'hi-IN' | 'en-IN', lines?: string[]): Promise<Narrated> {
+  async synthesize(text: string, lang: 'hi-IN' | 'en-IN' | 'mr-IN', lines?: string[]): Promise<Narrated> {
     if (lang !== 'en-IN') throw new Error('generative narration: no generative Polly voice for ' + lang);
     const style = hasStyle(this.o.style) ? this.o.style : {};
     const s = pageSsml(lines ?? [text], style);
@@ -104,6 +104,93 @@ export class GenerativeNarration implements NarrationService {
   }
 }
 
+/**
+ * A HUMAN narrator, one recording per page — for languages with no Polly voice (Marathi). The recordings are prepared
+ * by tools/content/prepare-recordings.sh: content/sources/<id>/narration/p<N>.wav (16 kHz mono PCM16, silence trimmed,
+ * loudness-normalised) and p<N>.mp3 (the same audio, for the TV). Word times come from Amazon Transcribe alignment,
+ * exactly as for the generative voice. Help clips are cut from the same recordings, so the child hears the same voice.
+ */
+export class RecordedNarration implements NarrationService {
+  readonly voice: StoryPackage['voice'];
+  readonly timingSource = 'transcribe' as const;
+  readonly stats: { page: number; tokens: number; matched: number }[] = [];
+  private page = 0;
+  private readonly segments: { pcm: Int16Array; tokens: string[]; t0: number[]; endMs: number }[] = [];
+  private readonly o: { dir: string; narrator: string; transcribe: (pcm: Int16Array, lang: 'hi-IN' | 'en-IN' | 'mr-IN') => Promise<Heard[]>; offsetMs?: number };
+  constructor(o: RecordedNarration['o']) { this.o = o; this.voice = { engine: 'recorded', id: o.narrator }; }
+  static async create(o: { dir: string; narrator: string; transcribeRegion: string; offsetMs?: number }) {
+    const { TranscribeSource } = await import('../../server/src/reading/speech.ts');
+    const { transcribeWords } = await import('./align.ts');
+    const src = new TranscribeSource({ region: o.transcribeRegion });
+    return new RecordedNarration({ dir: o.dir, narrator: o.narrator, offsetMs: o.offsetMs, transcribe: cachedTranscribe((pcm, lang) => transcribeWords(src, pcm, lang)) });
+  }
+  async synthesize(text: string, lang: 'hi-IN' | 'en-IN' | 'mr-IN'): Promise<Narrated> {
+    const n = ++this.page;
+    const wav = path.join(this.o.dir, `p${n}.wav`), mp3f = path.join(this.o.dir, `p${n}.mp3`);
+    if (!existsSync(wav) || !existsSync(mp3f)) throw new Error(`no recording for page ${n}: ${wav} / p${n}.mp3 (run tools/content/prepare-recordings.sh)`);
+    const pcm16k = readWav16k(readFileSync(wav));
+    const durationMs = Math.round((pcm16k.length / 16000) * 1000);
+    const { tokenStarts, marksFromStarts } = await import('./align.ts');
+    const heard = await this.o.transcribe(pcm16k, lang);
+    const tokens = text.split(/\s+/).filter(Boolean);
+    const { t0, matched } = tokenStarts(tokens, heard, lang, { offsetMs: this.o.offsetMs ?? 0, endMs: durationMs });
+    this.stats.push({ page: n, tokens: tokens.length, matched });
+    this.segments.push({ pcm: pcm16k, tokens, t0, endMs: durationMs });
+    return { mp3: new Uint8Array(readFileSync(mp3f)), durationMs, marksNdjson: marksFromStarts(text, t0), pcm16k };
+  }
+  /** The word as the narrator said it on the page (first occurrence), lightly padded, as an mp3 help clip. */
+  async wordClip(word: string): Promise<Uint8Array> {
+    const { clipKey } = await import('./help-clips.ts');
+    const k = clipKey(word);
+    for (const seg of this.segments) for (let i = 0; i < seg.tokens.length; i++) {
+      if (clipKey(seg.tokens[i]) !== k) continue;
+      const off = this.o.offsetMs ?? 0;
+      const from = Math.max(0, seg.t0[i] - off - 60), to = Math.min(seg.endMs, (i + 1 < seg.t0.length ? seg.t0[i + 1] - off : seg.endMs) + 20);
+      return encodeMp3(trimTail(seg.pcm.subarray(Math.round(from * 16), Math.round(to * 16))));
+    }
+    throw new Error(`no recorded occurrence of ${JSON.stringify(word)} for a help clip`);
+  }
+}
+
+/** PCM16 samples of a 16 kHz mono 16-bit WAV (the format prepare-recordings.sh writes). */
+export function readWav16k(b: Buffer | Uint8Array): Int16Array {
+  const buf = Buffer.from(b.buffer, b.byteOffset, b.byteLength);
+  if (buf.toString('ascii', 0, 4) !== 'RIFF' || buf.toString('ascii', 8, 12) !== 'WAVE') throw new Error('not a WAV file');
+  let p = 12, fmt: { ch: number; rate: number; bits: number } | null = null;
+  while (p + 8 <= buf.length) {
+    const id = buf.toString('ascii', p, p + 4), len = buf.readUInt32LE(p + 4);
+    if (id === 'fmt ') fmt = { ch: buf.readUInt16LE(p + 10), rate: buf.readUInt32LE(p + 12), bits: buf.readUInt16LE(p + 22) };
+    if (id === 'data') {
+      if (!fmt || fmt.ch !== 1 || fmt.rate !== 16000 || fmt.bits !== 16) throw new Error(`WAV must be 16 kHz mono 16-bit (got ${JSON.stringify(fmt)})`);
+      const d = buf.subarray(p + 8, p + 8 + Math.min(len, buf.length - p - 8));
+      return new Int16Array(d.buffer.slice(d.byteOffset, d.byteOffset + (d.byteLength & ~1)));
+    }
+    p += 8 + len + (len & 1);
+  }
+  throw new Error('WAV has no data chunk');
+}
+
+/** Drop trailing near-silence (20 ms frames below ~-40 dBFS), keeping 60 ms of it. */
+export function trimTail(pcm: Int16Array): Int16Array {
+  const F = 320; let end = pcm.length;
+  for (let i = Math.floor(pcm.length / F) - 1; i >= 0; i--) {
+    let e = 0; for (let j = i * F; j < (i + 1) * F; j++) e += pcm[j] * pcm[j];
+    if (Math.sqrt(e / F) > 330) { end = Math.min(pcm.length, (i + 1) * F + 960); break; }
+  }
+  return pcm.subarray(0, end);
+}
+
+/** 16 kHz PCM → 24 kHz mono mp3 (pure JS encoder, so the build needs no ffmpeg on the Mac). */
+export async function encodeMp3(pcm16k: Int16Array): Promise<Uint8Array> {
+  const { Mp3Encoder } = await import('@breezystack/lamejs');
+  const n = Math.floor((pcm16k.length * 3) / 2), up = new Int16Array(n); // linear resample 16 → 24 kHz
+  for (let i = 0; i < n; i++) { const x = (i * 2) / 3, a = Math.floor(x), f = x - a; up[i] = Math.round((pcm16k[a] ?? 0) * (1 - f) + (pcm16k[a + 1] ?? pcm16k[a] ?? 0) * f); }
+  const enc = new Mp3Encoder(1, 24000, 64), parts: Uint8Array[] = [];
+  for (let i = 0; i < up.length; i += 1152) { const b = enc.encodeBuffer(up.subarray(i, i + 1152)); if (b.length) parts.push(new Uint8Array(b)); }
+  const e = enc.flush(); if (e.length) parts.push(new Uint8Array(e));
+  return new Uint8Array(Buffer.concat(parts));
+}
+
 /** Cache Polly SynthesizeSpeech responses on disk (.dev/cache/polly): the audio that was measured is the audio shipped. */
 export function cachedPolly(client: PollyLike, dir = path.join(ROOT, '.dev/cache/polly')): PollyLike {
   return {
@@ -118,8 +205,8 @@ export function cachedPolly(client: PollyLike, dir = path.join(ROOT, '.dev/cache
   };
 }
 /** Cache Transcribe alignment input → words, keyed by the audio bytes (.dev/cache/transcribe). */
-export function cachedTranscribe(fn: (pcm: Int16Array, lang: 'hi-IN' | 'en-IN') => Promise<Heard[]>, dir = path.join(ROOT, '.dev/cache/transcribe')) {
-  return async (pcm: Int16Array, lang: 'hi-IN' | 'en-IN') => {
+export function cachedTranscribe(fn: (pcm: Int16Array, lang: 'hi-IN' | 'en-IN' | 'mr-IN') => Promise<Heard[]>, dir = path.join(ROOT, '.dev/cache/transcribe')) {
+  return async (pcm: Int16Array, lang: 'hi-IN' | 'en-IN' | 'mr-IN') => {
     const key = createHash('sha256').update(lang).update(new Uint8Array(pcm.buffer, pcm.byteOffset, pcm.byteLength)).digest('hex').slice(0, 32);
     const f = path.join(dir, `${key}.json`);
     if (existsSync(f)) return JSON.parse(readFileSync(f, 'utf8')) as Heard[];

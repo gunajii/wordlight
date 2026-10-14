@@ -3,7 +3,7 @@
 // Every event carries sessionId and readerId (where a reader is involved); the server stamps
 // serverMs on everything it relays, so each hop (phone → server → TV) can be timed.
 
-export const LANGS = ['hi-IN', 'en-IN'] as const;
+export const LANGS = ['hi-IN', 'en-IN', 'mr-IN'] as const;
 export type Lang = (typeof LANGS)[number];
 /** Languages offered for the parent's summary (Amazon Translate codes; 'en' = no translation). */
 export const SUMMARY_LANGS = ['en', 'hi', 'mr', 'bn', 'gu', 'kn', 'ta', 'te'] as const;

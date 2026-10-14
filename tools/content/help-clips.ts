@@ -6,11 +6,11 @@ import path from 'node:path';
 export const clipKey = (w: string) => w.normalize('NFC').replace(/^[^\p{L}\p{M}\p{N}]+|[^\p{L}\p{M}\p{N}]+$/gu, '').toLowerCase();
 type W = { w: string; clip?: string };
 type Pages = { lines: { words: W[] }[] }[];
-export interface WordVoice { wordClip(w: string, lang: 'hi-IN' | 'en-IN'): Promise<Uint8Array> }
+export interface WordVoice { wordClip(w: string, lang: 'hi-IN' | 'en-IN' | 'mr-IN'): Promise<Uint8Array> }
 
 /** Every word of the given lines gets a clip (h<N>.mp3 in outDir). A word that already has a clip anywhere in the story
  *  reuses it; existing clips and their names are never touched. Returns how many clips were made. */
-export async function addHelpClips(pages: Pages, refs: { page: number; line: number }[], voice: WordVoice, outDir: string, lang: 'hi-IN' | 'en-IN'): Promise<number> {
+export async function addHelpClips(pages: Pages, refs: { page: number; line: number }[], voice: WordVoice, outDir: string, lang: 'hi-IN' | 'en-IN' | 'mr-IN'): Promise<number> {
   const have = new Map<string, string>(); let max = 0;
   for (const p of pages) for (const l of p.lines) for (const w of l.words) if (w.clip) {
     const k = clipKey(w.w); if (k && !have.has(k)) have.set(k, w.clip);

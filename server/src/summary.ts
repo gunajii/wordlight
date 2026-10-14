@@ -7,7 +7,7 @@
 // Bedrock can never break the demo and never changes the numbers.
 import { usage as defaultUsage, type UsageMeter } from './usage.ts';
 export interface SummaryInput {
-  name: string; lang: 'hi-IN' | 'en-IN';
+  name: string; lang: 'hi-IN' | 'en-IN' | 'mr-IN';
   read: number; helped: number; skipped: number; lines: number;
   storiesCompleted: string[]; storyTitles: string[]; sessionMs: number;
   /** book words the TV helped with (optional; lets the coach name them) */
@@ -74,7 +74,7 @@ export class BedrockSummaryService implements SummaryService {
     try { this.o.usage.check('bedrockCalls', 1); } catch { return this.fallback(i, 'daily-cap'); }
     this.calls++; this.o.usage.add('bedrockCalls', 1);
     const mins = Math.max(1, Math.round(i.sessionMs / 60000));
-    const facts = { childFirstName: i.name, wordsReadIndependently: i.read, wordsHelped: i.helped, wordsSkipped: i.skipped, readingTurns: i.lines, storiesFinished: i.storiesCompleted.length, minutes: mins, storyTitles: i.storyTitles, wordsThatNeededHelp: (i.helpedWords ?? []).map((w) => w.replace(/[\p{P}\p{S}]/gu, '')).filter(Boolean).slice(0, 5), language: i.lang === 'hi-IN' ? 'Hindi' : 'English' };
+    const facts = { childFirstName: i.name, wordsReadIndependently: i.read, wordsHelped: i.helped, wordsSkipped: i.skipped, readingTurns: i.lines, storiesFinished: i.storiesCompleted.length, minutes: mins, storyTitles: i.storyTitles, wordsThatNeededHelp: (i.helpedWords ?? []).map((w) => w.replace(/[\p{P}\p{S}]/gu, '')).filter(Boolean).slice(0, 5), language: i.lang === 'hi-IN' ? 'Hindi' : i.lang === 'mr-IN' ? 'Marathi' : 'English' };
     const prompt = `Write one or two short, warm sentences for a parent about tonight's read-along session, in plain English. Use ONLY these facts and these exact numbers; do not add any other number, praise level, judgement, or claim about reading ability or progress. Facts: ${JSON.stringify(facts)}`;
     const ctl = new AbortController();
     const timer = setTimeout(() => ctl.abort(), this.o.timeoutMs);

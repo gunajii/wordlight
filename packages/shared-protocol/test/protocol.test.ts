@@ -7,7 +7,7 @@ const start = { type: 'turn.start', sessionId: 'ABCD', turnId: 't1', readerId: '
 test('valid turn.start passes; each missing/bad field is named', () => {
   assert.equal(validateEvent(start).ok, true);
   assert.match((validateEvent({ ...start, words: [] }) as any).error, /words/);
-  assert.match((validateEvent({ ...start, lang: 'mr-IN' }) as any).error, /lang/);
+  assert.match((validateEvent({ ...start, lang: 'ta-IN' }) as any).error, /lang/);
   assert.match((validateEvent({ ...start, page: -1 }) as any).error, /page/);
   assert.match((validateEvent({ ...start, sessionId: '' }) as any).error, /sessionId/);
   assert.match((validateEvent({ ...start, type: 'nope' }) as any).error, /unknown type/);

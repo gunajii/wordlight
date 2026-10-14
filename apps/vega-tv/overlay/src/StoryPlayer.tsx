@@ -13,7 +13,7 @@ import { View, Text, Image, StyleSheet } from 'react-native';
 import { AudioPlayer } from '@amazon-devices/react-native-w3cmedia';
 import { useTVEventHandler } from '@amazon-devices/react-native-kepler';
 import { PlayheadSampler, lineIndexAt, KaraokeLine } from './vendor/karaoke-core/index';
-import { idle, turnReduce, nextTurn, resumeAt, echoStopAt, lineStart, turnProgress, childText, type TurnState, type TurnEvent, type ReadingMode } from './vendor/tv-core/index';
+import { idle, turnReduce, nextTurn, resumeAt, echoStopAt, lineStart, turnProgress, childText, isDevanagari, type TurnState, type TurnEvent, type ReadingMode } from './vendor/tv-core/index';
 import { log, logKey } from './net';
 import type { TvSession } from './session';
 import type { Story } from './S1Player';
@@ -227,7 +227,7 @@ export function StoryPlayer({ story, mediaBase, session, leadMs, mode, simulated
 
   const reader = session.onlineReader();
   const line = lines[viewLine];
-  const deva = story.lang === 'hi-IN';
+  const deva = isDevanagari(story.lang);
   const hf = deva && fontReady ? st.hiFont : null; // bundled Noto Sans Devanagari for every Hindi text (S1: renders correctly)
   const prog = turnProgress(turn.marks);
   const micOn = MIC_ON.includes(turn.phase);

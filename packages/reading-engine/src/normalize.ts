@@ -2,7 +2,7 @@
 // Goal: equal words compare equal regardless of spelling variants that ASR and books disagree on,
 // WITHOUT making different words equal. Every rule here must have a test.
 
-export type Lang = 'hi-IN' | 'en-IN';
+export type Lang = 'hi-IN' | 'en-IN' | 'mr-IN'; // every non-English language here is written in Devanagari
 
 const NUKTA = '़';
 const VIRAMA = '्';
@@ -14,7 +14,7 @@ const DEVANAGARI_DIGITS = '०१२३४५६७८९';
 // Small numbers are read aloud as words; ASR may print either form. Canonicalise to digits.
 const NUMBER_WORDS: Record<string, string> = {
   zero: '0', one: '1', two: '2', three: '3', four: '4', five: '5', six: '6', seven: '7', eight: '8', nine: '9', ten: '10',
-  'शून्य': '0', 'एक': '1', 'दो': '2', 'तीन': '3', 'चार': '4', 'पांच': '5', 'पाँच': '5', 'छह': '6', 'छः': '6', 'छे': '6', 'सात': '7', 'आठ': '8', 'नौ': '9', 'दस': '10',
+  'शून्य': '0', 'एक': '1', 'दो': '2', 'दोन': '2', 'पाच': '5', 'सहा': '6', 'नऊ': '9', 'दहा': '10', 'तीन': '3', 'चार': '4', 'पांच': '5', 'पाँच': '5', 'छह': '6', 'छः': '6', 'छे': '6', 'सात': '7', 'आठ': '8', 'नौ': '9', 'दस': '10',
 };
 
 /** Normalise one word for comparison. Returns '' for tokens that are only punctuation. */

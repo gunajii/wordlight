@@ -6,7 +6,9 @@
 // its last word. Help for a word replays that word's span of the page audio (or `clip` if set).
 
 export const PACKAGE_VERSION = 1;
-export type Lang = 'hi-IN' | 'en-IN';
+export type Lang = 'hi-IN' | 'en-IN' | 'mr-IN';
+/** Languages written in Devanagari (Hindi, Marathi): same text checks, fonts and matching rules. */
+export const isDevanagariLang = (l: string | undefined) => l === 'hi-IN' || l === 'mr-IN';
 
 export interface Word {
   /** the word as displayed, punctuation attached (e.g. "था।") */

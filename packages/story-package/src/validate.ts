@@ -28,7 +28,7 @@ export function validateStory(s: StoryPackage): Issue[] {
   const warn = (path: string, message: string) => out.push({ level: 'warning', path, message });
   if (s.packageVersion !== PACKAGE_VERSION) err('packageVersion', `expected ${PACKAGE_VERSION}`);
   if (!/^[a-z0-9][a-z0-9-]{2,63}$/.test(s.id ?? '')) err('id', 'lowercase letters, digits, dashes (3–64)');
-  if (s.lang !== 'hi-IN' && s.lang !== 'en-IN') err('lang', 'unsupported language (hi-IN or en-IN)');
+  if (s.lang !== 'hi-IN' && s.lang !== 'en-IN' && s.lang !== 'mr-IN') err('lang', 'unsupported language (hi-IN, en-IN or mr-IN)');
   if (!s.title || typeof s.title !== 'string') err('title', 'required');
   if (!Number.isInteger(s.level) || s.level < 1 || s.level > 4) err('level', 'integer 1–4');
   if (!s.voice || !ENGINES.includes(s.voice.engine) || !s.voice.id) err('voice', `engine one of ${ENGINES.join(', ')} and an id`);
@@ -53,7 +53,7 @@ export function validateStory(s: StoryPackage): Issue[] {
       const la = `${at}.lines[${li}]`;
       if (!l.words?.length) return err(`${la}.words`, 'every line needs timed words');
       if (typeof l.text !== 'string' || l.words.map((w) => w.w).join(' ') !== l.text.trim().split(/\s+/).join(' ')) err(`${la}.text`, 'words must spell the text');
-      if (s.lang === 'hi-IN') for (const prob of hindiTextProblems(l.text ?? '')) err(`${la}.text`, `malformed Hindi text: ${prob}`);
+      if (s.lang === 'hi-IN' || s.lang === 'mr-IN') for (const prob of hindiTextProblems(l.text ?? '')) err(`${la}.text`, `malformed Devanagari text: ${prob}`);
       let prevEnd = -1;
       l.words.forEach((w, wi) => {
         if (!(typeof w.t0 === 'number' && typeof w.t1 === 'number' && w.t0 >= 0 && w.t1 > w.t0)) err(`${la}.words[${wi}]`, `bad span ${w.t0}..${w.t1}`);

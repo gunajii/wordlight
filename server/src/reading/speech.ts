@@ -18,7 +18,7 @@ export interface SpeechSource {
   readonly name: string;
   /** true for a local simulation — callers must label every result SIMULATED */
   readonly simulated?: boolean;
-  open(o: { lang: 'hi-IN' | 'en-IN'; expected?: string[] }, h: SpeechHandlers): SpeechSession;
+  open(o: { lang: 'hi-IN' | 'en-IN' | 'mr-IN'; expected?: string[] }, h: SpeechHandlers): SpeechSession;
 }
 export type SpeechRecognitionService = SpeechSource;
 
@@ -38,7 +38,7 @@ export class TranscribeSource implements SpeechSource {
     this.stability = o.stability === undefined ? 'high' : o.stability;
   }
 
-  open(o: { lang: 'hi-IN' | 'en-IN' }, h: SpeechHandlers): SpeechSession {
+  open(o: { lang: 'hi-IN' | 'en-IN' | 'mr-IN' }, h: SpeechHandlers): SpeechSession {
     const meter = this.usage;
     // Cost guard: refuse a new stream once today's Transcribe cap is reached (the turn ends with an error).
     try { meter.check('transcribeSeconds'); } catch (e: any) {

@@ -39,4 +39,23 @@ const hi: ChildText = {
   end: { title: 'बहुत बढ़िया पढ़ा!', theEnd: 'समाप्त', seeYou: 'फिर मिलेंगे', wordsAloud: (n) => `${n} शब्द बोलकर पढ़े`, onOwn: () => 'शब्द ख़ुद पढ़े', withHelp: 'थोड़ी मदद से', turns: () => 'पढ़ने की बारी', pairNext: 'अगली बार फ़ोन जोड़कर कुछ पंक्तियाँ ख़ुद पढ़ना।' },
 };
 
-export function childText(lang?: string): ChildText { return lang === 'hi-IN' ? hi : en; }
+// Marathi strings: simple spoken Marathi, gender-neutral where the verb would otherwise be gendered (review:
+// docs/MARATHI_REVIEW.md).
+const mr: ChildText = {
+  yourTurn: (n, m) => (m === 'echo' ? `${n}, आता तू म्हण` : `${n}, आता तुझी पाळी`),
+  wellRead: 'छान वाचलं!', listenTogether: 'चला, एकत्र ऐकूया', listenThisOne: 'चला, हे ऐकूया', pairPhoneLine: 'पुढच्या वेळी फोन जोडून ही ओळ स्वतः वाच',
+  help: (w) => `थोडी मदत: “${w}”`,
+  sayIt: (w) => `आता तू म्हण: “${w}”`,
+  lineDone: (r, h) => `${r} स्वतः वाचले${h ? ` · ${h} थोड्या मदतीने` : ''}`,
+  progress: (d, t) => `${t} पैकी ${d} शब्द`,
+  micStarting: '○ माइक सुरू होत आहे…', micOn: '● ऐकत आहे', micOff: '○ माइक बंद',
+  hint: 'अडचण आली? पुढचा शब्द ऐकण्यासाठी OK दाब · → दाबून ऐक',
+  readingAlong: (n) => `● वाचक: ${n}`, pairToRead: '○ सोबत वाचण्यासाठी होम स्क्रीनवर फोन जोडा',
+  end: { title: 'छान वाचलं!', theEnd: 'समाप्त', seeYou: 'पुन्हा भेटू', wordsAloud: (n) => `${n} शब्द मोठ्याने वाचले`, onOwn: () => 'शब्द स्वतः वाचले', withHelp: 'थोड्या मदतीने', turns: () => 'वाचनाच्या पाळ्या', pairNext: 'पुढच्या वेळी फोन जोडून काही ओळी स्वतः वाच.' },
+};
+
+export function childText(lang?: string): ChildText { return lang === 'hi-IN' ? hi : lang === 'mr-IN' ? mr : en; }
+/** Name of a story language in that language, for the shelf. */
+export function langLabel(lang?: string): string { return lang === 'hi-IN' ? 'हिंदी' : lang === 'mr-IN' ? 'मराठी' : 'English'; }
+/** Devanagari stories (Hindi, Marathi) use the bundled Devanagari font. */
+export const isDevanagari = (lang?: string) => lang === 'hi-IN' || lang === 'mr-IN';

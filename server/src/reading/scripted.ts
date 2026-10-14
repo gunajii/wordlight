@@ -131,7 +131,7 @@ export class ScriptedSource implements SpeechSource {
     this.o = { scenario: o.scenario ?? 'demo', pick: o.pick, script: o.script, timing: { ...DEFAULT_TIMING, ...o.timing }, now: o.now ?? (() => performance.timeOrigin + performance.now()) };
   }
 
-  open(o: { lang: 'hi-IN' | 'en-IN'; expected?: string[] }, h: SpeechHandlers): SpeechSession {
+  open(o: { lang: 'hi-IN' | 'en-IN' | 'mr-IN'; expected?: string[] }, h: SpeechHandlers): SpeechSession {
     const words = o.expected ?? [];
     const scenario = this.o.pick ? this.o.pick(words, this.turnNo) : this.o.scenario;
     const T = this.o.timing;

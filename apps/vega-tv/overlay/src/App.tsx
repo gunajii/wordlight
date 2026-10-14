@@ -8,7 +8,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, Image, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
 import { useTVEventHandler } from '@amazon-devices/react-native-kepler';
-import { totals, formatDuration, playableStoryProblem, childText, applyAgeTurns, turnsForAge, maxWordsForAge, type ReadingMode } from './vendor/tv-core/index';
+import { totals, formatDuration, playableStoryProblem, childText, langLabel, isDevanagari, applyAgeTurns, turnsForAge, maxWordsForAge, type ReadingMode } from './vendor/tv-core/index';
 import { SERVER_URL, SERVER_CANDIDATES, AUDIO_FILE, LEAD_MS } from './wordlight.config';
 import { log, logKey, findServer, fetchConfig, withTimeout, type Run } from './net';
 import { TvSession } from './session';
@@ -110,7 +110,7 @@ export const App = () => {
   if (screen.name === 'end') {
     const t = totals(screen.results);
     const E = childText(screen.story.lang).end;
-    const hf = screen.story.lang === 'hi-IN' && fontReady ? { fontFamily: 'NotoSansDevanagari-Regular' } : null;
+    const hf = isDevanagari(screen.story.lang) && fontReady ? { fontFamily: 'NotoSansDevanagari-Regular' } : null;
     return (
       <View style={s.root}>
         {simulated ? <Text style={s.sim}>SIMULATED SPEECH · local demo — not real recognition</Text> : null}
@@ -145,7 +145,7 @@ export const App = () => {
             <TouchableOpacity key={it.id} hasTVPreferredFocus={i === 0} activeOpacity={1} style={[s.card, focused === it.id && s.cardFocus]} onFocus={() => setFocused(it.id)} onBlur={() => setFocused((f) => (f === it.id ? null : f))} onPress={() => openStory(it.id)}>
               {mediaBase && it.cover ? <Image source={{ uri: `${mediaBase}/content/stories/${it.id}/${it.cover}` }} style={s.cardImg} /> : <View style={s.cardImg} />}
               <Text style={s.cardTitle}>{it.title}</Text>
-              <Text style={s.cardMeta}>{it.lang === 'hi-IN' ? 'हिंदी' : 'English'} · {turnsFor(it, readers.find((r) => r.online)?.age)} reading turn{turnsFor(it, readers.find((r) => r.online)?.age) === 1 ? '' : 's'}{it.test ? ' · test story' : ''}</Text>
+              <Text style={s.cardMeta}>{langLabel(it.lang)} · {turnsFor(it, readers.find((r) => r.online)?.age)} reading turn{turnsFor(it, readers.find((r) => r.online)?.age) === 1 ? '' : 's'}{it.test ? ' · test story' : ''}</Text>
             </TouchableOpacity>
           ))}
         </View>
