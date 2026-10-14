@@ -13,9 +13,9 @@ WordLight turns the family Fire TV into a read-along partner for children of abo
 - **Help, never "wrong":** if the child is stuck, the TV waits while they are still trying (a stutter counts as trying). After about 3 seconds of quiet it says just the next word, slowly, marks it amber, and lets the child say it back (✓).
 - **Turns grow with the child:** 5 reading turns at age 5, one more per year, with longer lines for older readers.
 - **Well read!** The TV and the parent's phone show what really happened: words read on their own, and words that needed a little help.
-- **English and Hindi:** five English picture books from Pratham Books on StoryWeaver (CC BY 4.0): *Busy Ants*, *Naughty Dog*, *Noisy Crows*, *Clean Cat* and *The Moon and The Cap*, plus my Hindi translation of *Busy Ants*.
 - **Reading diary:** the parent's phone also shows the last week of sessions (story, words read on their own, words helped), counts only, kept 30 days.
-- **In the parent's language:** the parent can get the summary on the phone in Hindi, Marathi, Bengali, Gujarati, Kannada, Tamil or Telugu (Amazon Translate). The child's name is never sent for translation.
+- **In the parent's language:** the parent can get that summary on the phone in Hindi, Marathi, Bengali, Gujarati, Kannada, Tamil or Telugu (Amazon Translate; checked in the app in Marathi). The child's name is never sent for translation.
+- **English and Hindi:** five English picture books from Pratham Books on StoryWeaver (CC BY 4.0): *Busy Ants*, *Naughty Dog*, *Noisy Crows*, *Clean Cat* and *The Moon and The Cap*, plus my Hindi translation of *Busy Ants*.
 
 ## Why the TV, not a tablet
 Reading-aloud tutors already exist on phones and tablets. WordLight puts the same idea on the screen a family shares:
@@ -26,6 +26,11 @@ Reading-aloud tutors already exist on phones and tablets. WordLight puts the sam
 - **Made for Indian homes.** English and Hindi stories from StoryWeaver's free library, a Hindi narrator, and a reading
   engine that handles Devanagari.
 - **No new hardware.** A Fire TV app plus the phone the family already has.
+
+## Languages: built to travel
+- **Today:** the child reads in English and Hindi, and the parent's summary comes in 8 languages.
+- **Adding a language is mostly content, not new code:** a free StoryWeaver book, a narrator (Amazon Polly today; a recorded narrator could be timed the same way, because my generative narration is already timed by Amazon Transcribe alignment), and a language Amazon Transcribe can hear live.
+- **The reach:** StoryWeaver lists over 60,000 free stories in more than 300 languages, and Amazon Transcribe streams more than 70 languages, 10 of them Indian besides English. The goal is a family TV that becomes a reading partner in the language a child speaks at home. So far only English and Hindi reading are tested.
 
 ## How I built it
 - **Fire TV app on Vega OS:** React Native for Vega, the W3C `AudioPlayer`, and remote-only navigation. Word timing uses my open-source **[karaoke-vega](https://github.com/gunajii/karaoke-vega)** (MIT). It turns the player's coarse `currentTime` into an accurate playhead and cancels the measured audio latency.
@@ -50,7 +55,9 @@ Every number has its device, sample and method in the repository's `MEASURED_RES
   - adult tester: a word lights a median **1.05 s** after it is spoken (93 words, 5 sessions);
   - children: a median **1.15 s** (48 words).
 - **Children:** two children (ages 4 and 6), with a parent present, completed **14 of 14 reading turns**. Viraj's mother afterwards: *“This app is a really good way for Viraj to learn and revise his reading. Most of the time I am either unavailable or don't comprehend the exact words like the app might, which makes his learning better.”*
+- **The parent's summary in Marathi:** worked in the app (one adult session, 14 Oct), after I fixed a translation problem described below.
 - **Privacy:** **0 violations** in 1,238 microphone status reports from the phone.
+- **221 automated tests**, run by GitHub Actions on every push.
 - **Cost:** about **USD 0.03 of Transcribe per reading session.** Narration costs nothing at play time.
 
 ## Challenges I ran into
@@ -62,6 +69,7 @@ Every number has its device, sample and method in the repository's `MEASURED_RES
   - A nested `<Text>` background is not drawn.
   - A focused card is drawn faded. All of these are in my friction log.
 - **A brand-new AWS account:** services came online one by one, Amazon Bedrock is still not authorised (so the parent's language comes from Amazon Translate instead), and EC2 had no capacity on one restart.
+- **Amazon Translate spelled my name placeholder in Marathi letters.** The child's name is swapped for a placeholder before translation; Hindi kept it, but Marathi turned it into एक्सक्यूझेड, so the app safely fell back to English. Amazon's do-not-translate markup fixed it (friction log W20).
 - **Real children found real bugs.** The 6-year-old found 3–4 turns too easy, which led to the age-based turns. The phone locking itself mid-story led to an automatic reconnect.
 
 ## Accomplishments that I'm proud of
@@ -76,11 +84,11 @@ Every number has its device, sample and method in the repository's `MEASURED_RES
 
 ## What's next
 - A physical Fire TV stick (so far tested on the Vega Virtual Device).
-- The stories themselves in more Indian languages (the parent's summary already comes in eight).
+- Stories in more of the languages Transcribe can hear, starting with Indian ones (the parent's summary already comes in eight).
 - More families, always with a parent's permission.
 - A Bedrock-written parent summary once my account is authorised. It is built and guarded, and falls back to a template today.
 
 *WordLight makes no claim that it improves reading: a few sessions can't show that. What it shows is that a child can read with the TV, and the TV can listen.*
 
 ## Built with (Devpost tags)
-vega-os, react-native, fire-tv, typescript, javascript, node.js, amazon-transcribe, amazon-polly, amazon-ec2, amazon-s3, amazon-dynamodb, aws-cloudformation, aws-iam, aws-systems-manager, aws-budgets, websockets, web-audio-api, caddy, webvtt, storyweaver
+vega-os, react-native, fire-tv, typescript, javascript, node.js, amazon-transcribe, amazon-polly, amazon-translate, amazon-ec2, amazon-s3, amazon-dynamodb, aws-cloudformation, aws-iam, aws-systems-manager, aws-budgets, github-actions, websockets, web-audio-api, caddy, webvtt, storyweaver

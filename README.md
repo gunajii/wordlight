@@ -26,16 +26,16 @@ WordLight on 2026-10-12 with a parent present: **14 of 14 reading turns complete
 ## For judges: where the evidence is
 | Criterion | What WordLight does | Evidence (labels: MEASURED / INFERRED / UNKNOWN) |
 |---|---|---|
-| **Technological implementation** | Vega OS app (React Native for Vega) · phone web page, no install · AWS server streaming the child's voice to **Amazon Transcribe** · deterministic reading engine for English and Hindi | Spoken word → lit on the TV: **median 1.05 s** (93 words, 5 real sessions, adult; target ≤ 1 s just missed) · narration ↔ highlight sync **median −1.0 ms** (Vega Virtual Device) · **207 tests** (`npm test`) — [MEASURED_RESULTS](docs/submission/MEASURED_RESULTS.md) |
-| **Design** | Scan a QR → consent → reader. The TV reads a line, the child says it back, words light green; after a stall the TV says just the next word (amber) and lets the child repeat it; nothing is marked wrong. Turns follow the child's age | [Demo video](https://youtu.be/-5x0W25ymOw) · screenshots below · [privacy rules](docs/PRIVACY.md): microphone **only during a turn**, always shown on the phone — **0 violations in 891 status reports** (MEASURED) |
+| **Technological implementation** | Vega OS app (React Native for Vega) · phone web page, no install · AWS server streaming the child's voice to **Amazon Transcribe** · deterministic reading engine for English and Hindi | Spoken word → lit on the TV: **median 1.05 s** (93 words, 5 real sessions, adult; target ≤ 1 s just missed) · narration ↔ highlight sync **median −1.0 ms** (Vega Virtual Device) · **221 tests**, run by GitHub Actions on every push — [MEASURED_RESULTS](docs/submission/MEASURED_RESULTS.md) |
+| **Design** | Scan a QR → consent → reader. The TV reads a line, the child says it back, words light green; after a stall the TV says just the next word (amber) and lets the child repeat it; nothing is marked wrong. Turns follow the child's age | [Demo video](https://youtu.be/-5x0W25ymOw) · screenshots below · [privacy rules](docs/PRIVACY.md): microphone **only during a turn**, always shown on the phone — **0 violations in 1,238 status reports** (adult 891 + children 347; MEASURED) |
 | **Potential impact** | Children about 6–10 reading with a parent on the family TV; English and Hindi; open-licence picture books (StoryWeaver, CC BY) | **≈ USD 0.03 of Transcribe per reading session** (median of 7 real runs; narration costs nothing at play time) — [cost](docs/submission/MEASURED_RESULTS.md#cost-per-reading-session-real-aws-runs-2026-10-09-to-12) · two children (4 and 6) completed 14 of 14 turns, 0 microphone violations (MEASURED) · no learning effect claimed |
 | **Quality of the idea** | Same-language subtitling (word-by-word highlighting) + echo reading on the screen families already watch together | Why Echo Mode: Transcribe lit only ≈ 51 % of words within 1 s (169 lines), so the TV reads first — [S2](docs/submission/MEASURED_RESULTS.md) |
-| **AWS Builder** | Transcribe streaming · Polly (narration, help clips) · EC2 + CloudFormation · IAM role · S3 · DynamoDB (counts only) · Translate (parent's summary in 7 Indian languages, name masked). Bedrock integrated but **not in use** (account not authorised) | [AWS_BUILDER](docs/submission/AWS_BUILDER.md) |
+| **AWS Builder** | Transcribe streaming · Polly (narration, help clips) · EC2 + CloudFormation · IAM role · S3 · DynamoDB (counts only) · Translate (parent's summary in 7 Indian languages, name masked; **worked in the app in Marathi**, MEASURED). Bedrock integrated but **not in use** (account not authorised) | [AWS_BUILDER](docs/submission/AWS_BUILDER.md) |
 | **Open source** | [`karaoke-vega`](https://github.com/gunajii/karaoke-vega): word-timed subtitles for Vega (MIT) · `npm install github:gunajii/karaoke-vega` | [OPEN_SOURCE](docs/submission/OPEN_SOURCE.md) |
-| **Friction log** | 19 entries on Vega and AWS (task → steps → expected → actual → severity → workaround → suggestion) | [FRICTION_LOG](docs/FRICTION_LOG.md) |
+| **Friction log** | 20 entries on Vega and AWS (task → steps → expected → actual → severity → workaround → suggestion) | [FRICTION_LOG](docs/FRICTION_LOG.md) |
 
-Limits I know of: tested on the Vega Virtual Device (physical Fire TV: UNKNOWN) · recognition takes ≈ 1 s · three
-stories · two children so far, and no measure of learning.
+Limits I know of: tested on the Vega Virtual Device (physical Fire TV: UNKNOWN) · recognition takes ≈ 1 s · the child
+reads in English and Hindi only · two children so far, and no measure of learning.
 
 | The child's turn on the TV | Help, then say it back | The phone during a turn |
 |---|---|---|
@@ -50,6 +50,20 @@ Reading-aloud tutors already exist on phones and tablets. WordLight puts the sam
 - **Made for Indian homes.** English and Hindi stories from StoryWeaver's free library, a Hindi narrator, and a reading
   engine that handles Devanagari.
 - **No new hardware.** A Fire TV app plus the phone the family already has.
+
+## Languages: built to travel
+- **Today:** the child reads in **English and Hindi** (Amazon Transcribe en-IN / hi-IN, a reading engine that handles
+  Devanagari). The parent's summary comes in **8 languages** (English, Hindi, Marathi, Bengali, Gujarati, Kannada,
+  Tamil, Telugu) through Amazon Translate, with the child's name kept out of the request; Marathi was checked in the
+  app on 2026-10-14 (MEASURED).
+- **Adding a language is mostly content, not new code:** a free StoryWeaver book (CC BY), a narrator (Amazon Polly
+  today; a recorded narrator could be timed the same way, because the generative voice is already timed by Amazon
+  Transcribe alignment), and a language Amazon Transcribe can hear live. Only English and Hindi reading are tested.
+- **The reach (not a result):** StoryWeaver lists over 60,000 free stories in more than 300 languages
+  ([IndiaFOSS 2025](https://fossunited.org/c/indiafoss/2025/cfp/9t90elof3d),
+  [OE Global 2023](https://awards.oeglobal.org/awards/2023/open-repository/storyweaver/)), and Amazon Transcribe
+  streams 99 language codes, more than 70 languages, 10 of them Indian besides English
+  ([AWS docs](https://docs.aws.amazon.com/transcribe/latest/dg/supported-languages.html), checked 2026-10-14).
 
 ## How it works
 1. **Pair:** the TV shows a QR code; a parent scans it (no app install), agrees to the microphone rule, and adds the
@@ -84,7 +98,7 @@ age 12, with longer lines only for older readers (7 words at age 5, up to 12 wor
 it has: *Naughty Dog* stops at 9, because lines with the names “Chinku”, “Ma” and “papads” are kept out (a recogniser
 is likely to mishear them). Set on 2026-10-12 after a 6-year-old read the earlier 3–4 turns easily.
 
-## What is real and what was measured (2026-10-09)
+## What is real and what was measured (2026-10-09 to 14)
 | | Result | Label |
 |---|---|---|
 | Narration ↔ highlight sync on the Vega Virtual Device (S1) | median −1.0 ms, SD 11 ms after calibration | MEASURED (VVD). Physical Fire TV: UNKNOWN |
@@ -95,12 +109,13 @@ is likely to mishear them). Set on 2026-10-12 after a 6-year-old read the earlie
 | Help recovery (next word helped too early) | 1/20 → 0/20 after the fix (synthetic reader, real Transcribe) | MEASURED |
 | Privacy audit on AWS | 0 violations in 891 microphone reports (5 sessions); mic off 8–107 ms after each turn end | MEASURED |
 | Children (2026-10-12) | two children, 4 and 6, parent present: 14/14 turns completed; 48 words lit a median 1.15 s after spoken; 0 microphone violations | MEASURED · learning effect: not measured |
+| Parent's summary in Marathi (Amazon Translate, 2026-10-14) | first try fell back to English (Translate spelled the name placeholder in Marathi letters; friction log W20); after the fix, Marathi with the name kept, plus the reading diary | MEASURED (one adult session, phone recording) · translation quality not reviewed |
 
 ## Run it
 Needs Node ≥ 22.18; the TV app needs the Vega SDK (macOS).
 ```bash
 git clone https://github.com/gunajii/wordlight && cd wordlight
-npm install && npm test        # 207 tests, no AWS needed
+npm install && npm test        # 221 tests, no AWS needed
 npm run demo:check             # headless loop with a LOCAL SIMULATION of speech (labelled SIMULATED)
 
 # TV app (macOS + Vega SDK 0.24): generate the Vega project once, then build + launch on the Virtual Device
