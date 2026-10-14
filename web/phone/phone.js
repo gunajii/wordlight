@@ -12,6 +12,7 @@ import { encodeAudioFrame } from '/pkg/shared-protocol/audio.ts';
 import { initialState, reduce, micWanted, needsTap, micTip } from '/phone/mic-lifecycle.js';
 import { WakeLockKeeper } from '/phone/wakelock.js';
 import { resumeAction } from '/phone/resume.js';
+import { historyView } from '/phone/history.js';
 
 const $ = (id) => document.getElementById(id);
 const store = {
@@ -34,6 +35,8 @@ let reader = null; try { reader = JSON.parse(store.get(READER_KEY) || 'null'); }
 let editingReader = false;
 let lineWords = [], lineMarks = [], lastDone = null, summaryText = null, summaryTranslated = false, lineMode = 'free', simulated = false;
 // A local simulation must never look like real recognition: the server says when its speech source is scripted.
+let history = null, titles = {};
+fetch('/api/stories').then((r) => r.json()).then((list) => { for (const st of list ?? []) titles[st.id] = st.title; if (history) render(); }).catch(() => {});
 fetch('/api/config').then((r) => r.json()).then((c) => { simulated = !!c?.speech?.simulated; render(); }).catch(() => {});
 const now = () => performance.now();
 
@@ -132,6 +135,7 @@ function onStatus(st) {
 function onMessage(m) {
   if (m.t === 'error') msg(`${m.code}: ${m.message}`);
   if (m.t === 's3.ack' && L.turn && m.turnId === L.turn.turnId) { S.acked = m.frames; S.lost = m.missing; S.latMs = m.latencyMedianMs; }
+  if (m.t === 'reader.history' && Array.isArray(m.sessions)) { history = m.sessions; render(); }
   if (m.type === 'session.summary') { summaryText = m.text; summaryTranslated = m.translatedBy === 'amazon-translate'; render(); }
   if (L.turn && m.turnId === L.turn.turnId) {
     const mark = (k) => { if (m.index >= 0 && m.index < lineMarks.length && lineMarks[m.index] === 'pending') lineMarks[m.index] = k; };
@@ -246,6 +250,7 @@ function render() {
   $('summary-card').classList.toggle('hidden', !summaryText);
   $('summary').textContent = summaryText ?? '';
   $('summary-note').classList.toggle('hidden', !summaryTranslated);
+  renderHistory();
   // Manual turn buttons only with ?manual=1: in run 2 a tap on them started a turn that collided with the runner's.
   $('test-card').classList.toggle('hidden', !MANUAL || !S.consent || !L.ready);
   $('session-end-btn').classList.toggle('hidden', !L.ready || L.session !== 'active');
@@ -350,3 +355,28 @@ setInterval(render, 100);
 if (!code) msg('Open the link printed on the Mac (…/j/CODE).');
 else client.start();
 render();
+
+/** The parent's reading diary (counts only), built with textContent — nothing from the network becomes HTML. */
+function renderHistory() {
+  const v = historyView(history, titles, Date.now());
+  $('history-card').classList.toggle('hidden', v.rows.length === 0);
+  if (!v.rows.length) return;
+  const who = reader?.name ?? 'Your reader';
+  const t = v.totals;
+  $('history-totals').textContent = `${who}: ${t.sessions} ${t.sessions === 1 ? 'session' : 'sessions'} on ${t.days} ${t.days === 1 ? 'day' : 'days'} · ${t.read} words on their own · ${t.helped} with a little help`;
+  const box = $('history-rows');
+  box.replaceChildren(...v.rows.map((r) => {
+    const row = document.createElement('div'); row.className = 'h-row';
+    const top = document.createElement('div'); top.className = 'h-top';
+    const b = document.createElement('b'); b.textContent = `${r.day} · ${r.title}`;
+    const sp = document.createElement('span'); sp.textContent = `${r.read} on own${r.helped ? ` · ${r.helped} helped` : ''}`;
+    top.append(b, sp);
+    const bar = document.createElement('div'); bar.className = 'h-bar';
+    const tot = r.read + r.helped || 1;
+    const own = document.createElement('i'); own.className = 'own'; own.style.width = `${(r.pct * r.read) / tot}%`;
+    const help = document.createElement('i'); help.className = 'help'; help.style.width = `${(r.pct * r.helped) / tot}%`;
+    bar.append(own, help);
+    row.append(top, bar);
+    return row;
+  }));
+}

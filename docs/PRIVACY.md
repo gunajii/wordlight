@@ -62,6 +62,9 @@ Children use WordLight. Privacy is a product requirement, not a feature.
   only the counts-based English sentence, with the child's first name replaced by a placeholder (`XQZ`). The name is
   put back on the server; if the placeholder doesn't come back exactly once per mention, the parent gets English.
   Nothing about the child's voice or words is ever sent to Translate.
+- **Reading diary (2026-10-14).** After a session the server sends the parent's phone (only the phone that saved
+  that reader) its last 7 sessions from DynamoDB: date, story ids and counts. No names, audio or transcripts exist in
+  those records, and they expire after 30 days.
 - **Child testing protocol:** `docs/CHILD_TESTING.md`. It requires written permission, uses the AWS path only and
   prefers no recording. If recordings are made, they stay outside Git and are deleted after scoring.
 - **Still to verify on the real account:** that the effective AI opt-out policy shows `optOut` (the first check,

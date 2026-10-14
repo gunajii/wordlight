@@ -6,7 +6,7 @@
 // Control messages use `t` (hello, ping, telemetry), app events use `type` (see shared-protocol).
 import { validateEvent, mayClientSend, type Reader, type TurnStart, type WordLightEvent, type AudioFrame } from '@wordlight/shared-protocol';
 import { LocalSummaryService, templateSummary, type SummaryService, type SummaryInput } from './summary.ts';
-import { MemoryProgressStore, type ProgressStore } from './progress.ts';
+import { MemoryProgressStore, type ProgressStore, type SessionRecord } from './progress.ts';
 import { SummaryTranslator } from './translate.ts';
 
 export interface Conn { send: (msg: unknown) => void }
@@ -32,6 +32,13 @@ export interface ReaderProgress { readerId: string; lines: number; read: number;
 /** Deterministic parent summary from real counts only (no generated claims). Kept for callers of the old API. */
 export function summaryText(name: string, p: ReaderProgress): string {
   return templateSummary({ name, lang: 'en-IN', read: p.read, helped: p.helped, skipped: p.skipped, lines: p.lines, storiesCompleted: [], storyTitles: [], sessionMs: p.readingMs });
+}
+
+/** How many past sessions the parent's phone shows (the store keeps them 30 days). */
+export const HISTORY_SESSIONS = 7;
+/** One line of the parent's reading diary: counts and story ids only. */
+export function historyRow(r: SessionRecord) {
+  return { endedAt: r.endedAt, lang: r.lang, read: r.read, helped: r.helped, skipped: r.skipped, turns: r.turns, storiesCompleted: r.storiesCompleted.length, storyIds: r.storyIds.slice(0, 5), minutes: Math.round(r.durationMs / 60000) };
 }
 
 export interface PhoneStatus { micLive: number; turnId: string | null; ctx: string | null; visible: string | null; atServerMs: number }
@@ -342,9 +349,14 @@ export class SessionHub {
       this.log(s, { kind: 'session-summary', readerId: r.readerId, read: p.read, helped: p.helped, skipped: p.skipped, lines: p.lines, source: out.source, fallback: out.fallbackReason,
         summaryLang: want ?? 'en', translated: tr.source === 'amazon-translate', translateFallback: tr.fallbackReason });
       // persist counts only (never the name, audio or transcripts); a failing store never breaks the session
+      // then the parent's reading diary: this reader's recent sessions (counts only), to the parent's phone only
+      const phoneId = r.phoneClientId, readerId = r.readerId;
       this.progress.save({ readerId: r.readerId, sessionId: s.id, endedAt: new Date().toISOString(), lang: r.lang, age: r.age, storyIds: [...new Set([...p.stories, ...s.storiesCompleted])], storiesCompleted: s.storiesCompleted.slice(),
         turns: p.lines, read: p.read, helped: p.helped, skipped: p.skipped, durationMs: sessionMs, helpedWords: (p.helpedWords ?? []).slice(0, 50), mode: this.meta.mode, speech: this.meta.speech })
-        .catch((e: any) => this.log(s, { kind: 'progress-save-failed', error: String(e?.name ?? e).slice(0, 80) }));
+        .catch((e: any) => this.log(s, { kind: 'progress-save-failed', error: String(e?.name ?? e).slice(0, 80) }))
+        .then(() => this.progress.recent(readerId, HISTORY_SESSIONS))
+        .then((rows) => s.phones.get(phoneId)?.send({ t: 'reader.history', readerId, sessions: (rows ?? []).map(historyRow), serverMs: this.o.now() }))
+        .catch((e: any) => this.log(s, { kind: 'history-failed', error: String(e?.name ?? e).slice(0, 80) }));
     }
   }
 

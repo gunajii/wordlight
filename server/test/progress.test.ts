@@ -57,3 +57,27 @@ test('session end saves one counts-only record per reader (helped words are book
     } else assert.ok(s.telemetry.some((t: any) => t.kind === 'progress-save-failed'));
   }
 });
+
+test("the parent's reading diary: after session end only that reader's phone gets its recent sessions — counts only, no name", async () => {
+  const hub = new SessionHub({ now: () => Date.now() });
+  const mem = new MemoryProgressStore();
+  mem.rows.push({ ...R, readerId: 'rd-1', endedAt: '2026-10-10T07:00:00.000Z', read: 9 }, { ...R, readerId: 'rd-other', read: 99 });
+  hub.progress = mem;
+  const id = hub.createSession();
+  const tvOut: any[] = [], pOut: any[] = [], qOut: any[] = [];
+  const tv = { send: (m: any) => tvOut.push(m) }, p = { send: (m: any) => pOut.push(m) }, q = { send: (m: any) => qOut.push(m) };
+  hub.handle(tv, { t: 'hello', role: 'tv', sessionId: id, clientId: 'tv' });
+  hub.handle(p, { t: 'hello', role: 'phone', sessionId: id, clientId: 'p' });
+  hub.handle(q, { t: 'hello', role: 'phone', sessionId: id, clientId: 'q' });
+  hub.handle(p, { type: 'reader.save', reader: { readerId: 'rd-1', firstName: 'Riya', age: 7, lang: 'en-IN' }, consent: { microphone: true, atMs: 1 } });
+  await hub.sessionEnd(hub.get(id)!, { storyId: 'kite', storyTitle: 'Kite', completed: true, durationMs: 120_000 });
+  await new Promise((r) => setTimeout(r, 10));
+  const h = pOut.find((m) => m.t === 'reader.history');
+  assert.ok(h, 'phone got the diary');
+  assert.equal(h.readerId, 'rd-1');
+  assert.equal(h.sessions.length, 2, 'this session + the earlier one, not the other reader');
+  assert.deepEqual(Object.keys(h.sessions[0]).sort(), ['endedAt', 'helped', 'lang', 'minutes', 'read', 'skipped', 'storiesCompleted', 'storyIds', 'turns']);
+  assert.equal(h.sessions[1].read, 9);
+  assert.ok(!JSON.stringify(h).includes('Riya'));
+  assert.ok(!tvOut.some((m) => m.t === 'reader.history') && !qOut.some((m) => m.t === 'reader.history'), 'nobody else gets it');
+});

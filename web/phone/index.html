@@ -36,6 +36,12 @@
   .words { font-size: 22px; line-height: 1.6; margin-top: 10px; }
   .w-read { color: var(--ok); } .w-helped { background: #ffb347; color: #111; border-radius: 4px; padding: 0 3px; } .w-skipped { color: var(--dim); } .w-next { text-decoration: underline; }
   body:not(.diag) .diag { display: none !important; }
+  .history-totals { font-size: 18px; font-weight: 600; margin: 4px 0 10px; }
+  .h-row { padding: 8px 0; border-top: 1px solid var(--line); }
+  .h-top { display: flex; justify-content: space-between; gap: 10px; font-size: 15px; }
+  .h-top b { font-weight: 600; } .h-top span { color: var(--dim); white-space: nowrap; }
+  .h-bar { display: flex; height: 8px; border-radius: 4px; overflow: hidden; background: var(--line); margin-top: 6px; }
+  .h-bar i { display: block; height: 100%; } .h-bar .own { background: var(--ok); } .h-bar .help { background: #ffb347; }
 </style>
 </head>
 <body>
@@ -106,6 +112,13 @@
     <div class="dim">Tonight</div>
     <p id="summary"></p>
     <p class="dim hidden" id="summary-note">Translated by Amazon Translate (machine translation).</p>
+  </section>
+
+  <section class="card hidden" id="history-card">
+    <div class="dim">Reading diary</div>
+    <p id="history-totals" class="history-totals"></p>
+    <div id="history-rows"></div>
+    <p class="dim">Counts only, kept 30 days. No recordings and no words your child said are stored.</p>
   </section>
 
   <section class="card hidden" id="test-card">

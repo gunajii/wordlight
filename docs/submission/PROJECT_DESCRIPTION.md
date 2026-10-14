@@ -14,6 +14,7 @@ WordLight turns the family Fire TV into a read-along partner for children of abo
 - **Turns grow with the child:** 5 reading turns at age 5, one more per year, with longer lines for older readers.
 - **Well read!** The TV and the parent's phone show what really happened: words read on their own, and words that needed a little help.
 - **English and Hindi:** five English picture books from Pratham Books on StoryWeaver (CC BY 4.0): *Busy Ants*, *Naughty Dog*, *Noisy Crows*, *Clean Cat* and *The Moon and The Cap*, plus my Hindi translation of *Busy Ants*.
+- **Reading diary:** the parent's phone also shows the last week of sessions (story, words read on their own, words helped), counts only, kept 30 days.
 - **In the parent's language:** the parent can get the summary on the phone in Hindi, Marathi, Bengali, Gujarati, Kannada, Tamil or Telugu (Amazon Translate). The child's name is never sent for translation.
 
 ## Why the TV, not a tablet
