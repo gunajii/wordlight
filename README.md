@@ -92,6 +92,9 @@ first and then saying it is a deliberate guided-reading design, not a hidden fal
 - **Busy Ants** (English) — Kanchan Bannerjee, illustrated by Deepa Balsavar, Pratham Books, CC BY 4.0, via
   StoryWeaver. Narrated by Amazon Polly's expressive (generative) Kajal voice.
 - **व्यस्त चींटियाँ** (Hindi) — my own unofficial translation of Busy Ants (CC BY 4.0), narrated by Polly neural Kajal.
+- **कामसू मुंग्या** (Marathi) — StoryWeaver's official Marathi translation of Busy Ants by Sandhya Taksale (Pratham Books,
+  CC BY 4.0). Polly has no Marathi voice, so it is read by a human narrator (my recording), timed by Amazon Transcribe
+  (mr-IN) alignment; the help words are cut from the same recording.
 - **Naughty Dog** (English) — Kanchan Bannerjee, illustrated by Deepa Balsavar, Pratham Books, CC BY 4.0, via
   StoryWeaver (same “Animals Around Us” series). Expressive Kajal voice; three reading turns chosen by hand (common words, no names).
 - **Noisy Crows** and **Clean Cat** (English) — Kanchan Bannerjee, illustrated by Deepa Balsavar, Pratham Books,
