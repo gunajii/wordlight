@@ -200,6 +200,21 @@ being shown (developer's report). As always, no audio and no transcript were sto
 | Second run (18:54 IST), *The Moon and The Cap* | The phone showed the summary **in Marathi with the child's name restored** and the note "Translated by Amazon Translate", plus the reading diary (19 on their own, 2 helped). The TV kept English |
 | Label | **MEASURED** (developer's phone screen recording; not committed). Translation quality was not reviewed by a Marathi teacher |
 
+## First Marathi reading session (2026-10-14 17:03 UTC, session U6S8, one adult tester)
+*कामसू मुंग्या* (StoryWeaver's official Marathi translation of *Busy Ants*), narrated by a **human voice** (the
+developer's recording, timed by Amazon Transcribe mr-IN alignment; help words cut from the same recording). The reader
+was set to age 5 on the phone, so 5 turns. Real AWS loop on the Vega Virtual Device; Amazon Transcribe streaming in
+**mr-IN**.
+
+| | Result |
+|---|---|
+| Turns | **5 / 5 completed** (Echo Mode, Marathi lines) |
+| On their own · helped · skipped | **14 · 2 · 1** (TV end card and server traces agree). Help: on “मस्त गोष्ट सुचली.” the TV said “गोष्ट” in the narrator's voice, amber, and it was said back (✓) |
+| Word lit after spoken | 14 words: **median 1 105 ms**, p95 1 429 ms, 2 within 1 s (recognition median 1 066 ms; server → TV median 39 ms) |
+| Microphone audit | 154 status reports, **0 violations**; off 10–18 ms after each turn ends |
+| After the book | New-sticker line on the end card; the shelf card shows “✓ Riya” and the reader line “✓ 1 book”; the phone showed the summary in Marathi (Amazon Translate) and the diary (“14 on own · 2 helped”) |
+| Label | **MEASURED** (`docs/results/e2e/marathi-20261014T172146Z.json`, `docs/results/privacy/aws-20261014T172146Z.json`; TV stills and a phone screen recording, not committed). One adult (the developer) reading as a test reader; children reading Marathi: UNKNOWN. The Marathi UI strings are listed for a native reviewer in `docs/MARATHI_REVIEW.md` |
+
 ## Cost per reading session (real AWS runs, 2026-10-09 to 12)
 The server counts the seconds it streams to Amazon Transcribe (`.dev/aws/usage-server-*.json`, cumulative per day,
 saved at the end of each run). Seven real runs (3–8 reading turns, one or two stories each):

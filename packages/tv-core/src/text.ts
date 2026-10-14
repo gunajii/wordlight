@@ -10,7 +10,7 @@ export interface ChildText {
   progress(done: number, total: number): string;
   micStarting: string; micOn: string; micOff: string; hint: string;
   readingAlong(name: string): string; pairToRead: string;
-  end: { title: string; theEnd: string; seeYou: string; wordsAloud(n: number): string; onOwn(n: number): string; withHelp: string; turns(n: number): string; pairNext: string; newSticker(name: string): string };
+  end: { title: string; theEnd: string; seeYou: string; wordsAloud(n: number): string; onOwn(n: number): string; withHelp: string; turns(n: number): string; pairNext: string; newSticker(name: string): string; back: string };
 }
 
 const en: ChildText = {
@@ -23,7 +23,7 @@ const en: ChildText = {
   micStarting: '○ microphone starting…', micOn: '● listening', micOff: '○ microphone off',
   hint: 'Stuck? Press OK for the next word · → to listen instead',
   readingAlong: (n) => `● ${n} is reading along`, pairToRead: '○ Pair a phone on the home screen to read along',
-  end: { title: 'Well read!', theEnd: 'The end', seeYou: 'See you next time', wordsAloud: (n) => `${n} word${n === 1 ? '' : 's'} read aloud`, onOwn: (n) => `word${n === 1 ? '' : 's'} on your own`, withHelp: 'with a little help', turns: (n) => `reading turn${n === 1 ? '' : 's'}`, pairNext: 'Pair a phone next time to read some lines yourself.', newSticker: (n) => `✓ A new sticker for ${n}: this book is on your shelf!` },
+  end: { title: 'Well read!', theEnd: 'The end', seeYou: 'See you next time', wordsAloud: (n) => `${n} word${n === 1 ? '' : 's'} read aloud`, onOwn: (n) => `word${n === 1 ? '' : 's'} on your own`, withHelp: 'with a little help', turns: (n) => `reading turn${n === 1 ? '' : 's'}`, pairNext: 'Pair a phone next time to read some lines yourself.', newSticker: (n) => `✓ A new sticker for ${n}: this book is on your shelf!`, back: 'Back to stories' },
 };
 
 const hi: ChildText = {
@@ -36,7 +36,7 @@ const hi: ChildText = {
   micStarting: '○ माइक चालू हो रहा है…', micOn: '● सुन रहे हैं', micOff: '○ माइक बंद',
   hint: 'अटक गए? अगला शब्द सुनने के लिए OK दबाओ · → दबाकर सुनो',
   readingAlong: (n) => `● पाठक: ${n}`, pairToRead: '○ साथ में पढ़ने के लिए होम स्क्रीन पर फ़ोन जोड़ो',
-  end: { title: 'बहुत बढ़िया पढ़ा!', theEnd: 'समाप्त', seeYou: 'फिर मिलेंगे', wordsAloud: (n) => `${n} शब्द बोलकर पढ़े`, onOwn: () => 'शब्द ख़ुद पढ़े', withHelp: 'थोड़ी मदद से', turns: () => 'पढ़ने की बारी', pairNext: 'अगली बार फ़ोन जोड़कर कुछ पंक्तियाँ ख़ुद पढ़ना।', newSticker: (n) => `✓ ${n} के लिए नया स्टिकर: यह किताब अब तुम्हारी शेल्फ़ पर है!` },
+  end: { title: 'बहुत बढ़िया पढ़ा!', theEnd: 'समाप्त', seeYou: 'फिर मिलेंगे', wordsAloud: (n) => `${n} शब्द बोलकर पढ़े`, onOwn: () => 'शब्द ख़ुद पढ़े', withHelp: 'थोड़ी मदद से', turns: () => 'पढ़ने की बारी', pairNext: 'अगली बार फ़ोन जोड़कर कुछ पंक्तियाँ ख़ुद पढ़ना।', newSticker: (n) => `✓ ${n} के लिए नया स्टिकर: यह किताब अब तुम्हारी शेल्फ़ पर है!`, back: 'कहानियों पर वापस' },
 };
 
 // Marathi strings: simple spoken Marathi, gender-neutral where the verb would otherwise be gendered (review:
@@ -51,7 +51,7 @@ const mr: ChildText = {
   micStarting: '○ माइक सुरू होत आहे…', micOn: '● ऐकत आहे', micOff: '○ माइक बंद',
   hint: 'अडचण आली? पुढचा शब्द ऐकण्यासाठी OK दाब · → दाबून ऐक',
   readingAlong: (n) => `● वाचक: ${n}`, pairToRead: '○ सोबत वाचण्यासाठी होम स्क्रीनवर फोन जोडा',
-  end: { title: 'छान वाचलं!', theEnd: 'समाप्त', seeYou: 'पुन्हा भेटू', wordsAloud: (n) => `${n} शब्द मोठ्याने वाचले`, onOwn: () => 'शब्द स्वतः वाचले', withHelp: 'थोड्या मदतीने', turns: () => 'वाचनाच्या पाळ्या', pairNext: 'पुढच्या वेळी फोन जोडून काही ओळी स्वतः वाच.', newSticker: (n) => `✓ ${n}साठी नवा स्टिकर: हे पुस्तक आता तुझ्या शेल्फवर आहे!` },
+  end: { title: 'छान वाचलं!', theEnd: 'समाप्त', seeYou: 'पुन्हा भेटू', wordsAloud: (n) => `${n} शब्द मोठ्याने वाचले`, onOwn: () => 'शब्द स्वतः वाचले', withHelp: 'थोड्या मदतीने', turns: () => 'वाचनाच्या पाळ्या', pairNext: 'पुढच्या वेळी फोन जोडून काही ओळी स्वतः वाच.', newSticker: (n) => `✓ ${n}साठी नवा स्टिकर: हे पुस्तक आता तुझ्या शेल्फवर आहे!`, back: 'गोष्टींकडे परत' },
 };
 
 export function childText(lang?: string): ChildText { return lang === 'hi-IN' ? hi : lang === 'mr-IN' ? mr : en; }

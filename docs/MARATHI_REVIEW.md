@@ -15,6 +15,7 @@ Marathi speaker's review before wider use. Status: _not yet reviewed_.
 | Hint | अडचण आली? पुढचा शब्द ऐकण्यासाठी OK दाब · → दाबून ऐक | Stuck? Press OK for the next word |
 | End | छान वाचलं! · समाप्त · पुन्हा भेटू | Well read · The end · See you |
 | New sticker | `✓ <name>साठी नवा स्टिकर: हे पुस्तक आता तुझ्या शेल्फवर आहे!` | A new sticker for <name> |
+| End-card button | `गोष्टींकडे परत` (Hindi: `कहानियों पर वापस`) | Back to stories |
 
 Gendered verb forms are avoided where possible (“अडचण आली?” instead of “अडकलास/अडकलीस?”).
 

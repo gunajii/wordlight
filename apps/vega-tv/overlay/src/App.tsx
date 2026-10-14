@@ -129,7 +129,7 @@ export const App = () => {
         <Text style={s.hint}>{screen.story.title} · {screen.info.completed ? 'story finished' : 'stopped early'} · {formatDuration(screen.info.durationMs)}{t.skipped ? ` · ${t.skipped} word${t.skipped === 1 ? '' : 's'} skipped` : ''}</Text>
         {summary ? <Text style={s.summary}>For the parent: “{summary}”</Text> : null}
         <TouchableOpacity hasTVPreferredFocus activeOpacity={1} style={[s.btn, focused === 'end' && s.btnFocus]} onFocus={() => setFocused('end')} onBlur={() => setFocused(null)} onPress={() => setScreen({ name: 'home' })}>
-          <Text style={s.btnText}>Back to stories</Text>
+          <Text style={[s.btnText, hf]}>{E.back}</Text>
         </TouchableOpacity>
         <Text style={s.credit}>{screen.story.credits.attribution}</Text>
       </View>
