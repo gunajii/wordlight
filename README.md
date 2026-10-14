@@ -20,6 +20,9 @@ WordLight on 2026-10-12 with a parent present: **14 of 14 reading turns complete
 ([results](docs/submission/MEASURED_RESULTS.md#children-2026-10-12-two-children-ages-4-and-6-a-parent-present)). The
 6-year-old read the earlier 3–4 turns easily, which led to more turns by age.
 
+> “This app is a really good way for Viraj to learn and revise his reading. Most of the time I am either unavailable or don't comprehend the exact words like the app might, which makes his learning better.”
+> — Viraj's mother, 14 Oct 2026 (shared with permission; punctuation and grammar lightly edited, meaning unchanged)
+
 ## For judges: where the evidence is
 | Criterion | What WordLight does | Evidence (labels: MEASURED / INFERRED / UNKNOWN) |
 |---|---|---|

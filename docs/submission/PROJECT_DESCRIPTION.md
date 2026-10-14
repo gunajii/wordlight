@@ -49,7 +49,7 @@ Every number has its device, sample and method in the repository's `MEASURED_RES
 - **The real loop (phone → AWS → Transcribe → TV):**
   - adult tester: a word lights a median **1.05 s** after it is spoken (93 words, 5 sessions);
   - children: a median **1.15 s** (48 words).
-- **Children:** two children (ages 4 and 6), with a parent present, completed **14 of 14 reading turns**.
+- **Children:** two children (ages 4 and 6), with a parent present, completed **14 of 14 reading turns**. Viraj's mother afterwards: *“This app is a really good way for Viraj to learn and revise his reading. Most of the time I am either unavailable or don't comprehend the exact words like the app might, which makes his learning better.”*
 - **Privacy:** **0 violations** in 1,238 microphone status reports from the phone.
 - **Cost:** about **USD 0.03 of Transcribe per reading session.** Narration costs nothing at play time.
 

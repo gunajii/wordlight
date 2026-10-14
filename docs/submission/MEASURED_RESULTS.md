@@ -190,6 +190,7 @@ being shown (developer's report). As always, no audio and no transcript were sto
   below the age WordLight is designed for (about 6–10); the phone's age setting starts at 5.
 - **MEASURED** (server records: `docs/results/e2e/real-20261012T125811Z.json`, `real-20261012T144543Z.json`,
   `docs/results/privacy/aws-…`). This is usage evidence from two children, **not** evidence about learning to read.
+- **The parent's view** (a statement, not a measurement): “This app is a really good way for Viraj to learn and revise his reading. Most of the time I am either unavailable or don't comprehend the exact words like the app might, which makes his learning better.” — Viraj's mother, 14 Oct 2026 (shared with permission; punctuation and grammar lightly edited, meaning unchanged).
 
 ## Cost per reading session (real AWS runs, 2026-10-09 to 12)
 The server counts the seconds it streams to Amazon Transcribe (`.dev/aws/usage-server-*.json`, cumulative per day,
