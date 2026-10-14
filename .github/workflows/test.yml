@@ -13,4 +13,4 @@ jobs:
         shell: bash
         run: |
           set -o pipefail
-          npm test 2>&1 | tee test-output.txt || { grep -E "^not ok|^# Subtest|error:|Error" test-output.txt | head -40 | while IFS= read -r l; do echo "::error::$l"; done; exit 1; }
+          npm test 2>&1 | tee test-output.txt || { grep -E "not ok|code: |message: |ERR_" test-output.txt | head -9 | while IFS= read -r l; do echo "::error::$l"; done; exit 1; }
