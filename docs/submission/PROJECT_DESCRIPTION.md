@@ -14,6 +14,7 @@ WordLight turns the family Fire TV into a read-along partner for children of abo
 - **Turns grow with the child:** 5 reading turns at age 5, one more per year, with longer lines for older readers.
 - **Well read!** The TV and the parent's phone show what really happened: words read on their own, and words that needed a little help.
 - **English and Hindi:** five English picture books from Pratham Books on StoryWeaver (CC BY 4.0): *Busy Ants*, *Naughty Dog*, *Noisy Crows*, *Clean Cat* and *The Moon and The Cap*, plus my Hindi translation of *Busy Ants*.
+- **In the parent's language:** the parent can get the summary on the phone in Hindi, Marathi, Bengali, Gujarati, Kannada, Tamil or Telugu (Amazon Translate). The child's name is never sent for translation.
 
 ## Why the TV, not a tablet
 Reading-aloud tutors already exist on phones and tablets. WordLight puts the same idea on the screen a family shares:
@@ -28,7 +29,7 @@ Reading-aloud tutors already exist on phones and tablets. WordLight puts the sam
 ## How I built it
 - **Fire TV app on Vega OS:** React Native for Vega, the W3C `AudioPlayer`, and remote-only navigation. Word timing uses my open-source **[karaoke-vega](https://github.com/gunajii/karaoke-vega)** (MIT). It turns the player's coarse `currentTime` into an accurate playhead and cancels the measured audio latency.
 - **Phone:** a plain web page. The microphone opens **only during a reading turn**, and the page always shows whether it is on or off.
-- **Server on AWS:** one Graviton EC2 instance behind TLS (CloudFormation, an IAM role with no keys on the server, SSM, private S3). For each turn it opens an **Amazon Transcribe streaming** session (en-IN, hi-IN).
+- **Server on AWS:** one Graviton EC2 instance behind TLS (CloudFormation, an IAM role with no keys on the server, SSM, private S3). For each turn it opens an **Amazon Transcribe streaming** session (en-IN, hi-IN). At the end, **Amazon Translate** puts the parent's summary into the parent's language; the child's name is swapped for a placeholder first, and anything unexpected falls back to English.
 - **The reading engine is deterministic, not a chatbot:**
   - A misread word does not light, and the cursor never goes backwards.
   - Small spelling noise on long words is tolerated; vowel changes (big/bag, कल/काल) are not.
@@ -59,7 +60,7 @@ Every number has its device, sample and method in the repository's `MEASURED_RES
   - The virtual device's clock drifted and broke HTTPS.
   - A nested `<Text>` background is not drawn.
   - A focused card is drawn faded. All of these are in my friction log.
-- **A brand-new AWS account:** services came online one by one, Amazon Bedrock is still not authorised, and EC2 had no capacity on one restart.
+- **A brand-new AWS account:** services came online one by one, Amazon Bedrock is still not authorised (so the parent's language comes from Amazon Translate instead), and EC2 had no capacity on one restart.
 - **Real children found real bugs.** The 6-year-old found 3–4 turns too easy, which led to the age-based turns. The phone locking itself mid-story led to an automatic reconnect.
 
 ## Accomplishments that I'm proud of
@@ -74,7 +75,7 @@ Every number has its device, sample and method in the repository's `MEASURED_RES
 
 ## What's next
 - A physical Fire TV stick (so far tested on the Vega Virtual Device).
-- More StoryWeaver books and more Indian languages.
+- The stories themselves in more Indian languages (the parent's summary already comes in eight).
 - More families, always with a parent's permission.
 - A Bedrock-written parent summary once my account is authorised. It is built and guarded, and falls back to a template today.
 
