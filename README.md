@@ -26,13 +26,13 @@ WordLight on 2026-10-12 with a parent present: **14 of 14 reading turns complete
 ## For judges: where the evidence is
 | Criterion | What WordLight does | Evidence (labels: MEASURED / INFERRED / UNKNOWN) |
 |---|---|---|
-| **Technological implementation** | Vega OS app (React Native for Vega) · phone web page, no install · AWS server streaming the child's voice to **Amazon Transcribe** · deterministic reading engine for English, Hindi and Marathi | Spoken word → lit on the TV: **median 1.05 s** (93 words, 5 real sessions, adult; target ≤ 1 s just missed; Marathi: 1.11 s, 14 words) · narration ↔ highlight sync **median −1.0 ms** (Vega Virtual Device) · **235 tests**, run by GitHub Actions on every push — [MEASURED_RESULTS](docs/submission/MEASURED_RESULTS.md) |
+| **Technological implementation** | Vega OS app (React Native for Vega) · phone web page, no install · AWS server streaming the child's voice to **Amazon Transcribe** · deterministic reading engine for English, Hindi and Marathi | Spoken word → lit on the TV: **median 1.05 s** (93 words, 5 real sessions, adult; target ≤ 1 s just missed; Marathi: 1.11 s, 14 words) · narration ↔ highlight sync **median −1.0 ms** (Vega Virtual Device) · **236 tests**, run by GitHub Actions on every push — [MEASURED_RESULTS](docs/submission/MEASURED_RESULTS.md) |
 | **Design** | Scan a QR → consent → reader. The TV reads a line, the child says it back, words light green; after a stall the TV says just the next word (amber) and lets the child repeat it; nothing is marked wrong. Turns follow the child's age. A finished book earns a sticker on the shelf (no scores). The parent's page speaks English, Hindi or Marathi | [Demo video](https://youtu.be/-5x0W25ymOw) · screenshots below · [privacy rules](docs/PRIVACY.md): microphone **only during a turn**, always shown on the phone — **0 violations in 1,392 status reports** (adult 1,045 + children 347; MEASURED) |
 | **Potential impact** | Children about 6–10 reading with a parent on the family TV; English, Hindi and Marathi; open-licence picture books (StoryWeaver, CC BY) | **≈ USD 0.03 of Transcribe per reading session** (median of 7 real runs; narration costs nothing at play time) — [cost](docs/submission/MEASURED_RESULTS.md#cost-per-reading-session-real-aws-runs-2026-10-09-to-12) · two children (4 and 6) completed 14 of 14 turns, 0 microphone violations (MEASURED) · no learning effect claimed |
 | **Quality of the idea** | Same-language subtitling (word-by-word highlighting) + echo reading on the screen families already watch together | Why Echo Mode: Transcribe lit only ≈ 51 % of words within 1 s (169 lines), so the TV reads first — [S2](docs/submission/MEASURED_RESULTS.md) |
 | **AWS Builder** | Transcribe streaming · Polly (narration, help clips) · EC2 + CloudFormation · IAM role · S3 · DynamoDB (counts only) · Translate (parent's summary in 7 Indian languages, name masked; **worked in the app in Marathi**, MEASURED). Bedrock integrated but **not in use** (account not authorised) | [AWS_BUILDER](docs/submission/AWS_BUILDER.md) |
 | **Open source** | [`karaoke-vega`](https://github.com/gunajii/karaoke-vega): word-timed subtitles for Vega (MIT) · `npm install github:gunajii/karaoke-vega` | [OPEN_SOURCE](docs/submission/OPEN_SOURCE.md) |
-| **Friction log** | 20 entries on Vega and AWS (task → steps → expected → actual → severity → workaround → suggestion) | [FRICTION_LOG](docs/FRICTION_LOG.md) |
+| **Friction log** | 21 entries on Vega and AWS (task → steps → expected → actual → severity → workaround → suggestion) | [FRICTION_LOG](docs/FRICTION_LOG.md) |
 
 Limits I know of: tested on the Vega Virtual Device (physical Fire TV: UNKNOWN) · recognition takes ≈ 1 s · the child
 reads in English, Hindi and Marathi only (Marathi tested by one adult) · two children so far, and no measure of learning.
@@ -123,7 +123,7 @@ is likely to mishear them). Set on 2026-10-12 after a 6-year-old read the earlie
 Needs Node ≥ 22.18; the TV app needs the Vega SDK (macOS).
 ```bash
 git clone https://github.com/gunajii/wordlight && cd wordlight
-npm install && npm test        # 235 tests, no AWS needed
+npm install && npm test        # 236 tests, no AWS needed
 npm run demo:check             # headless loop with a LOCAL SIMULATION of speech (labelled SIMULATED)
 
 # TV app (macOS + Vega SDK 0.24): generate the Vega project once, then build + launch on the Virtual Device

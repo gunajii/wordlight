@@ -124,6 +124,17 @@ test("session end: the TV keeps the original; the parent's phone gets the summar
   assert.deepEqual(log.map((x: any) => [x.summaryLang, x.translated]), [['mr', true], ['en', false]]);
 });
 
+test('story titles are sent in do-not-translate markup and come back unchanged (Marathi field test)', async () => {
+  // a translator that mangles the Devanagari title unless it is protected, like Amazon Translate did on 2026-10-14
+  const { t, sent } = fake((text) => text.replace(/(?<!>)कामसू मुंग्या/g, 'महासा मंगा').replace('read', 'वाचले'));
+  const r = await new SummaryTranslator({ translator: t, usage: meter() }).translate('Riya read 14 words and finished “कामसू मुंग्या”.', 'Riya', 'mr', ['कामसू मुंग्या', 'Riya', '']);
+  assert.ok(sent[0].text.includes('<span translate="no">कामसू मुंग्या</span>'));
+  assert.ok(!sent[0].text.includes('Riya'), 'the name is still masked, never sent as a kept term');
+  assert.equal(r.text, 'Riya वाचले 14 words and finished “कामसू मुंग्या”.');
+  const plain = fake((text) => text.replace(/(?<!>)कामसू मुंग्या/g, 'महासा मंगा'));
+  assert.ok((await new SummaryTranslator({ translator: plain.t, usage: meter() }).translate('Riya finished “कामसू मुंग्या”.', 'Riya', 'mr')).text.includes('महासा मंगा'), 'without keep the fake mangles it');
+});
+
 test("the name placeholder goes in Amazon Translate's do-not-translate markup and comes back as plain text", async () => {
   const { t, sent } = fake((text) => text.replace('read', 'वाचले').replace(NAME_TAG, '<span translate="no"> XQZ </span>'));
   const r = await new SummaryTranslator({ translator: t, usage: meter() }).translate('Riya & Aarav read 3 words in “A <b> Book”.', 'Riya', 'mr');

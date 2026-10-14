@@ -355,7 +355,7 @@ export class SessionHub {
       // The parent's phone: the same counts, the sentence in the language the parent chose. Only the template sentence
       // (always English) is translated; the child's name is masked before the call (see translate.ts).
       const want = r.summaryLang && r.summaryLang !== 'en' ? r.summaryLang : undefined;
-      const tr = want && out.source === 'template' ? await this.translator.translate(out.text, r.firstName, want)
+      const tr = want && out.source === 'template' ? await this.translator.translate(out.text, r.firstName, want, s.storyTitles)
         : { text: out.text, lang: 'en', source: 'original' as const, fallbackReason: want ? 'not-template' : undefined };
       s.phones.get(r.phoneClientId)?.send(tr.source === 'amazon-translate' ? { ...ev, text: tr.text, textLang: tr.lang, textEn: out.text, translatedBy: 'amazon-translate' } : ev);
       this.log(s, { kind: 'session-summary', readerId: r.readerId, read: p.read, helped: p.helped, skipped: p.skipped, lines: p.lines, source: out.source, fallback: out.fallbackReason,

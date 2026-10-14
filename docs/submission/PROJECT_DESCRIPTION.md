@@ -59,7 +59,7 @@ Every number has its device, sample and method in the repository's `MEASURED_RES
 - **The parent's summary in Marathi:** worked in the app (one adult session, 14 Oct), after I fixed a translation problem described below.
 - **Reading in Marathi:** in the first Marathi session (one adult, 14 Oct) all 5 turns were completed (14 words on their own, 2 helped), a word lit a median **1.11 s** after it was spoken, and the finished book got its sticker.
 - **Privacy:** **0 violations** in 1,392 microphone status reports from the phone.
-- **235 automated tests**, run by GitHub Actions on every push.
+- **236 automated tests**, run by GitHub Actions on every push.
 - **Cost:** about **USD 0.03 of Transcribe per reading session.** Narration costs nothing at play time.
 
 ## Challenges I ran into

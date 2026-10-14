@@ -282,3 +282,16 @@ invented; where a detail was not recorded at the time it says so. Severity is my
 - **Workaround:** send the placeholder inside `<span translate="no">…</span>` and unwrap the reply; both languages keep it.
 - **Suggestion:** document that unknown tokens may be transliterated in some target languages, and point to
   do-not-translate tags from the `TranslateText` reference.
+
+### W21 — Amazon Translate rewrote a Devanagari book title inside an English sentence
+**Date / env:** 2026-10-14 · Amazon Translate `TranslateText`, ap-south-1, `en` → `mr`
+- **Task:** translate the parent's summary (“Riya read 14 words … and finished “कामसू मुंग्या” …”) into Marathi.
+- **Steps:** first Marathi reading session (U6S8) → the phone showed the Marathi summary → the title in it read
+  “महासा मंगा” instead of “कामसू मुंग्या” (phone screen recording).
+- **Expected:** text already in the target script, inside quotes, is kept as it is.
+- **Actual:** the title was changed into different, meaningless Marathi words; the counts and the name were right.
+- **Severity:** Low–Medium (the parent sees a wrong book name; nothing else is affected).
+- **Workaround:** story titles are now sent inside `<span translate="no">…</span>` as well (`translate.ts`, unit test);
+  not yet re-checked in the app.
+- **Suggestion:** keep source text that is already in the target language's script unchanged by default, or document
+  that it may be re-translated and point to do-not-translate tags.

@@ -55,15 +55,19 @@ export class SummaryTranslator {
     this.o = { timeoutMs: 3000, maxCalls: 200, log: () => {}, usage: defaultUsage, ...o };
   }
 
-  /** `text` is the English summary that mentions the child as `name`. */
-  async translate(text: string, name: string, target: string | undefined): Promise<TranslatedSummary> {
+  /** `text` is the English summary that mentions the child as `name`. `keep`: other strings sent in do-not-translate
+   *  markup, as they are (story titles: field test 2026-10-14, Translate turned the Marathi title “कामसू मुंग्या” into
+   *  “महासा मंगा”). Unlike the name, these are not private and are sent. */
+  async translate(text: string, name: string, target: string | undefined, keep: readonly string[] = []): Promise<TranslatedSummary> {
     const original: TranslatedSummary = { text, lang: 'en', source: 'original' };
     if (!target || target === 'en') return original;
     const fail = (reason: string): TranslatedSummary => { this.o.log(`[translate] ${target}: English instead (${reason})`); return { ...original, fallbackReason: reason }; };
     if (!isSummaryLang(target)) return fail('unsupported-language');
     if (!this.o.translator) return fail('off');
     if (!name || text.includes(NAME_TOKEN)) return fail('name');
-    const masked = esc(text).split(esc(name)).join(NAME_TAG);
+    let masked = esc(text).split(esc(name)).join(NAME_TAG);
+    for (const k of [...new Set(keep)].filter((k) => k && k !== name && !k.includes(NAME_TOKEN)).sort((a, b) => b.length - a.length))
+      masked = masked.split(esc(k)).join(`<span translate="no">${esc(k)}</span>`);
     const want = count(masked, NAME_TOKEN);
     const key = `${target}\u0000${masked}`;
     let out = this.cache.get(key);
