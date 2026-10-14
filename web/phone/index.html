@@ -36,6 +36,10 @@
   .words { font-size: 22px; line-height: 1.6; margin-top: 10px; }
   .w-read { color: var(--ok); } .w-helped { background: #ffb347; color: #111; border-radius: 4px; padding: 0 3px; } .w-skipped { color: var(--dim); } .w-next { text-decoration: underline; }
   body:not(.diag) .diag { display: none !important; }
+  .top { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+  .langs { display: flex; gap: 4px; flex-shrink: 0; }
+  .langs button { width: auto; margin: 0; padding: 6px 10px; font-size: 14px; font-weight: 600; border-radius: 999px; background: transparent; color: var(--dim); border: 1px solid var(--line); }
+  .langs button.on { background: var(--accent); color: #111; border-color: var(--accent); }
   .history-totals { font-size: 18px; font-weight: 600; margin: 4px 0 10px; }
   .h-row { padding: 8px 0; border-top: 1px solid var(--line); }
   .h-top { display: flex; justify-content: space-between; gap: 10px; font-size: 15px; }
@@ -46,7 +50,7 @@
 </head>
 <body>
 <main>
-  <h1>WORD<span>LIGHT</span><span class="diag"> · MIC TEST</span></h1>
+  <div class="top"><h1>WORD<span>LIGHT</span><span class="diag"> · MIC TEST</span></h1><div class="langs" id="langs" role="group" aria-label="Language"><button type="button" data-lang="en">English</button><button type="button" data-lang="hi" lang="hi">हिन्दी</button><button type="button" data-lang="mr" lang="mr">मराठी</button></div></div>
   <div class="card hidden" id="sim-banner" style="border-color:var(--warn)"><b class="err">Local simulation</b><div class="dim">Speech recognition is simulated on this server (development mode). Words light from a script, not from the microphone.</div></div>
 
   <section class="card diag" id="conn-card">
@@ -57,42 +61,42 @@
   </section>
 
   <section class="card privacy hidden" id="consent-card">
-    <p><b>Before we start (for the parent)</b></p>
-    <p>WordLight uses the microphone <b>only during reading turns</b> to recognise the words your child reads aloud. <b>Your child's voice is not stored</b> by WordLight.</p>
-    <p class="dim">The microphone is off before, between and after turns, and this page always shows whether it is ON or OFF. During a turn the sound goes over an encrypted connection to the WordLight server, which passes it to Amazon Transcribe for speech recognition and keeps only which words were read.</p>
+    <p><b data-i18n="consentTitle">Before we start (for the parent)</b></p>
+    <p data-i18n-html="consentBody">WordLight uses the microphone <b>only during reading turns</b> to recognise the words your child reads aloud. <b>Your child's voice is not stored</b> by WordLight.</p>
+    <p class="dim" data-i18n="consentDetail">The microphone is off before, between and after turns, and this page always shows whether it is ON or OFF. During a turn the sound goes over an encrypted connection to the WordLight server, which passes it to Amazon Transcribe for speech recognition and keeps only which words were read.</p>
     <p class="dim diag">This page is a technical test (spike S3). Please use adult speech or test sounds, not a child's voice.</p>
-    <button id="consent-btn">I agree — use the microphone during reading turns</button>
+    <button id="consent-btn" data-i18n="consentBtn">I agree — use the microphone during reading turns</button>
   </section>
 
   <section class="card hidden" id="reader-card">
-    <p><b>Who is reading?</b></p>
-    <label for="reader-name">First name (shown on the TV)</label>
+    <p><b data-i18n="readerTitle">Who is reading?</b></p>
+    <label for="reader-name" data-i18n="readerName">First name (shown on the TV)</label>
     <input id="reader-name" maxlength="20" autocomplete="off" placeholder="e.g. Riya">
-    <label for="reader-age">Age</label>
+    <label for="reader-age" data-i18n="readerAge">Age</label>
     <select id="reader-age"><option>5</option><option>6</option><option selected>7</option><option>8</option><option>9</option><option>10</option><option>11</option><option>12</option></select>
-    <label for="reader-lang">Reads in</label>
+    <label for="reader-lang" data-i18n="readerLang">Reads in</label>
     <select id="reader-lang"><option value="en-IN">English</option><option value="hi-IN">हिंदी (Hindi)</option><option value="mr-IN">मराठी (Marathi)</option></select>
-    <label for="reader-summary-lang">Your summary at the end, in</label>
+    <label for="reader-summary-lang" data-i18n="readerSummaryLang">Your summary at the end, in</label>
     <select id="reader-summary-lang"><option value="en">English</option><option value="hi">हिन्दी (Hindi)</option><option value="mr">मराठी (Marathi)</option><option value="bn">বাংলা (Bengali)</option><option value="gu">ગુજરાતી (Gujarati)</option><option value="kn">ಕನ್ನಡ (Kannada)</option><option value="ta">தமிழ் (Tamil)</option><option value="te">తెలుగు (Telugu)</option></select>
-    <p class="dim">Other languages are machine-translated by Amazon Translate; your child's name is not sent for translation.</p>
-    <button id="reader-save">Save</button>
+    <p class="dim" data-i18n="readerSummaryNote">Other languages are machine-translated by Amazon Translate; your child's name is not sent for translation.</p>
+    <button id="reader-save" data-i18n="save">Save</button>
   </section>
 
   <section class="card hidden" id="ready-card">
-    <p>Reading as <b id="ready-name">—</b>. Keep this page open near your child; the TV will say when it is their turn.</p>
-    <p class="dim tip hidden" id="mic-tip-safari"><b>iPhone tip (once):</b> so Safari doesn't ask for the microphone at every turn, tap <b>aA</b> (the page menu) in the address bar → <b>Website Settings</b> → <b>Microphone</b> → <b>Allow</b>. The microphone still only turns on during a reading turn.</p>
-    <p class="dim tip hidden" id="mic-tip-other"><b>iPhone tip:</b> this browser may ask for the microphone at every turn. Safari can be set to allow it once (aA → Website Settings → Microphone → Allow).</p>
-    <button id="ready-btn">Start reading session</button>
-    <button id="reader-change" class="secondary">Change reader</button>
+    <p><span data-i18n="readingAs">Reading as</span> <b id="ready-name">—</b>. <span data-i18n="readyHint">Keep this page open near your child; the TV will say when it is their turn.</span></p>
+    <p class="dim tip hidden" id="mic-tip-safari" data-i18n-html="tipSafari"><b>iPhone tip (once):</b> so Safari doesn't ask for the microphone at every turn, tap <b>aA</b> (the page menu) in the address bar → <b>Website Settings</b> → <b>Microphone</b> → <b>Allow</b>. The microphone still only turns on during a reading turn.</p>
+    <p class="dim tip hidden" id="mic-tip-other" data-i18n-html="tipOther"><b>iPhone tip:</b> this browser may ask for the microphone at every turn. Safari can be set to allow it once (aA → Website Settings → Microphone → Allow).</p>
+    <button id="ready-btn" data-i18n="startSession">Start reading session</button>
+    <button id="reader-change" class="secondary" data-i18n="changeReader">Change reader</button>
   </section>
 
   <section class="card hidden" id="mic-card">
     <div class="state" id="state">Waiting for your turn…</div>
-    <div class="dim">Microphone</div>
+    <div class="dim" data-i18n="micLabel">Microphone</div>
     <div class="mic off" id="mic">Microphone off</div>
     <div class="meter"><i id="level"></i></div>
     <div class="words" id="words"></div>
-    <button id="tap-btn" class="hidden">Tap to start listening</button>
+    <button id="tap-btn" class="hidden" data-i18n="tapToListen">Tap to start listening</button>
     <div class="diag">
       <div class="row"><span>Turn time</span><b id="elapsed">—</b></div>
       <div class="row"><span>Chunk size</span><b id="chunk">—</b></div>
@@ -104,21 +108,21 @@
       <div class="row"><span>Mic tracks live (browser API)</span><b id="live">0</b></div>
       <div class="row"><span>Input rate → output</span><b id="rates">—</b></div>
     </div>
-    <div class="row"><span>Screen kept awake</span><b id="wake">off</b></div>
-    <button id="session-end-btn" class="secondary">End reading session</button>
+    <div class="row"><span data-i18n="wakeLabel">Screen kept awake</span><b id="wake">off</b></div>
+    <button id="session-end-btn" class="secondary" data-i18n="endSession">End reading session</button>
   </section>
 
   <section class="card hidden" id="summary-card">
-    <div class="dim">Tonight</div>
+    <div class="dim" data-i18n="tonight">Tonight</div>
     <p id="summary"></p>
-    <p class="dim hidden" id="summary-note">Translated by Amazon Translate (machine translation).</p>
+    <p class="dim hidden" id="summary-note" data-i18n="summaryNote">Translated by Amazon Translate (machine translation).</p>
   </section>
 
   <section class="card hidden" id="history-card">
-    <div class="dim">Reading diary</div>
+    <div class="dim" data-i18n="diary">Reading diary</div>
     <p id="history-totals" class="history-totals"></p>
     <div id="history-rows"></div>
-    <p class="dim">Counts only, kept 30 days. No recordings and no words your child said are stored.</p>
+    <p class="dim" data-i18n="diaryNote">Counts only, kept 30 days. No recordings and no words your child said are stored.</p>
   </section>
 
   <section class="card hidden" id="test-card">
@@ -129,8 +133,8 @@
   </section>
 
   <section class="card privacy">
-    <b>Privacy</b>
-    <div class="dim">The microphone is only active during a reading turn. Audio is not stored by WordLight.</div>
+    <b data-i18n="privacyTitle">Privacy</b>
+    <div class="dim" data-i18n="privacyBody">The microphone is only active during a reading turn. Audio is not stored by WordLight.</div>
   </section>
   <p class="dim err" id="msg"></p>
 </main>

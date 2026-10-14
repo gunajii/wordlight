@@ -13,6 +13,7 @@ import { initialState, reduce, micWanted, needsTap, micTip } from '/phone/mic-li
 import { WakeLockKeeper } from '/phone/wakelock.js';
 import { resumeAction } from '/phone/resume.js';
 import { historyView } from '/phone/history.js';
+import { strings, pickUiLang, defaultSummaryLang } from '/phone/i18n.js';
 
 const $ = (id) => document.getElementById(id);
 const store = {
@@ -87,6 +88,20 @@ const client = new SyncClient({
 const wake = new WakeLockKeeper({ onChange: (st) => { S.wake = st; render(); }, log: (k, d) => ev(k, d ? { d: String(d).slice(0, 80) } : {}) });
 
 function msg(t) { $('msg').textContent = t || ''; }
+// page language (English / Hindi / Marathi), chosen at the top and remembered on this phone
+const UI_LANG_KEY = 'wordlight.uiLang';
+let uiLang = pickUiLang(store.get(UI_LANG_KEY), navigator.languages ?? [navigator.language]);
+let T = strings(uiLang);
+function applyI18n() {
+  T = strings(uiLang);
+  document.documentElement.lang = uiLang;
+  for (const el of document.querySelectorAll('[data-i18n]')) el.textContent = T[el.dataset.i18n];
+  for (const el of document.querySelectorAll('[data-i18n-html]')) el.innerHTML = T[el.dataset.i18nHtml]; // our own strings only
+  $('reader-name').placeholder = T.readerNamePh;
+  for (const b of document.querySelectorAll('#langs button')) b.classList.toggle('on', b.dataset.lang === uiLang);
+  if (!reader) $('reader-summary-lang').value = defaultSummaryLang(uiLang);
+}
+for (const b of document.querySelectorAll('#langs button')) b.onclick = () => { uiLang = b.dataset.lang; store.set(UI_LANG_KEY, uiLang); applyI18n(); render(); };
 function sendReader() {
   if (!S.consent) return;
   const r = reader ?? (DIAG ? { name: 'Test reader', age: 8, lang: 'en-IN' } : null);
@@ -256,20 +271,20 @@ function render() {
   $('session-end-btn').classList.toggle('hidden', !L.ready || L.session !== 'active');
   const live = micLive();
   const mic = $('mic');
-  mic.textContent = live > 0 ? '● Listening…' : L.turn ? (needsTap(L) ? 'Tap to start listening' : 'Getting the microphone ready…') : 'Microphone off';
+  mic.textContent = live > 0 ? T.micListening : L.turn ? (needsTap(L) ? T.tapToListen : T.micGetting) : T.micOff;
   mic.className = 'mic ' + (live > 0 ? 'on' : 'off');
   $('live').textContent = live;
   const showDone = !L.turn && lastDone && now() - lastDone.at < 4000;
   $('sim-banner').classList.toggle('hidden', !simulated);
-  $('state').textContent = L.turn ? (live > 0 ? (lineMode === 'echo' ? 'Your turn! Say the line you just heard.' : 'Your turn! Read the line on the TV.') : needsTap(L) ? 'Tap below to start listening' : 'Getting the microphone ready…')
-    : showDone ? `Well read! ${lastDone.read} on your own${lastDone.helped ? `, ${lastDone.helped} with a little help` : ''}.` : 'The TV will say when it is your turn. Watch the TV!';
+  $('state').textContent = L.turn ? (live > 0 ? (lineMode === 'echo' ? T.stateEcho : T.stateFree) : needsTap(L) ? T.stateTap : T.micGetting)
+    : showDone ? T.stateWellRead(lastDone.read, lastDone.helped) : T.stateWatch;
   $('words').innerHTML = L.turn || showDone ? lineWords.map((w, i) => `<span class="${lineMarks[i] === 'pending' ? (i === lineMarks.indexOf('pending') ? 'w-next' : '') : 'w-' + lineMarks[i]}">${w.replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[c])}</span>`).join(' ') : '';
   $('chunk').textContent = L.turn ? `${L.turn.chunkMs} ms` : '—';
   $('sent').textContent = S.sent; $('acked').textContent = S.acked; $('lost').textContent = S.lost; $('unsent').textContent = S.unsent;
   $('lat').textContent = S.latMs == null ? '—' : `${S.latMs} ms`;
   $('rates').textContent = S.rates;
   $('elapsed').textContent = L.turn ? `${((now() - S.turnStartedAt) / 1000).toFixed(1)} s` : '—';
-  const wakeText = { on: 'on', off: 'off', requesting: 'requesting…', unsupported: 'not supported — keep the screen on manually', lost: 'lost — tap the page to restore', error: 'refused — keep the screen on manually' }[S.wake] ?? S.wake;
+  const wakeText = T.wake[S.wake] ?? S.wake;
   $('wake').textContent = wakeText;
   const db = S.rms > 0 ? 20 * Math.log10(S.rms) : -90;
   $('level').style.width = `${Math.max(0, Math.min(100, ((db + 60) / 60) * 100))}%`;
@@ -286,7 +301,7 @@ async function checkMicPermission() {
     ev('mic-permission', { state: 'granted' });
   } catch (e) {
     ev('mic-permission', { state: e?.name ?? 'error' });
-    if (e?.name === 'NotAllowedError') msg('The microphone is blocked for this page. Allow it in the browser’s site settings, then tap Start reading session again.');
+    if (e?.name === 'NotAllowedError') msg(T.micBlocked);
   }
   updateMicTip();
 }
@@ -306,7 +321,7 @@ async function startSession() {
 $('consent-btn').onclick = () => { S.consent = Date.now(); store.set(CONSENT_KEY, String(S.consent)); ev('consent'); dispatch({ type: 'consent' }); sendReader(); if (DIAG) startSession(); else render(); };
 $('reader-save').onclick = () => {
   const name = $('reader-name').value.trim().replace(/\s+/g, ' ').slice(0, 20);
-  if (!name) { msg('Please type a first name.'); return; }
+  if (!name) { msg(T.nameMissing); return; }
   reader = { name, age: Number($('reader-age').value), lang: $('reader-lang').value, summaryLang: $('reader-summary-lang').value };
   store.set(READER_KEY, JSON.stringify(reader)); editingReader = false; msg('');
   sendReader(); render();
@@ -354,22 +369,23 @@ setInterval(render, 100);
 
 if (!code) msg('Open the link printed on the Mac (…/j/CODE).');
 else client.start();
+applyI18n();
 render();
 
 /** The parent's reading diary (counts only), built with textContent — nothing from the network becomes HTML. */
 function renderHistory() {
-  const v = historyView(history, titles, Date.now());
+  const v = historyView(history, titles, Date.now(), { today: T.today, yesterday: T.yesterday, aStory: T.aStory, locale: uiLang === 'en' ? 'en-GB' : `${uiLang}-IN` });
   $('history-card').classList.toggle('hidden', v.rows.length === 0);
   if (!v.rows.length) return;
-  const who = reader?.name ?? 'Your reader';
+  const who = reader?.name ?? T.yourReader;
   const t = v.totals;
-  $('history-totals').textContent = `${who}: ${t.sessions} ${t.sessions === 1 ? 'session' : 'sessions'} on ${t.days} ${t.days === 1 ? 'day' : 'days'} · ${t.read} words on their own · ${t.helped} with a little help`;
+  $('history-totals').textContent = T.historyTotals(who, t.sessions, t.days, t.read, t.helped);
   const box = $('history-rows');
   box.replaceChildren(...v.rows.map((r) => {
     const row = document.createElement('div'); row.className = 'h-row';
     const top = document.createElement('div'); top.className = 'h-top';
     const b = document.createElement('b'); b.textContent = `${r.day} · ${r.title}`;
-    const sp = document.createElement('span'); sp.textContent = `${r.read} on own${r.helped ? ` · ${r.helped} helped` : ''}`;
+    const sp = document.createElement('span'); sp.textContent = T.historyRow(r.read, r.helped);
     top.append(b, sp);
     const bar = document.createElement('div'); bar.className = 'h-bar';
     const tot = r.read + r.helped || 1;
