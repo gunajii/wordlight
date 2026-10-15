@@ -6,6 +6,8 @@
 # 3. records for N minutes: a video of the Virtual Device window plus a still every 2 s (tools/vvd/record.sh) AND
 #    clean full-resolution frames from the device itself every 2 s (tools/vvd/shots.sh).
 # Output: .dev/rec/<stamp>/ and .dev/shots/<stamp>/ (git-ignored). Ctrl-C stops early and still saves.
+# REC=0 bash tools/vvd/video-shoot.sh   → steps 1–2 only: deploy, launch the TV app and keep it running (no recording);
+#   Ctrl-C to stop.
 # While it records, Claude drives the TV with the remote keys (computer use); you only need the phone for turns.
 set -uo pipefail
 cd "$(dirname "$0")/../.."
@@ -29,6 +31,11 @@ TVPID=$!
 for i in $(seq 1 60); do grep -q "^launched" .dev/video-shoot-tv.log 2>/dev/null && break; kill -0 $TVPID 2>/dev/null || break; sleep 3; done
 grep -q "^launched" .dev/video-shoot-tv.log || { tail -15 .dev/video-shoot-tv.log; fail "the TV app did not launch (log: .dev/video-shoot-tv.log)"; }
 echo "launched; giving the app 8 s"; sleep 8
+if [ "${REC:-1}" = 0 ]; then
+  echo; echo "== ready: the TV app is running on the Virtual Device against $URL (not recording)."
+  echo "Scan the QR code with the phone to read. TV log: .dev/video-shoot-tv.log · Ctrl-C here to stop."
+  wait $TVPID; exit 0
+fi
 echo "== 3. recording ${MIN} min — tell Claude \"recording\" now"
 bash tools/vvd/shots.sh 2 > .dev/video-shoot-shots.log 2>&1 &
 SHPID=$!
