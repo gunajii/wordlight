@@ -51,7 +51,8 @@ and the local demo loop. Phone tests cover: lifecycle, the privacy invariant tab
 ## Real-service tests (2026-10-08/09) — MEASURED, see docs/submission/MEASURED_RESULTS.md
 S2 (169 lines through Transcribe) · S4 (Polly timing) · align-check (generative narration) · help recovery (before/after,
 40 runs) · five real sessions on AWS with an adult tester (end-to-end latency n = 93, privacy audit 891 reports) ·
-certificate reuse on redeploy · English and Hindi stories end to end.
+certificate reuse on redeploy · English and Hindi stories end to end · Marathi (2026-10-14, one adult, mr-IN) ·
+all sessions to 2026-10-14: privacy audit 0 violations in 1,392 reports.
 
 ## Not tested
 Children (needs written guardian permission) · physical Fire TV · Bedrock (account blocked).

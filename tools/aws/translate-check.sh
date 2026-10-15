@@ -7,6 +7,11 @@ cd "$(dirname "$0")/../.."
 REGION="${AWS_REGION:-ap-south-1}"; export AWS_PAGER=""
 T='XQZ read 28 words independently and needed help with 1 word, and finished “Clean Cat” (4 reading turns, 1 minute).'
 H='<span translate="no">XQZ</span> read 28 words independently and needed help with 1 word, and finished “Clean Cat” (4 reading turns, 1 minute).'
+# W21: a Devanagari book title inside the English sentence, plain vs. protected (what the server sends since 41c02d6)
+M='<span translate="no">XQZ</span> read 14 words independently and needed help with 2 words, and finished “कामसू मुंग्या” (5 reading turns, 1 minute).'
+M2='<span translate="no">XQZ</span> read 14 words independently and needed help with 2 words, and finished “<span translate="no">कामसू मुंग्या</span>” (5 reading turns, 1 minute).'
+echo "== mr, title unprotected:"; aws translate translate-text --region "$REGION" --source-language-code en --target-language-code mr --text "$M" --query TranslatedText --output text 2>&1
+echo "== mr, title protected (expect कामसू मुंग्या unchanged):"; aws translate translate-text --region "$REGION" --source-language-code en --target-language-code mr --text "$M2" --query TranslatedText --output text 2>&1
 for L in mr hi; do
   echo "== $L, plain placeholder:"; aws translate translate-text --region "$REGION" --source-language-code en --target-language-code $L --text "$T" --query TranslatedText --output text 2>&1
   echo "== $L, do-not-translate tag:"; aws translate translate-text --region "$REGION" --source-language-code en --target-language-code $L --text "$H" --query TranslatedText --output text 2>&1

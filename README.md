@@ -4,8 +4,8 @@
 
 > **The TV already has the words. WordLight teaches your child to read them.**
 
-**▶ Demo video (2:58):** https://youtu.be/k3brgBPWMfc (a narrated intro, a real session with a 6-year-old, then Hindi
-and Marathi, all on the Vega Virtual Device)
+**▶ Demo video (2:48, narrated by me):** https://youtu.be/oe4j4BSq7pw (the problem, a real session with a 6-year-old,
+then Hindi and Marathi, all on the Vega Virtual Device)
 
 WordLight turns a family Fire TV into a reading stage for children aged about 6–10: the TV narrates an illustrated
 story and lights each word as it is spoken; at a marked line it says **“Riya, now you say it”**, and the child reads
@@ -27,7 +27,7 @@ WordLight on 2026-10-12 with a parent present: **14 of 14 reading turns complete
 | Criterion | What WordLight does | Evidence (labels: MEASURED / INFERRED / UNKNOWN) |
 |---|---|---|
 | **Technological implementation** | Vega OS app (React Native for Vega) · phone web page, no install · AWS server streaming the child's voice to **Amazon Transcribe** · deterministic reading engine for English, Hindi and Marathi | Spoken word → lit on the TV: **median 1.05 s** (93 words, 5 real sessions, adult; target ≤ 1 s just missed; Marathi: 1.11 s, 14 words) · narration ↔ highlight sync **median −1.0 ms** (Vega Virtual Device) · **236 tests**, run by GitHub Actions on every push — [MEASURED_RESULTS](docs/submission/MEASURED_RESULTS.md) |
-| **Design** | Scan a QR → consent → reader. The TV reads a line, the child says it back, words light green; after a stall the TV says just the next word (amber) and lets the child repeat it; nothing is marked wrong. Turns follow the child's age. A finished book earns a sticker on the shelf (no scores). The parent's page speaks English, Hindi or Marathi | [Demo video](https://youtu.be/k3brgBPWMfc) · screenshots below · [privacy rules](docs/PRIVACY.md): microphone **only during a turn**, always shown on the phone — **0 violations in 1,392 status reports** (adult 1,045 + children 347; MEASURED) |
+| **Design** | Scan a QR → consent → reader. The TV reads a line, the child says it back, words light green; after a stall the TV says just the next word (amber) and lets the child repeat it; nothing is marked wrong. Turns follow the child's age. A finished book earns a sticker on the shelf (no scores). The parent's page speaks English, Hindi or Marathi | [Demo video](https://youtu.be/oe4j4BSq7pw) · screenshots below · [privacy rules](docs/PRIVACY.md): microphone **only during a turn**, always shown on the phone — **0 violations in 1,392 status reports** (adult 1,045 + children 347; MEASURED) |
 | **Potential impact** | Children about 6–10 reading with a parent on the family TV; English, Hindi and Marathi; open-licence picture books (StoryWeaver, CC BY) | **≈ USD 0.03 of Transcribe per reading session** (median of 7 real runs; narration costs nothing at play time) — [cost](docs/submission/MEASURED_RESULTS.md#cost-per-reading-session-real-aws-runs-2026-10-09-to-12) · two children (4 and 6) completed 14 of 14 turns, 0 microphone violations (MEASURED) · no learning effect claimed |
 | **Quality of the idea** | Same-language subtitling (word-by-word highlighting) + echo reading on the screen families already watch together | Why Echo Mode: Transcribe lit only ≈ 51 % of words within 1 s (169 lines), so the TV reads first — [S2](docs/submission/MEASURED_RESULTS.md) |
 | **AWS Builder** | Transcribe streaming · Polly (narration, help clips) · EC2 + CloudFormation · IAM role · S3 · DynamoDB (counts only) · Translate (parent's summary in 7 Indian languages, name masked; **worked in the app in Marathi**, MEASURED). Bedrock integrated but **not in use** (account not authorised) | [AWS_BUILDER](docs/submission/AWS_BUILDER.md) |
@@ -35,7 +35,7 @@ WordLight on 2026-10-12 with a parent present: **14 of 14 reading turns complete
 | **Friction log** | 21 entries on Vega and AWS (task → steps → expected → actual → severity → workaround → suggestion) | [FRICTION_LOG](docs/FRICTION_LOG.md) |
 
 Limits I know of: tested on the Vega Virtual Device (physical Fire TV: UNKNOWN) · recognition takes ≈ 1 s · the child
-reads in English, Hindi and Marathi only (Marathi tested by one adult) · two children so far, and no measure of learning.
+reads in English, Hindi and Marathi only (Marathi read by one adult so far; its screens approved by a Marathi teacher) · two children so far, and no measure of learning.
 
 | The child's turn on the TV | Help, then say it back | The phone during a turn |
 |---|---|---|
@@ -117,9 +117,10 @@ is likely to mishear them). Set on 2026-10-12 after a 6-year-old read the earlie
 | Transcribe in the reading loop (S2, 169 lines, synthetic adult voice) | ≈ 95 % recognised, 51 % within 1 s — **FAIL for free reading** → Echo Mode | MEASURED |
 | Real loop: phone → AWS → Transcribe → TV (adult tester) | word lit a median 1.05 s after spoken (n = 93, 5 sessions); target ≤ 1 s not met | MEASURED |
 | Help recovery (next word helped too early) | 1/20 → 0/20 after the fix (synthetic reader, real Transcribe) | MEASURED |
-| Privacy audit on AWS | 0 violations in 891 microphone reports (5 sessions); mic off 8–107 ms after each turn end | MEASURED |
+| Privacy audit on AWS | 0 violations in 1,392 microphone status reports (adult 1,045 over 6 sessions + children 347 over 2); mic off 8–248 ms after each turn end | MEASURED |
 | Children (2026-10-12) | two children, 4 and 6, parent present: 14/14 turns completed; 48 words lit a median 1.15 s after spoken; 0 microphone violations | MEASURED · learning effect: not measured |
 | Parent's summary in Marathi (Amazon Translate, 2026-10-14) | first try fell back to English (Translate spelled the name placeholder in Marathi letters; friction log W20); after the fix, Marathi with the name kept, plus the reading diary | MEASURED (one adult session, phone recording) · translation quality not reviewed |
+| Phone auto-lock mid-story (found in the children's session, 2026-10-12) | the TV lost the paired phone; fixed (the phone reconnects after being hidden ≥ 3 s, the server re-sends the reader list), unit-tested, then re-tested on a real phone on AWS: lock mid-story, unlock, the reader is back and the next turns start | MEASURED (developer's report, 2026-10-13) |
 | First Marathi reading (2026-10-14, *कामसू मुंग्या*, recorded human narrator, Transcribe mr-IN) | 5/5 turns, 14 on own · 2 helped · 1 skipped; word lit a median 1.11 s after spoken (n = 14); 154 microphone reports, 0 violations; sticker on the shelf afterwards | MEASURED (one adult) · children reading Marathi: UNKNOWN |
 
 ## Run it

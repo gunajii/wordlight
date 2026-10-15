@@ -213,7 +213,7 @@ was set to age 5 on the phone, so 5 turns. Real AWS loop on the Vega Virtual Dev
 | Word lit after spoken | 14 words: **median 1 105 ms**, p95 1 429 ms, 2 within 1 s (recognition median 1 066 ms; server → TV median 39 ms) |
 | Microphone audit | 154 status reports, **0 violations**; off 10–18 ms after each turn ends |
 | After the book | New-sticker line on the end card; the shelf card shows “✓ Riya” and the reader line “✓ 1 book”; the phone showed the summary in Marathi (Amazon Translate) and the diary (“14 on own · 2 helped”). **Found:** Translate changed the book's title inside the summary (“कामसू मुंग्या” → “महासा मंगा”); titles are now sent as do-not-translate (friction log W21), not yet re-checked in the app |
-| Label | **MEASURED** (`docs/results/e2e/marathi-20261014T172146Z.json`, `docs/results/privacy/aws-20261014T172146Z.json`; TV stills and a phone screen recording, not committed). One adult (the developer) reading as a test reader; children reading Marathi: UNKNOWN. The Marathi UI strings are listed for a native reviewer in `docs/MARATHI_REVIEW.md` |
+| Label | **MEASURED** (`docs/results/e2e/marathi-20261014T172146Z.json`, `docs/results/privacy/aws-20261014T172146Z.json`; TV stills and a phone screen recording, not committed). One adult (the developer) reading as a test reader; children reading Marathi: UNKNOWN. The Marathi screen text (`docs/MARATHI_REVIEW.md`) was approved by a Marathi teacher on 2026-10-15 (informal review, developer's report) |
 
 ## Cost per reading session (real AWS runs, 2026-10-09 to 12)
 The server counts the seconds it streams to Amazon Transcribe (`.dev/aws/usage-server-*.json`, cumulative per day,

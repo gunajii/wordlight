@@ -2,7 +2,9 @@
 
 Marathi was added on 2026-10-14. The **story text is the official StoryWeaver translation** (कामसू मुंग्या, Sandhya
 Taksale, Pratham Books, CC BY 4.0) and is not changed. Everything below was **written for WordLight** and needs a
-Marathi speaker's review before wider use. Status: _not yet reviewed_.
+Marathi speaker's review before wider use. Status: **reviewed 2026-10-15 by a Marathi teacher (the developer's former
+school Marathi teacher), who approved the Marathi screens** (informal review, reported by the developer; no changes
+requested). The machine-translated parent's summary (Amazon Translate) is outside this review.
 
 ## TV (child-facing) — packages/tv-core/src/text.ts
 | Where | Marathi | English meaning |

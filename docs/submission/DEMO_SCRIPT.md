@@ -51,15 +51,16 @@ counts only: DynamoDB. Nothing else.
 **Numbers allowed on screen** (all in MEASURED_RESULTS.md; say “adult tester” with them):
 - highlight in sync with narration: median −1.0 ms (Vega Virtual Device)
 - a spoken word lights a median 1.05 s later (93 words, 5 sessions)
-- 0 microphone violations in 891 status reports
+- 0 microphone violations in 1,392 status reports (adult and children)
 - recognition test: 95 % of words recognised, 51 % within 1 s (169 lines)
 
 **Don't say:** that a child's reading improved (one session measures nothing about learning) · “children” if one
 child took part · “Fire TV device” for the footage (it's the Vega Virtual Device) · anything about Bedrock.
 
 ## Upload (YouTube)
-Published: https://youtu.be/k3brgBPWMfc (2:58, v5, 2026-10-15): adds Hindi and Marathi sessions, the reach card, the
-dark-mode phone, seven books and the sticker. Earlier cut: https://youtu.be/-5x0W25ymOw (2:52).
+Published: https://youtu.be/oe4j4BSq7pw (2:48, 2026-10-15): narrated by the developer in his own voice; Hindi and
+Marathi sessions, the reach card, the dark-mode phone, seven books and the sticker. Earlier cuts (Polly narration):
+https://youtu.be/k3brgBPWMfc (2:58) and https://youtu.be/-5x0W25ymOw (2:52). The template below is from the first cut.
 
 - Title: **WordLight: a Fire TV that listens to your child read (Amazon Developer Hackathon 2026)**
 - Audience: **No, it's not made for kids** (it is a demo for judges). Visibility: public (or unlisted if the rules allow).

@@ -4,7 +4,7 @@ Official deadline: **2026-10-23, 12:00 PM PDT**. Submit as soon as everything be
 ✅ done · ⬜ to do (owner)
 
 ## Primary track (Fire TV / Vega)
-- ✅ Latest build runs on the Vega Virtual Device on the real AWS path (English and Hindi, 2026-10-09)
+- ✅ Latest build runs on the Vega Virtual Device on the real AWS path (English and Hindi 2026-10-09, Marathi 2026-10-14)
 - ⬜ Physical Vega Fire TV — only if available; otherwise say “Vega Virtual Device” everywhere (it is said)
 - ✅ Demo path uses real Transcribe (no SIMULATED badge on this path)
 - ✅ Repository public (github.com/gunajii/wordlight, MIT) — README has setup and run instructions
@@ -17,6 +17,7 @@ Official deadline: **2026-10-23, 12:00 PM PDT**. Submit as soon as everything be
 ## Documentation
 - ✅ README · ARCHITECTURE · TEST_PLAN · PRIVACY · SECURITY · MEASURED_RESULTS (every number labelled)
 - ✅ Hindi review (docs/HINDI_REVIEW.md); p2/p4 wording kept by the developer
+- ✅ Marathi screens approved by a Marathi teacher (docs/MARATHI_REVIEW.md, 2026-10-15)
 
 ## AWS Builder
 - ✅ Services listed only if they ran (AWS_BUILDER.md); Bedrock marked blocked
@@ -28,14 +29,14 @@ Official deadline: **2026-10-23, 12:00 PM PDT**. Submit as soon as everything be
 - ⬜ Repository URL, username `gunajii` and description in Devpost
 
 ## Friction log
-- ✅ docs/FRICTION_LOG.md W1–W19, real entries only
+- ✅ docs/FRICTION_LOG.md W1–W21, real entries only
 
 ## Content
 - ✅ Busy Ants and Naughty Dog credits verbatim from StoryWeaver's attribution files; shown on the end card and in docs/CONTENT.md
 - ✅ My test story (Mina's Red Kite) is off the demo shelf
 
 ## Privacy and security
-- ✅ No audio or transcript text stored; mic audit 0/891 on AWS; child audio only via the AWS endpoint
+- ✅ No audio or transcript text stored; mic audit 0/1,392 on AWS; child audio only via the AWS endpoint
 - ✅ Repository secret scan clean (2026-10-09)
 - ⬜ Root password changed + MFA, no root access keys; daily work with the limited IAM user (developer, docs/SECURITY.md)
 

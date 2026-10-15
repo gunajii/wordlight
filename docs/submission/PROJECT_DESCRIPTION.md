@@ -87,7 +87,7 @@ Every number has its device, sample and method in the repository's `MEASURED_RES
 ## What's next
 - A physical Fire TV stick (so far tested on the Vega Virtual Device).
 - Stories in more of the languages Transcribe can hear, starting with Indian ones (the parent's summary already comes in eight), recorded by parents and teachers where Polly has no voice.
-- A native Marathi teacher's review of the Marathi screens, and children reading in Marathi.
+- Children reading in Marathi (a Marathi teacher has approved the Marathi screens; the book has so far been read only by me).
 - More families, always with a parent's permission.
 - A Bedrock-written parent summary once my account is authorised. It is built and guarded, and falls back to a template today.
 
